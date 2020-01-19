@@ -270,10 +270,13 @@ function compute_fluid_mass_matrix(m::Int64, n::Int64, h::Float64)
 end
 
 @doc raw"""
+    trim_coupled(Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, M::SparseMatrixCSC{Float64,Int64}, 
+        bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
 
+Assembles matrices from mechanics and flow and assemble the coupled matrix. 
 """
 function trim_coupled(Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, M::SparseMatrixCSC{Float64,Int64}, 
-    bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    bd::Array{Int64}, m::Int64, n::Int64, h::Float64;)
     A = [M -L'
         L Q]
     A[bd,:] = spzeros(length(bd), 2(m+1)*(n+1)+m*n)

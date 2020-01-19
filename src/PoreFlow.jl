@@ -2,7 +2,6 @@ __precompile__(false)
 module PoreFlow 
 
     using SparseArrays
-    using PyPlot
     using LinearAlgebra
     using PyCall
     np = pyimport("numpy")
