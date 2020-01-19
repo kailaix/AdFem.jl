@@ -12,6 +12,9 @@ os:
   # - osx
   - linux
   # - windows
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install python3-pip
 notifications:
   email: false
 coveralls: true
