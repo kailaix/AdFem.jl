@@ -67,5 +67,5 @@ for i = 1:NT
     U[:,i+1] = A\rhs
 end
 
-U
-close("all"); visualize_pressure(U, m, n, h); savefig("pressure.png")
+visualize_pressure(U, m, n, h)
+visualize_velocity(U, m, n, h)
