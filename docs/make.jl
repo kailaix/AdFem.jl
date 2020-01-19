@@ -1,5 +1,5 @@
-using PyCall 
-using Pkg; Pkg.add("PyPlot")
+# using PyCall 
+# using Pkg; Pkg.add("PyPlot")
 
 using Documenter, PoreFlow
 makedocs(sitename="PoreFlow", modules=[PoreFlow],
