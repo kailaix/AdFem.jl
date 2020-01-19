@@ -12,9 +12,6 @@ os:
   # - osx
   - linux
   # - windows
-before_install:
-  - /usr/bin/python3 -m pip install --user matplotlib
-  - /usr/bin/python3 -m pip install --user numpy
 notifications:
   email: false
 coveralls: true
@@ -26,6 +23,8 @@ jobs:
       script:
         - julia --project=docs/ -e 'using Pkg;Pkg.add("Documenter");  Pkg.add("PyCall");  Pkg.add("LinearAlgebra"); Pkg.develop(PackageSpec(path=pwd()));
                                                Pkg.instantiate()'
+        - /usr/bin/python3 -m pip install --user matplotlib
+        - /usr/bin/python3 -m pip install --user numpy
         - julia --project=docs/ docs/make.jl
       after_success: skip
 # after_success:
