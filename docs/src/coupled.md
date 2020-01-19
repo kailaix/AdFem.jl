@@ -59,6 +59,30 @@ where $k$ is the absolute permeability tensor, $\mu$ is the fluid viscosity and 
 
 The mechanical equation and fluid equation are coupled through $p$ and $\varepsilon$. In the drained split scheme, in each step $p$ is kept fixed while solving the mechanics equation and then the fluid equation is solved keeping $\varepsilon$ fixed. The drained scheme can be viewed as a Jacobian iteration of the fully coupled system. 
 
+
+
+!!! note
+    The linear poroelasticity equations with $g=0$ can be expressed as [^linear]
+
+    $$\begin{aligned}
+    \mathrm{div}\sigma(u) - b \nabla p &= 0\\
+    \frac{1}{M} \frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v(u)}{\partial t} - \nabla\cdot\left(\frac{k}{B_f\mu}\nabla p\right) &= f(x,t)
+    \end{aligned}$$
+
+    ​with boundary conditions
+
+    $$\begin{aligned}
+    \sigma n = 0,\quad x\in \Gamma_{N}^u, \qquad u=0, \quad x\in \Gamma_D^u\\
+    -\frac{k}{B_f\mu}\frac{\partial p}{\partial n} = 0,\quad x\in \Gamma_{N}^p, \qquad p=g, \quad x\in \Gamma_N^p
+    \end{aligned}$$
+
+    and the initial condition
+    
+    $$p(x,0) = p_0,\ u(x,0) =0,\ x\in \Omega$$
+
+
+[^linear]: Kolesov, Alexandr E., Petr N. Vabishchevich, and Maria V. Vasilyeva. "Splitting schemes for poroelasticity and thermoelasticity problems." *Computers & Mathematics with Applications* 67.12 (2014): 2185-2198.
+
 ## Numerical Discretization
 
 ### Mechanics
