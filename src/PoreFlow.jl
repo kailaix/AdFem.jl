@@ -5,6 +5,7 @@ module PoreFlow
     using LinearAlgebra
     using PyCall
     using PyPlot
+    using Parameters
     np = pyimport("numpy")
     if Sys.isapple()
         matplotlib.use("macosx")

@@ -284,6 +284,39 @@ function compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
     sparse(I, J, V, m*n, m*n)
 end
 
+
+@doc raw"""
+    compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
+
+Computes the term with two-point flux approximation with distinct permeability at each cell
+```math
+\int_{A_i} K_i \Delta p \mathrm{d}x = K_i\sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
+```
+
+"""
+function compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    function add(i, j, v)
+        push!(I, i)
+        push!(J, j)
+        push!(V, v)
+    end
+    for i = 1:m 
+        for j = 1:n 
+            k = (j-1)*m + i
+            for (ii,jj) in [(i+1,j),(i-1,j),(i,j+1),(i,j-1)]
+                if 1<=ii<=m && 1<=jj<=n
+                    kp = (jj-1)*m + ii
+                    add(k, kp, K[k])
+                    add(k, k, -K[k])
+                end
+            end
+        end
+    end
+    sparse(I, J, V, m*n, m*n)
+end
+
+
 @doc raw"""
     compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
         m::Int64, n::Int64, h::Float64)

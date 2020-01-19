@@ -35,7 +35,7 @@ $$D = \frac{E(1-\nu)}{(1+\nu)(1-2\nu)}\begin{bmatrix}
 \frac{\nu}{1-\nu} & \frac{\nu}{1-\nu} & 1
 \end{bmatrix}$$
 
-$E$ is the Young modulus,  $\nu$ is the Poisson ratio and  $\varepsilon$ is the strain
+Here $E$ is the Young modulus,  $\nu$ is the Poisson ratio and  $\varepsilon$ is the strain
 
 $$\varepsilon = \begin{bmatrix}
 \varepsilon_{xx} & \varepsilon_{xy}\\
@@ -68,14 +68,14 @@ The mechanical equation and fluid equation are coupled through $p$ and $\varepsi
     \mathrm{div}\sigma(u) - b \nabla p &= 0\\
     \frac{1}{M} \frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v(u)}{\partial t} - \nabla\cdot\left(\frac{k}{B_f\mu}\nabla p\right) &= f(x,t)
     \end{aligned}$$
-
+    
     ​with boundary conditions
-
+    
     $$\begin{aligned}
     \sigma n = 0,\quad x\in \Gamma_{N}^u, \qquad u=0, \quad x\in \Gamma_D^u\\
     -\frac{k}{B_f\mu}\frac{\partial p}{\partial n} = 0,\quad x\in \Gamma_{N}^p, \qquad p=g, \quad x\in \Gamma_N^p
     \end{aligned}$$
-
+    
     and the initial condition
     
     $$p(x,0) = p_0,\ u(x,0) =0,\ x\in \Omega$$
@@ -151,7 +151,7 @@ $$\int_{A_i} \frac{1}{M}\frac{p_i^{n+1} - p_{i}^{n}}{\Delta t} \mathrm{d}x + \in
 
 For the divergence term, we use the two-point flux approximation and we have (assuming $k$ is a constant scalar)
 
-$$\int_{A_i} \mathrm{div}\mathbf{v} \mathrm{d}x = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (q_j-q_i) = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (p_j^{n+1} - p_i^{n+1}) + \frac{k\rho_f|g|}{B_f\mu}\sum_{j=1}^{n_\mathrm{faces}} y_j$$
+$$\int_{A_i} \mathrm{div}\mathbf{v} \mathrm{d}x = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (q_j-q_i) = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (p_j^{n+1} - p_i^{n+1}) + \frac{k\rho_f|g|}{B_f\mu}\sum_{j=1}^{n_\mathrm{faces}} (y_j-y_i)$$
 
 where
 $$q = p^{n+1} - \rho_f|g|y$$

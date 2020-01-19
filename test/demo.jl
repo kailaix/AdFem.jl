@@ -8,7 +8,7 @@ np = pyimport("numpy")
 NT = 100
 m = 40
 n = 20
-h = 0.1
+h = 1.
 traction = 2.125e6
 production = 1.0e8
 bdnode = Int64[]
@@ -38,13 +38,23 @@ for j = 1:n
 end
 bdedge = vcat(bdedge...)
 
+Kp = ones(m*n)
+for i = 1:m 
+    for j = 1:n
+        if div(n,3)<=j<=2div(n,3)
+            Kp[(j-1)*m+i] = 100.0
+        end
+    end
+end
+
 # Physical parameters
 pd = PoreData()
 K = compute_elasticity_tangent(pd.E, pd.ν)
 
-# pd.b = 0.0
+pd.b = 0.0
+pd.g = 0.0
 # formulate matrix
-Q = compute_fluid_tpfa_matrix(m, n, h)
+Q = compute_fluid_tpfa_matrix(Kp, m, n, h)
 M = compute_fem_stiffness_matrix(K, m, n, h)
 L = compute_interaction_matrix(m, n, h)
 A = trim_coupled(pd, Q, L, M, bdnode, Δt, m, n, h)
@@ -56,11 +66,23 @@ productions = zeros(4m*n)
 idx = div(n,2)*(m)+div(m,5)
 productions[4(idx-1)+1:4idx] .= production
 
+
+g1 = zeros(4*m*n)
+g2 = pd.ρb*pd.g*ones(4*m*n)
+Y = zeros(m*n)
+for i = 1:m 
+    for j = 1:n 
+        Y[(j-1)*m+i] = (j-1/2)*h 
+    end
+end
+
 for i = 1:NT 
-    rhs1 = compute_fem_normal_traction_term(traction, bdedge, m, n, h)
+    rhs1 = compute_fem_normal_traction_term(traction, bdedge, m, n, h) + 
+        compute_fem_source_term(g1, g2, m, n, h)
     rhs2 = compute_fvm_source_term(productions, m, n, h) +
         1/pd.M/Δt * h^2 * U[2(m+1)*(n+1)+1:end, i] +
-         pd.b/Δt * compute_fvm_mechanics_term(U[1:2(m+1)*(n+1), i],m,n,h) 
+         pd.b/Δt * compute_fvm_mechanics_term(U[1:2(m+1)*(n+1), i],m,n,h) - 
+         pd.kp/pd.Bf/pd.μ*Q*Y
         
     rhs = [rhs1;rhs2]
     rhs[bdnode] = bdval
