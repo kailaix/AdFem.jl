@@ -1,3 +1,13 @@
+export compute_fem_stiffness_matrix,
+compute_fem_source_term,
+trim_fem,
+eval_f_on_gauss_pts,
+compute_interaction_matrix,
+compute_fvm_source_term,
+compute_fvm_mechanics_term,
+compute_fluid_mass_matrix,
+trim_coupled
+
 ####################### Mechanics #######################
 @doc raw"""
     compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)

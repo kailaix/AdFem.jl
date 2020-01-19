@@ -9,7 +9,7 @@ git:
 julia:
   - 1.2
 os:
-  - osx
+  # - osx
   - linux
   # - windows
 before_install:
@@ -28,8 +28,8 @@ jobs:
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       after_success: skip
-after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
+# after_success:
+  # - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
 cache:
   directories:
   - /home/travis/.julia/conda/3/
