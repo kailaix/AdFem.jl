@@ -13,6 +13,8 @@ os:
   - linux
   # - windows
 before_install:
+  - sudo apt-get update
+  - sudo apt-get install python3
   - pip3 install --user matplotlib
   - pip3 install --user numpy
 notifications:
