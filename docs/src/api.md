@@ -17,6 +17,7 @@ compute_fluid_tpfa_matrix
 compute_fem_source_term
 compute_fvm_source_term
 compute_fvm_mechanics_term
+compute_fem_normal_traction_term
 ```
 
 ## Misc

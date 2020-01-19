@@ -7,7 +7,8 @@ compute_fvm_source_term,
 compute_fvm_mechanics_term,
 compute_fluid_tpfa_matrix,
 trim_coupled,
-compute_elasticity_tangent
+compute_elasticity_tangent,
+compute_fem_normal_traction_term
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -257,6 +258,9 @@ Computes the term with two-point flux approximation
 \int_{A_i} \Delta p \mathrm{d}x = \sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
 ```
 ![](./assets/tpfa.png)
+
+!!! warning
+    No flow boundary condition is assumed. 
 """
 function compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
@@ -278,6 +282,28 @@ function compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
         end
     end
     sparse(I, J, V, m*n, m*n)
+end
+
+@doc raw"""
+    compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
+        m::Int64, n::Int64, h::Float64)
+
+Computes the normal traction term 
+```math
+\int_{\Gamma} t\cdot\delta u \mathrm{d}
+```
+Here $t$ points **outward** to the domain and the magnitude is constant (given by `t`). 
+`bdedge` is a $N\times2$ matrix and each row denotes the indices of two endpoints of the boundary edge. 
+"""
+function compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
+         m::Int64, n::Int64, h::Float64)
+    rhs = zeros(2*(m+1)*(n+1))
+    for k = 1:size(bdedge,1)
+        ii, jj = bdedge[k,:]
+        rhs[ii] += h/2*t 
+        rhs[jj] += h/2*t 
+    end
+    return rhs 
 end
 
 @doc raw"""

@@ -1,5 +1,5 @@
 export PoreData
-"""
+@doc raw"""
 `PoreData` is a collection of physical parameters for coupled geomechanics and flow simulation
 
 - `M`: Biot modulus
@@ -10,8 +10,7 @@ export PoreData
 - `ν`: Poisson ratio
 - `μ`: Fluid viscosity
 - `Pi`: Initial pressure
-- `Pbc`: Boundary pressure
-- `Bf`: ???
+- `Bf`: formation volume, $B_f=\frac{\rho_{f,0}}{\rho_f}$
 """
 mutable struct PoreData
     M::Float64
@@ -22,6 +21,19 @@ mutable struct PoreData
     ν::Float64
     μ::Float64
     Pi::Float64
-    Pbc::Float64
     Bf::Float64
+end
+
+function PoreData()
+    PoreData(
+        1.0,
+        1.0,
+        2400,
+        50,
+        350e6,
+        0.35,
+        1.0,
+        2.125e6,
+        1.0
+    )
 end

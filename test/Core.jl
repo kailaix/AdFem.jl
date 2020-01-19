@@ -162,3 +162,18 @@ end
     scatter3D(Xv, Yv, 4h^2 * ones(m*n), marker = "+") 
     savefig("compute_fluid_tpfa_matrix.png")
 end
+
+@testset "compute_fem_normal_traction_term" begin
+    bdedge = []
+    for i = 1:m 
+        push!(bdedge, [i i+1])
+        push!(bdedge, [n*(m+1)+i n*(m+1)+i+1])
+    end
+    for j = 1:n 
+        push!(bdedge, [(j-1)*(m+1)+1 j*(m+1)+1])
+        push!(bdedge, [(j-1)*(m+1)+m+1 j*(m+1)+m+1])
+    end
+    bdedge = vcat(bdedge...)
+    rhs = compute_fem_normal_traction_term(10.0, bdedge, m, n, h)
+    @test sum(rhs)≈120
+end

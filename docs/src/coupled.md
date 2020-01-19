@@ -4,7 +4,7 @@
 
 The governing equation for mechanical deformation of the solid-fluid system is 
 
-$$\mathrm{div} \sigma + \rho_b g = 0$$
+$$\boxed{\mathrm{div} \sigma + \rho_b g = 0}$$
 
 where $\mathrm{div}$ is the divergence operator, $\sigma$ is the Cauchy total-stress 
 
@@ -47,7 +47,7 @@ $$\varepsilon = \begin{bmatrix}
 
 The fluid mass convervation in terms of pressure and volumetric strain is given by 
 
-$$\frac{1}{M}\frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v}{\partial t} + \mathrm{div}\mathrm{v} = f$$
+$$\boxed{\frac{1}{M}\frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v}{\partial t} + \mathrm{div}\mathrm{v} = f}$$
 
 where $\varepsilon_v = \mathrm{tr} \varepsilon$, $f$ is a volumetric source term and 
 
@@ -69,9 +69,9 @@ We discretize the domain $[0,(n-1)h]\times [0, (m-1)h]$ uniformly with step size
 
 The finite element method is usually used to solve the mechanics equation, whose discretization reads
 
-$$\int_{\Omega} \delta \varepsilon :\sigma'\mathrm{d}x - \int_\Omega b p \delta \varepsilon_v\mathrm{d}x = \int_{\partial\Omega} t\cdot\delta u\mathrm{d}s + \int_\Omega \rho_b g\cdot\delta u dx$$
+$$\int_{\Omega} \delta \varepsilon :\sigma'\mathrm{d}x - \int_\Omega b p \delta \varepsilon_v\mathrm{d}x = \int_{\Gamma} t\cdot\delta u\mathrm{d}s + \int_\Omega \rho_b g\cdot\delta u dx$$
 
-where $t = \sigma n = \sigma' n - bpn$ and $n$ is the unit normal vector pointing outwards. One each element $A$, define $u_A$ as the nodal values of the basis functions whose supports overlap $A$, then the strain at $(x,y)$ can be expressed as (see the figure for illustration)
+where $t = \sigma n = \sigma' n - bpn$, $\Gamma$ is the part of $\partial \Omega$ with external traction,  and $n$ is the unit normal vector pointing outwards. One each element $A$, define $u_A$ as the nodal values of the basis functions whose supports overlap $A$, then the strain at $(x,y)$ can be expressed as (see the figure for illustration)
 
 $$\varepsilon_A = Bu_A, \quad \varepsilon_A =\begin{bmatrix}
 \varepsilon_{xx}\\
@@ -123,21 +123,34 @@ where $(x_i, \eta_i)$ are Gauss quadrature points and $w_i$ is the corresponding
 
 The fluid equation is discretized using finite volume method. 
 
-$$\frac{1}{M}\frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v}{\partial t} + \mathrm{div}\mathrm{v} = f$$
-
 $$\int_{A_i} \frac{1}{M}\frac{p_i^{n+1} - p_{i}^{n}}{\Delta t} \mathrm{d}x + \int_{A_i} b \frac{\varepsilon_v^{n+1}-\varepsilon_v^n}{\Delta t} \mathrm{d} x + \int_{A_i} \mathrm{div}\mathbf{v}\mathrm{d}x = \int_{A_i} f\mathrm{d}x$$
 
 For the divergence term, we use the two-point flux approximation and we have (assuming $k$ is a constant scalar)
 
-$$\int_{A_i} \mathrm{div}\mathbf{v} \mathrm{d}x = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (q_j-q_i) = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (p_j - p_i) + \frac{k\rho_f|g|}{B_f\mu}\sum_{j=1}^{n_\mathrm{faces}} y_j$$
+$$\int_{A_i} \mathrm{div}\mathbf{v} \mathrm{d}x = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (q_j-q_i) = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (p_j^{n+1} - p_i^{n+1}) + \frac{k\rho_f|g|}{B_f\mu}\sum_{j=1}^{n_\mathrm{faces}} y_j$$
 
 where
-$$q = p - \rho_f|g|y$$
+$$q = p^{n+1} - \rho_f|g|y$$
 
+### Initial and Boundary Conditions
+
+For the mechanial problem we consider
+
+* Prescribed displacement: $u = \bar u$; or
+* Prescribed traction: $\sigma\cdot n=\bar t$ (also called *overburden*).
+
+For the flow problem we consider
+
+* Prescribed pressure: $p=\bar p$; or
+* Prescribed volumetric flux: $\mathbf{v}\cdot n=\bar v$ (called *no flow* if $\bar v=0$).
+
+The initial displacement and strains are zero. The initial pressure is prescribed. 
 
 ### Numerical Example
 
 Here is a list of reasonable parameters
+
+![](./assets/setting.png)
 
 | Property               | Value           |
 | ---------------------- | --------------- |
@@ -148,8 +161,9 @@ Here is a list of reasonable parameters
 | Grid spacing $h$       | 2 m             |
 | Fluid density $\rho_f$ | 1000 kg/m${}^3$ |
 | Initial pressure $P_i$ | 2.125 MPa       |
-| Domain Size            | 40 m            |
-| Time step              | 0.044           |
+| Traction $|\bar t|$    | 2.125 MPa       |
+| Young's modulus $E$    | 350 MPa         |
+| Poisson's ratio $\nu$  | 0.35            |
 
 ​                                    
 
