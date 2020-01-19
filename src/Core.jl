@@ -5,8 +5,9 @@ eval_f_on_gauss_pts,
 compute_interaction_matrix,
 compute_fvm_source_term,
 compute_fvm_mechanics_term,
-compute_fluid_mass_matrix,
-trim_coupled
+compute_fluid_tpfa_matrix,
+trim_coupled,
+compute_elasticity_tangent
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -140,6 +141,7 @@ Computes the interaction term
 ```math
 \int_A p \delta \varepsilon_v\mathrm{d}x = \int_A p [1,1,0]B^T\delta u_A\mathrm{d}x
 ```
+The output is a $mn \times 2(m+1)(n+1)$ matrix. 
 """
 function compute_interaction_matrix(m::Int64, n::Int64, h::Float64)
     I = Int64[]
@@ -209,13 +211,21 @@ Computes the mechanic interaction term
 ```math
 \int_{A_i} \varepsilon_v\mathrm{d}x
 ```
+Here 
+```math
+\varepsilon_v = \mathrm{tr} \varepsilon = \varepsilon_{xx} + \varepsilon_{yy}
+```
+Numerically, we have 
+```math
+\varepsilon_v = [1 \ 1 \ 0] B^T \delta u_A
+```
 """
 function compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
     out = zeros(m*n)
     B = zeros(4, 3, 8)
     for i = 1:2
         for j = 1:2
-            η = pts[i]; ξ = pts[j]
+            ξ = pts[i]; η = pts[j]
             B[(j-1)*2+i,:,:] = [
                 -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
                 0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
@@ -225,12 +235,12 @@ function compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Fl
     end
     for i = 1:m 
         for j = 1:n
+            idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+            idx = [idx; idx .+ (m+1)*(n+1)]
             for p = 1:2
-                for q = 1:2
-                    idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
-                    idx = [idx; idx .+ (m+1)*(n+1)]
+                for q = 1:2        
                     Bk = B[(q-1)*2+p,:,:]
-                    Bk = [1. 1. 0.]*Bk*u[idx]
+                    Bk = [1. 1. 0.]*Bk*u[idx]*0.25*h^2
                     out[(j-1)*m+i] += Bk[1,1]
                 end
             end
@@ -240,14 +250,15 @@ function compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Fl
 end
 
 @doc raw"""
-    compute_fluid_mass_matrix(m::Int64, n::Int64, h::Float64)
+    compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
 
 Computes the term with two-point flux approximation 
 ```math
-\int_{A_i} \Delta p \mathrm{d}x
+\int_{A_i} \Delta p \mathrm{d}x = \sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
 ```
+![](./assets/tpfa.png)
 """
-function compute_fluid_mass_matrix(m::Int64, n::Int64, h::Float64)
+function compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
     function add(i, j, v)
         push!(I, i)
@@ -260,8 +271,8 @@ function compute_fluid_mass_matrix(m::Int64, n::Int64, h::Float64)
             for (ii,jj) in [(i+1,j),(i-1,j),(i,j+1),(i,j-1)]
                 if 1<=ii<=m && 1<=jj<=n
                     kp = (jj-1)*m + ii
-                    add(k, kp, -1.)
-                    add(k, k, 1.)
+                    add(k, kp, 1.)
+                    add(k, k, -1.)
                 end
             end
         end
@@ -270,17 +281,64 @@ function compute_fluid_mass_matrix(m::Int64, n::Int64, h::Float64)
 end
 
 @doc raw"""
-    trim_coupled(Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, M::SparseMatrixCSC{Float64,Int64}, 
-        bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, 
+        M::SparseMatrixCSC{Float64,Int64}, 
+        bd::Array{Int64}, Δt::Float64, m::Int64, n::Int64, h::Float64)
 
-Assembles matrices from mechanics and flow and assemble the coupled matrix. 
+Assembles matrices from mechanics and flow and assemble the coupled matrix 
+
+
+$$\begin{bmatrix}
+\mbox{stiffness matrix} & -\mbox{transmissible matrix}^T\\
+\mbox{transmissible matrix} & \mbox{transient matrix}
+\end{bmatrix}$$
+
+`Q` is obtained from [`compute_fluid_tpfa_matrix`](@ref), `M` is obtained from [`compute_fem_stiffness_matrix`](@ref),
+and `L` is obtained from [`compute_interaction_matrix`](@ref).
 """
-function trim_coupled(Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, M::SparseMatrixCSC{Float64,Int64}, 
-    bd::Array{Int64}, m::Int64, n::Int64, h::Float64;)
-    A = [M -L'
-        L Q]
+function trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, 
+    M::SparseMatrixCSC{Float64,Int64}, 
+    bd::Array{Int64}, Δt::Float64, m::Int64, n::Int64, h::Float64)
+
+    A22 = 1/pd.M/Δt*h^2*spdiagm(0=>ones(m*n)) -
+        pd.kp/pd.Bf*Q
+    A21 = pd.b/Δt * L 
+    A12 = -A21'
+    A11 = M
+
+    A = [A11 A12
+        A21 A22]
     A[bd,:] = spzeros(length(bd), 2(m+1)*(n+1)+m*n)
     A[:, bd] = spzeros(2(m+1)*(n+1)+m*n, length(bd))
     A[bd, bd] = spdiagm(0=>ones(length(bd)))
     dropzeros(A)
+end
+
+function get_gauss_points(m, n, h)
+    pts_ = []
+    for i = 1:m 
+        for j = 1:n 
+            for p = 1:2
+                for q = 1:2
+                    x = pts[p]*h+(i-1)*h
+                    y = pts[q]*h+(j-1)*h
+                    push!(pts_, [x y])
+                end
+            end
+        end
+    end
+    vcat(pts_...)
+end
+
+"""
+    compute_elasticity_tangent(E::Float64, ν::Float64)
+
+Computes the elasticity matrix for 2D plane strain
+"""
+function compute_elasticity_tangent(E::Float64, ν::Float64)
+    E*(1-ν)/(1+ν)/(1-2ν)*[
+        1 ν/(1-ν) ν/(1-ν)
+        ν/(1-ν) 1 ν/(1-ν)
+        ν/(1-ν) ν/(1-ν) 1
+    ]
 end

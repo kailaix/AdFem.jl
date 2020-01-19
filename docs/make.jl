@@ -1,6 +1,7 @@
 # using PyCall 
 # using Pkg; Pkg.add("PyPlot")
 
+push!(LOAD_PATH, "../src/")
 using Documenter, PoreFlow
 makedocs(sitename="PoreFlow", modules=[PoreFlow],
 pages = Any[

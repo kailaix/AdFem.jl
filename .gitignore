@@ -7,3 +7,5 @@ src/fully_coupled.jl
 src/tests.jl
 src/*.png
 *.DS_Store
+docs/build
+test/*.png
