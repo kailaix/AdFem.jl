@@ -1,0 +1,10 @@
+name = "PoreFlow"
+uuid = "c10abcb9-3e37-4bfe-9bab-99a3bc662411"
+authors = ["Kailai Xu <kailaix@stanford.edu>"]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"

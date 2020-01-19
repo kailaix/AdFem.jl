@@ -1,0 +1,9 @@
+test/.ipynb_checkpoints
+test/*.ipynb 
+test/grid.png
+deps/*
+!deps/build.jl
+src/fully_coupled.jl
+src/tests.jl
+src/*.png
+*.DS_Store
