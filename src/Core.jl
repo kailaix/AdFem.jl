@@ -8,7 +8,9 @@ compute_fvm_mechanics_term,
 compute_fluid_tpfa_matrix,
 trim_coupled,
 compute_elasticity_tangent,
-compute_fem_normal_traction_term
+compute_fem_normal_traction_term,
+coupled_impose_pressure,
+compute_principal_stress_term
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -348,8 +350,8 @@ Assembles matrices from mechanics and flow and assemble the coupled matrix
 
 
 $$\begin{bmatrix}
-\mbox{stiffness matrix} & -\mbox{transmissible matrix}^T\\
-\mbox{transmissible matrix} & \mbox{transient matrix}
+\hat M & -\hat L^T\\
+\hat L & \hat Q
 \end{bmatrix}$$
 
 `Q` is obtained from [`compute_fluid_tpfa_matrix`](@ref), `M` is obtained from [`compute_fem_stiffness_matrix`](@ref),
@@ -371,6 +373,20 @@ function trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::Sparse
     A[:, bd] = spzeros(2(m+1)*(n+1)+m*n, length(bd))
     A[bd, bd] = spdiagm(0=>ones(length(bd)))
     dropzeros(A)
+end
+
+"""
+    coupled_impose_pressure(A::SparseMatrixCSC{Float64,Int64}, pnode::Array{Int64}, 
+        m::Int64, n::Int64, h::Float64)
+
+Returns a trimmed matrix.
+"""
+function coupled_impose_pressure(A::SparseMatrixCSC{Float64,Int64}, pnode::Array{Int64}, 
+        m::Int64, n::Int64, h::Float64)
+    pnode = pnode.+2(m+1)*(n+1)
+    A[pnode, :] = spzeros(length(pnode), 2(m+1)*(n+1)+m*n)
+    A[pnode, pnode] = spdiagm(0=>ones(length(pnode)))
+    A
 end
 
 function get_gauss_points(m, n, h)
@@ -400,4 +416,49 @@ function compute_elasticity_tangent(E::Float64, ν::Float64)
         ν/(1-ν) 1 ν/(1-ν)
         ν/(1-ν) ν/(1-ν) 1
     ]
+    # E/(1+ν)/(1-2ν)*[
+    #     1-ν ν 0.0
+    #     ν 1-ν 0.0
+    #     0.0 0.0 (1-2ν)/2
+    # ]
+end
+
+"""
+    compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+
+Compute the principal stress on the Gauss quadrature nodes. 
+"""
+function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64;
+    b::Float64 = 1.0)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    B = zeros(4, 3, 8)
+    for i = 1:2
+        for j = 1:2
+            ξ = pts[i]; η = pts[j]
+            B[(j-1)*2+i,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
+                0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+            ]
+        end
+    end
+       
+    pval = Float64[]
+    for i = 1:m
+        for j = 1:n 
+            idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+            idx = [idx; idx .+ (m+1)*(n+1)]
+            uA = u[idx]
+            for p = 1:2
+                for q = 1:2
+                    Bk = B[(q-1)*2+p,:,:]
+                    σ = K * Bk * uA 
+                    # σ[1:2] .-= u[(j-1)*m+i+2(m+1)*(n+1)]*b
+                    v = eigvals([σ[1] σ[3];σ[3] σ[2]])
+                    push!(pval, sqrt(0.5*(v[1]^2+v[2]^2+(v[1]-v[2])^2)))
+                end
+            end
+        end
+    end
+    return pval
 end

@@ -7,9 +7,7 @@ module PoreFlow
     using PyPlot
     using Parameters
     np = pyimport("numpy")
-    if Sys.isapple()
-        matplotlib.use("macosx")
-    end
+    interpolate = pyimport("scipy.interpolate")
 
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2
 

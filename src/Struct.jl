@@ -6,6 +6,7 @@ export PoreData
 - `M`: Biot modulus
 - `b`: Biot coefficient
 - `ρb`: Bulk density
+- `ρf`: Fluid density
 - `kp`: Permeability
 - `E`: Young modulus
 - `ν`: Poisson ratio
@@ -17,7 +18,8 @@ export PoreData
 @with_kw mutable struct PoreData
     M::Float64 = 0.1
     b::Float64 = 1.0
-    ρb::Float64 = 2400
+    ρb::Float64 = 2400.
+    ρf::Float64 = 1000.
     kp::Float64 = 50e6 * 9.869233e-13 # Darcy
     E::Float64 = 350e6
     ν::Float64 = 0.0

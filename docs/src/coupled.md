@@ -176,18 +176,26 @@ Here is a list of reasonable parameters
 
 ![](./assets/setting.png)
 
-| Property               | Value                          |
-| ---------------------- | ------------------------------ |
-| Permeability $k$       | 50 md                          |
-| Biot coefficient $b$   | 1.0                            |
-| Bulk density $\rho_b$  | 2400 kg/m${}^3$                |
-| Fluid viscosity $\mu$  | $8.9\times 10^{-4}$ Pa$\cdot$s |
-| Grid spacing $h$       | 2 m                            |
-| Fluid density $\rho_f$ | 1000 kg/m${}^3$                |
-| Initial pressure $P_i$ | 2.125 MPa                      |
-| Traction $|\bar t|$    | 2.125 MPa                      |
-| Young's modulus $E$    | 350 MPa                        |
-| Poisson's ratio $\nu$  | 0.35                           |
+| Property                | Value                     |
+| ----------------------- | ------------------------- |
+| Permeability $k$        | $10^{-18}$m${}^2$         |
+| Biot coefficient $b$    | 1.0                       |
+| Bulk density $\rho_b$   | 2400 kg/m${}^3$           |
+| Fluid viscosity $\mu$   | 0.001 Pa$\cdot$s${}^{-1}$ |
+| Domain                  | $[0,5]\times [0,10]$      |
+| Fluid density $\rho_f$  | 1000 kg/m${}^3$           |
+| Initial pressure $P_i$  | $10^7$ Pa                 |
+| Traction $|\bar t|$     | 0 Pa                      |
+| Shear modulus $G$       | 15 GPa                    |
+| Lamé constant $\lambda$ | 10 GPa                    |
+| Biot modulus $M$        | 50 GPa                    |
+| Time horizon            | 3 days                    |
+| Time step               | 0.1 days                  |
 
 ​                                    
 
+![p](./assets/p.png)
+
+![p](./assets/disp.png)
+
+![p](./assets/stress.png)
