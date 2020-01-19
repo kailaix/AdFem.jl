@@ -327,7 +327,7 @@ function trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::Sparse
     bd::Array{Int64}, Δt::Float64, m::Int64, n::Int64, h::Float64)
 
     A22 = 1/pd.M/Δt*h^2*spdiagm(0=>ones(m*n)) -
-        pd.kp/pd.Bf*Q
+        pd.kp/pd.Bf/pd.μ*Q
     A21 = pd.b/Δt * L 
     A12 = -A21'
     A11 = M

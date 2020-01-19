@@ -152,18 +152,18 @@ Here is a list of reasonable parameters
 
 ![](./assets/setting.png)
 
-| Property               | Value           |
-| ---------------------- | --------------- |
-| Permeability $k$       | 50 md           |
-| Biot coefficient $b$   | 1.0             |
-| Bulk density $\rho_b$  | 2400 kg/m${}^3$ |
-| Fluid viscosity $\mu$  | 1 cp            |
-| Grid spacing $h$       | 2 m             |
-| Fluid density $\rho_f$ | 1000 kg/m${}^3$ |
-| Initial pressure $P_i$ | 2.125 MPa       |
-| Traction $|\bar t|$    | 2.125 MPa       |
-| Young's modulus $E$    | 350 MPa         |
-| Poisson's ratio $\nu$  | 0.35            |
+| Property               | Value                          |
+| ---------------------- | ------------------------------ |
+| Permeability $k$       | 50 md                          |
+| Biot coefficient $b$   | 1.0                            |
+| Bulk density $\rho_b$  | 2400 kg/m${}^3$                |
+| Fluid viscosity $\mu$  | $8.9\times 10^{-4}$ Pa$\cdot$s |
+| Grid spacing $h$       | 2 m                            |
+| Fluid density $\rho_f$ | 1000 kg/m${}^3$                |
+| Initial pressure $P_i$ | 2.125 MPa                      |
+| Traction $|\bar t|$    | 2.125 MPa                      |
+| Young's modulus $E$    | 350 MPa                        |
+| Poisson's ratio $\nu$  | 0.35                           |
 
 ​                                    
 
