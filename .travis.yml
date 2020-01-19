@@ -19,6 +19,7 @@ before_install:
   - /usr/bin/python3 -m pip install --upgrade pip
   - /usr/bin/python3 -m pip install --user matplotlib
   - /usr/bin/python3 -m pip install --user numpy
+  - /usr/bin/python3 -m pip install --user scipy
 notifications:
   email: false
 coveralls: true
