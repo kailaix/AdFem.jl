@@ -13,8 +13,8 @@ os:
   - linux
   # - windows
 before_install:
-  - pip install matplotlib
-  - pip install numpy
+  - pip install --user matplotlib
+  - pip install --user numpy
 notifications:
   email: false
 coveralls: true
