@@ -10,6 +10,7 @@ PoreData
 compute_fem_stiffness_matrix
 compute_interaction_matrix
 compute_fluid_tpfa_matrix
+compute_fem_mass_matrix
 ```
 
 ## Vector Assembling Functions

@@ -10,7 +10,8 @@ trim_coupled,
 compute_elasticity_tangent,
 compute_fem_normal_traction_term,
 coupled_impose_pressure,
-compute_principal_stress_term
+compute_principal_stress_term,
+compute_fem_mass_matrix
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -461,4 +462,46 @@ function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::
         end
     end
     return pval
+end
+
+
+@doc raw"""
+    compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
+
+Computes the finite element mass matrix 
+
+```math
+\int_{\Omega} u \delta u \mathrm{d}x
+```
+
+The matrix size is $2(m+1)(n+1) \times 2(m+1)(n+1)$.
+"""
+function compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    function add!(i, j)
+        idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
+        for l1 = 1:4
+            for l2 = 1:4
+                push!(I, idx[l1]); push!(J, idx[l2]); push!(V, A[l1]*A[l2])
+                push!(I, idx[l1]+(m+1)*(n+1)); push!(J, idx[l2]+(m+1)*(n+1)); push!(V, A[l1]*A[l2])
+            end
+        end
+    end
+    A = zeros(4)
+    for p = 1:2
+        for q = 1:2
+            ξ = pts[p]; η = pts[q]
+            A[1] += (1-ξ)*(1-η)*0.25*h^2
+            A[2] += ξ*(1-η)*0.25*h^2
+            A[3] += (1-ξ)*η*0.25*h^2
+            A[4] += ξ*η*0.25*h^2
+        end
+    end
+
+    for i = 1:m
+        for j = 1:n 
+            add!(i, j)
+        end
+    end
+    sparse(I, J, V, 2(m+1)*(n+1), 2(m+1)*(n+1))
 end
