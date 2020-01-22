@@ -14,7 +14,12 @@ coupled_impose_pressure,
 compute_principal_stress_term,
 compute_fem_mass_matrix,
 eval_f_on_boundary_node,
-eval_f_on_boundary_edge
+eval_f_on_boundary_edge,
+compute_fem_mass_matrix1,
+compute_fem_stiffness_matrix1,
+compute_fem_source_term1,
+compute_fem_flux_term1,
+fem_impose_Dirichlet_boundary_condition1
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -62,8 +67,52 @@ function compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h
 end
 
 @doc raw"""
-compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
-m::Int64, n::Int64, h::Float64)
+    compute_fem_stiffness_matrix1(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
+
+Computes the term 
+```math
+\int_{A} (K \nabla u) \cdot \nabla \delta u \mathrm{d}x = \int_A u_A B^T K B \delta u_A\mathrm{d}x
+```
+Returns a $(m+1)\times (n+1)$ matrix
+"""
+function compute_fem_stiffness_matrix1(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    @assert size(K,1)==2 && size(K,2)==2
+    function add(ii, jj, kk)
+        for  i = 1:length(ii)
+            for j = 1:length(jj)
+                push!(I,ii[i])
+                push!(J,jj[j])
+                push!(V,kk[i,j])
+            end
+        end
+    end
+    Ω = zeros(4,4)
+    for i = 1:2
+        for j = 1:2
+            ξ = pts[i]; η = pts[j]
+            B = [
+            -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+            -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+            ]
+            Ω += B'*K*B*0.25*h^2
+        end
+    end
+    
+    for i = 1:m
+        for j = 1:n 
+            ii = [i;i+1;i;i+1]
+            jj = [j;j;j+1;j+1]
+            kk = (jj .- 1)*(m+1) + ii
+            add(kk, kk, Ω)
+        end
+    end
+    return sparse(I, J, V, (m+1)*(n+1), (m+1)*(n+1))
+end
+
+@doc raw"""
+    compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
+    m::Int64, n::Int64, h::Float64)
 
 Computes the term 
 ```math
@@ -103,28 +152,95 @@ function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
 end
 
 @doc raw"""
+    compute_fem_source_term1(f1::Array{Float64}, f2::Array{Float64},
+    m::Int64, n::Int64, h::Float64)
+
+Computes the term 
+```math
+\int_\Omega f \delta u dx
+```
+Returns a $(m+1)\times (n+1)$ vector. 
+"""
+function compute_fem_source_term1(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    rhs = zeros((m+1)*(n+1))
+    k = 0
+    for i = 1:m
+        for j = 1:n
+            for p = 1:2
+                for q = 1:2
+                    ξ = pts[p]; η = pts[q]
+                    k += 1
+                    val1 = f[k] * h^2 * 0.25
+                    rhs[(j-1)*(m+1) + i] += val1 * (1-ξ)*(1-η)
+                    rhs[(j-1)*(m+1) + i+1] += val1 * ξ*(1-η)
+                    rhs[j*(m+1) + i] += val1 * (1-ξ)*η
+                    rhs[j*(m+1) + i+1] += val1 * ξ  * η
+                end
+            end
+            
+        end
+    end
+    return rhs
+end
+
+@doc raw"""
     fem_impose_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int64}, 
     bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
 
-Imposes the Dirichlet boundary conditions on the matrix `A`
+Imposes the Dirichlet boundary conditions on the matrix `A`.
+
+Returns 2 matrix, 
+```math
+\begin{bmatrix}
+A_{BB} & A_{BI} \\ 
+A_{IB} & A_{II} 
+\end{bmatrix} \Rightarrow \begin{bmatrix}
+I & 0 \\ 
+0 & A_{II} 
+\end{bmatrix}, \quad \begin{bmatrix}
+0 \\ 
+A_{IB} 
+\end{bmatrix}
+```
 """
 function fem_impose_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int64}, 
-    bd::Array{Int64}, m::Int64, n::Int64, h::Float64; bdval::Union{Missing, Array{Float64}}=missing)
+    bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     bd = [bd; bd .+ (m+1)*(n+1)]
     rhs = zeros(2*(m+1)*(n+1))
-    if !ismissing(bdval)
-        rhs[bd] = bdval 
-        rhs = -A*rhs
-        rhs[bd] .= 0.0
-    end
+    Q = A[:, bd]; Q[bd,:] = spzeros(length(bd), length(bd))
     A[bd,:] = spzeros(length(bd), 2(m+1)*(n+1))
     A[:,bd] = spzeros(2(m+1)*(n+1), length(bd))
     A[bd,bd] = spdiagm(0=>ones(length(bd)))
-    if ismissing(bdval)
-        return A 
-    else
-        return A, rhs
-    end
+    return A, Q  
+end
+
+@doc raw"""
+    fem_impose_Dirichlet_boundary_condition1(A::SparseMatrixCSC{Float64,Int64}, 
+        bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+
+Imposes the Dirichlet boundary conditions on the matrix `A`
+Returns 2 matrix, 
+```math
+\begin{bmatrix}
+A_{BB} & A_{BI} \\ 
+A_{IB} & A_{II} 
+\end{bmatrix} \Rightarrow \begin{bmatrix}
+I & 0 \\ 
+0 & A_{II} 
+\end{bmatrix}, \quad \begin{bmatrix}
+0 \\ 
+A_{IB} 
+\end{bmatrix}
+```
+"""
+function fem_impose_Dirichlet_boundary_condition1(A::SparseMatrixCSC{Float64,Int64}, 
+    bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    rhs = zeros((m+1)*(n+1))
+    Q = A[:, bd]; Q[bd,:] = spzeros(length(bd), length(bd))
+    A[bd,:] = spzeros(length(bd), (m+1)*(n+1))
+    A[:,bd] = spzeros((m+1)*(n+1), length(bd))
+    A[bd,bd] = spdiagm(0=>ones(length(bd)))
+    return dropzeros(A),  dropzeros(Q)
 end
 
 ####################### Interaction #######################
@@ -310,8 +426,8 @@ function compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Flo
 end
 
 @doc raw"""
-compute_fem_traction_term(t::Array{Float64, 2},
-bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+    compute_fem_traction_term(t::Array{Float64, 2},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
 
 Computes the traction term 
 ```math
@@ -332,6 +448,27 @@ function compute_fem_traction_term(t::Array{Float64, 2},
         rhs[jj] += t[k,1]*0.5*h
         rhs[ii+(m+1)*(n+1)] += t[k,2]*0.5*h
         rhs[jj+(m+1)*(n+1)] += t[k,2]*0.5*h 
+    end
+    rhs
+end
+
+@doc raw"""
+    compute_fem_flux_term1(t::Array{Float64},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+
+Computes the traction term 
+```math
+\int_{\Gamma} q \delta u \mathrm{d}
+```
+"""
+function compute_fem_flux_term1(q::Array{Float64},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+    @assert length(size(q))==1
+    rhs = zeros((m+1)*(n+1))
+    for k = 1:size(bdedge, 1)
+        ii, jj = bdedge[k,:]
+        rhs[ii] += q[k]*0.5*h 
+        rhs[jj] += q[k]*0.5*h
     end
     rhs
 end
@@ -495,6 +632,66 @@ function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::
     return pval
 end
 
+@doc raw"""
+    compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Float64)
+
+Computes the mass matrix for a scalar value $u$
+```
+\int_A \rho u \delta u \mathrm{d} x
+```
+The output is a $(m+1)*(n+1)$ sparse matrix. 
+"""
+function compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    function add(ii, jj, vv)
+        for i = 1:4
+            for j = 1:4
+                push!(I,ii[i])
+                push!(J,jj[j])
+                push!(V,vv[i,j])
+            end
+        end
+    end
+    A = zeros(4)
+    for p = 1:2
+        for q = 1:2
+            ξ = pts[p]; η = pts[q]
+            A[1] += (1-ξ)*(1-η)*0.25*h^2
+            A[2] += ξ*(1-η)*0.25*h^2
+            A[3] += (1-ξ)*η*0.25*h^2
+            A[4] += ξ*η*0.25*h^2
+        end
+    end
+    Me = A*A'
+    k = 0
+    for i = 1:m
+        for j = 1:n 
+            idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
+            for p = 1:2
+                for q = 1:2
+                    k += 1
+                    ρ_ = ρ[k]
+                    add(idx, idx, ρ_*Me)
+                end
+            end
+        end
+    end
+    sparse(I, J, V, (m+1)*(n+1), (m+1)*(n+1))
+end
+
+@doc raw"""
+    compute_fem_mass_matrix1(m::Int64, n::Int64, h::Float64)
+
+Computes the mass matrix for a scalar value $u$
+```
+\int_A u \delta u \mathrm{d} x
+```
+The output is a $(m+1)*(n+1)$ sparse matrix. 
+"""
+function compute_fem_mass_matrix1(m::Int64, n::Int64, h::Float64)
+    ρ = zeros(4*m*n)
+    compute_fem_mass_matrix1(ρ, m, n, h)
+end
 
 @doc raw"""
 compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
@@ -539,9 +736,11 @@ end
     
     
 @doc raw"""
-eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
+    eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
 
 Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 Gauss points per element)
+
+![](./assets/gauss.png)
 """
 function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
     out = zeros(4*m*n)

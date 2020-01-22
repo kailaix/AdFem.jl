@@ -11,6 +11,8 @@ compute_fem_stiffness_matrix
 compute_interaction_matrix
 compute_fluid_tpfa_matrix
 compute_fem_mass_matrix
+compute_fem_mass_matrix1
+compute_fem_stiffness_matrix1
 ```
 
 ## Vector Assembling Functions
@@ -20,6 +22,8 @@ compute_fvm_source_term
 compute_fvm_mechanics_term
 compute_fem_normal_traction_term
 compute_principal_stress_term
+compute_fem_source_term1
+compute_fem_flux_term1
 ```
 
 ## Evaluation Functions
@@ -33,6 +37,7 @@ eval_f_on_boundary_edge
 
 ```@docs
 fem_impose_Dirichlet_boundary_condition
+fem_impose_Dirichlet_boundary_condition1
 trim_coupled
 compute_elasticity_tangent
 coupled_impose_pressure
