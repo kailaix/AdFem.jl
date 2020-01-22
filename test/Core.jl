@@ -1,89 +1,3 @@
-@testset "compute_fem_stiffness_matrix 1" begin
-    K = diagm(0=>ones(3))
-    m = 40
-    n = 20
-    h = 0.1
-    bdnode = Int64[]
-    bdval1 = Float64[]
-    bdval2 = Float64[]
-    X = (0:n)*h
-    Y = (0:m)*h
-    X, Y = np.meshgrid(X,Y)
-    for i = 1:n+1
-        for j = 1:m+1
-            push!(bdnode, i+(j-1)*(n+1))
-            x = (i-1)*h
-            y = (j-1)*h
-            push!(bdval1, x^2+y^2)
-            push!(bdval2, x^2-y^2)
-        end
-    end
-    bdnode = [bdnode;bdnode.+(m+1)*(n+1)]
-    bdval = [bdval1;bdval2]
-    A = compute_fem_stiffness_matrix(K, m, n, h)
-    rhs = compute_fem_source_term(3*ones(4m*n), -1*ones(4m*n), m, n, h)
-    rhs[bdnode] = bdval
-    At = trim_fem(A, bdnode, m, n, h)
-    u = At\rhs 
-    u1 = reshape(u[1:(m+1)*(n+1)], n+1, m+1)'|>Array
-    u2 = reshape(u[(m+1)*(n+1)+1:end], n+1, m+1)'|>Array
-    close("all"); 
-    mesh(X,Y, u1); 
-    mesh(X,Y, (@. X^2+Y^2), color="orange", alpha=0.5)
-    savefig("compute_fem_stiffness_matrix1_u1.png")
-    close("all"); 
-    mesh(X,Y, u2); 
-    mesh(X,Y, (@. X^2-Y^2), color="orange", alpha=0.5)
-    savefig("compute_fem_stiffness_matrix1_u2.png")
-end
-
-@testset "compute_fem_stiffness_matrix 2" begin
-    E = 1.0
-    ν = 0.3
-
-    K = E/(1-ν^2)*[
-        1 ν 0.0
-        ν 1.0 0.0
-        0.0 0.0 (1-ν)/2
-    ]
-    m = 40
-    n = 20
-    h = 0.1
-    bdnode = Int64[]
-    bdval1 = Float64[]
-    bdval2 = Float64[]
-    X = (0:n)*h
-    Y = (0:m)*h
-    X, Y = np.meshgrid(X,Y)
-    for i = 1:n+1
-        for j = 1:m+1
-            push!(bdnode, i+(j-1)*(n+1))
-            x = (i-1)*h
-            y = (j-1)*h
-            push!(bdval1, x^2+y^2)
-            push!(bdval2, x^2-y^2)
-        end
-    end
-    bdnode = [bdnode;bdnode.+(m+1)*(n+1)]
-    bdval = [bdval1;bdval2]
-    A = compute_fem_stiffness_matrix(K, m, n, h)
-    rhs = compute_fem_source_term(E/(1-ν^2)*(5-ν)/2*ones(4m*n), -E/(1-ν^2)*(ν+2)/2*ones(4m*n), m, n, h)
-    rhs[bdnode] = bdval
-    At = trim_fem(A, bdnode, m, n, h)
-    u = At\rhs 
-    u1 = reshape(u[1:(m+1)*(n+1)], n+1, m+1)'|>Array
-    u2 = reshape(u[(m+1)*(n+1)+1:end], n+1, m+1)'|>Array
-    close("all"); 
-    mesh(X,Y, u1); 
-    mesh(X,Y, (@. X^2+Y^2), color="orange", alpha=0.5)
-    savefig("compute_fem_stiffness_matrix2_u1.png")
-    close("all"); 
-    mesh(X,Y, u2); 
-    mesh(X,Y, (@. X^2-Y^2), color="orange", alpha=0.5)
-    savefig("compute_fem_stiffness_matrix2_u2.png")
-end
-
-
 # matplotlib.use("macosx")
 
 @testset "eval_f_on_gauss_pts" begin
@@ -163,17 +77,43 @@ end
     savefig("compute_fluid_tpfa_matrix.png")
 end
 
-@testset "compute_fem_normal_traction_term" begin
-    bdedge = []
-    for i = 1:m 
-        push!(bdedge, [i i+1])
-        push!(bdedge, [n*(m+1)+i n*(m+1)+i+1])
+@testset "compute_fem_stiffness_matrix compute_fem_traction_term" begin
+    # bdedge = []
+    # for i = 1:m 
+    #     push!(bdedge, [i i+1])
+    # end
+    # bdedge = vcat(bdedge...)
+
+    bdnode = Int64[]
+    for j = 1:n+1
+        push!(bdnode, (j-1)*(m+1)+1)
+        push!(bdnode, (j-1)*(m+1)+m+1)
     end
-    for j = 1:n 
-        push!(bdedge, [(j-1)*(m+1)+1 j*(m+1)+1])
-        push!(bdedge, [(j-1)*(m+1)+m+1 j*(m+1)+m+1])
+    for i = 2:m
+        push!(bdnode, n*(m+1)+i)
+        push!(bdnode, i)
     end
-    bdedge = vcat(bdedge...)
-    rhs = compute_fem_normal_traction_term(10.0, bdedge, m, n, h)
+
+    F1 = eval_f_on_gauss_pts((x,y)->3.0, m, n, h)
+    F2 = eval_f_on_gauss_pts((x,y)->-1.0, m, n, h)
+    F = compute_fem_source_term(F1, F2, m, n, h)
+
+    # t1 = eval_f_on_boundary_edge((x,y)->2x, bdedge, m, n, h)
+    # t2 = eval_f_on_boundary_edge((x,y)->x+y, bdedge, m, n, h)
+    # T = compute_fem_traction_term([t1 t2], bdedge, m, n, h)
+    
+    D = diagm(0=>[1,1,0.5])
+    K = compute_fem_stiffness_matrix(D, m, n, h)
+    rhs =  - F 
+    bdval = [eval_f_on_boundary_node((x,y)->x^2+y^2, bdnode, m, n, h);
+            eval_f_on_boundary_node((x,y)->x^2-y^2, bdnode, m, n, h)]
+    rhs[[bdnode;bdnode .+ (m+1)*(n+1)]] = bdval
+    K, res = fem_impose_Dirichlet_boundary_condition(K, bdnode, m, n, h; bdval = bdval)
+    u = K\(rhs+res)
+    X, Y, U, V = plot_u(u, m, n, h)
+
+    mesh(X, Y, (@. X^2+Y^2-U), alpha=0.6, color="blue")
+    mesh(X, Y, (@. X^2-Y^2-V), alpha=0.6, color="orange")
+
     @test sum(rhs)≈120
 end

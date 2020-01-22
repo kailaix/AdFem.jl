@@ -1,6 +1,6 @@
 export compute_fem_stiffness_matrix,
 compute_fem_source_term,
-trim_fem,
+fem_impose_Dirichlet_boundary_condition,
 eval_f_on_gauss_pts,
 compute_interaction_matrix,
 compute_fvm_source_term,
@@ -8,10 +8,13 @@ compute_fvm_mechanics_term,
 compute_fluid_tpfa_matrix,
 trim_coupled,
 compute_elasticity_tangent,
+compute_fem_traction_term,
 compute_fem_normal_traction_term,
 coupled_impose_pressure,
 compute_principal_stress_term,
-compute_fem_mass_matrix
+compute_fem_mass_matrix,
+eval_f_on_boundary_node,
+eval_f_on_boundary_edge
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -36,7 +39,7 @@ function compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h
     Ω = zeros(8,8)
     for i = 1:2
         for j = 1:2
-            η = pts[i]; ξ = pts[j]
+            ξ = pts[i]; η = pts[j]
             B = [
             -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
             0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
@@ -50,7 +53,7 @@ function compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h
         for j = 1:n 
             ii = [i;i+1;i;i+1]
             jj = [j;j;j+1;j+1]
-            kk = @. (jj-1)*(m+1) + ii
+            kk = (jj .- 1)*(m+1) + ii
             kk = [kk; kk .+ (m+1)*(n+1)]
             add(kk, kk, Ω)
         end
@@ -75,20 +78,21 @@ function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
         for j = 1:n
             for p = 1:2
                 for q = 1:2
-                    
+                    ξ = pts[p]; η = pts[q]
+
                     k += 1
                     val1 = f1[k] * h^2 * 0.25
                     val2 = f2[k] * h^2 * 0.25
                     
-                    rhs[(j-1)*(m+1) + i] += val1 
-                    rhs[(j-1)*(m+1) + i+1] += val1 
-                    rhs[j*(m+1) + i] += val1 
-                    rhs[j*(m+1) + i+1] += val1 
+                    rhs[(j-1)*(m+1) + i] += val1 * (1-ξ)*(1-η)
+                    rhs[(j-1)*(m+1) + i+1] += val1 * ξ*(1-η)
+                    rhs[j*(m+1) + i] += val1 * (1-ξ)*η
+                    rhs[j*(m+1) + i+1] += val1 * ξ  * η
                     
-                    rhs[(m+1)*(n+1) + (j-1)*(m+1) + i] += val2
-                    rhs[(m+1)*(n+1) + (j-1)*(m+1) + i+1] += val2
-                    rhs[(m+1)*(n+1) + j*(m+1) + i] += val2
-                    rhs[(m+1)*(n+1) + j*(m+1) + i+1] += val2
+                    rhs[(m+1)*(n+1) + (j-1)*(m+1) + i] += val2* (1-ξ)*(1-η)
+                    rhs[(m+1)*(n+1) + (j-1)*(m+1) + i+1] += val2* ξ*(1-η)
+                    rhs[(m+1)*(n+1) + j*(m+1) + i] += val2 * (1-ξ)*η
+                    rhs[(m+1)*(n+1) + j*(m+1) + i+1] += val2 * ξ  * η
                     
                 end
             end
@@ -99,42 +103,28 @@ function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
 end
 
 @doc raw"""
-trim_fem(A::SparseMatrixCSC{Float64,Int64}, 
-bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    fem_impose_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int64}, 
+    bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
 
 Imposes the Dirichlet boundary conditions on the matrix `A`
 """
-function trim_fem(A::SparseMatrixCSC{Float64,Int64}, 
-    bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+function fem_impose_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int64}, 
+    bd::Array{Int64}, m::Int64, n::Int64, h::Float64; bdval::Union{Missing, Array{Float64}}=missing)
+    bd = [bd; bd .+ (m+1)*(n+1)]
+    rhs = zeros(2*(m+1)*(n+1))
+    if !ismissing(bdval)
+        rhs[bd] = bdval 
+        rhs = -A*rhs
+        rhs[bd] .= 0.0
+    end
     A[bd,:] = spzeros(length(bd), 2(m+1)*(n+1))
     A[:,bd] = spzeros(2(m+1)*(n+1), length(bd))
     A[bd,bd] = spdiagm(0=>ones(length(bd)))
-    A
-end
-
-@doc raw"""
-eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
-
-Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 Gauss points per element)
-"""
-function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
-    out = zeros(4*m*n)
-    k = 0
-    for i = 1:m 
-        for j = 1:n 
-            x1 = (i-1)*h 
-            y1 = (j-1)*h
-            for p = 1:2
-                for q = 1:2
-                    η = pts[p]; ξ = pts[q]
-                    x = x1 + ξ*h; y = y1 + η*h
-                    k += 1
-                    out[k] = f(x, y)
-                end
-            end
-        end
+    if ismissing(bdval)
+        return A 
+    else
+        return A, rhs
     end
-    out
 end
 
 ####################### Interaction #######################
@@ -320,8 +310,8 @@ function compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Flo
 end
 
 @doc raw"""
-    compute_fem_traction_term(t::Array{Float64, 2},
-    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+compute_fem_traction_term(t::Array{Float64, 2},
+bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
 
 Computes the traction term 
 ```math
@@ -347,10 +337,10 @@ function compute_fem_traction_term(t::Array{Float64, 2},
 end
 
 @doc raw"""
-    compute_fem_normal_traction_term(t::Array{Float64,1}, bdedge::Array{Int64},
-    m::Int64, n::Int64, h::Float64)
-    compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
-    m::Int64, n::Int64, h::Float64)
+compute_fem_normal_traction_term(t::Array{Float64,1}, bdedge::Array{Int64},
+m::Int64, n::Int64, h::Float64)
+compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
+m::Int64, n::Int64, h::Float64)
 
 Computes the normal traction term 
 ```math
@@ -448,103 +438,171 @@ function get_gauss_points(m, n, h)
 end
 
 """
-compute_elasticity_tangent(E::Float64, ν::Float64)
+    compute_elasticity_tangent(E::Float64, ν::Float64)
 
 Computes the elasticity matrix for 2D plane strain
-    """
-    function compute_elasticity_tangent(E::Float64, ν::Float64)
-        E*(1-ν)/(1+ν)/(1-2ν)*[
-        1 ν/(1-ν) ν/(1-ν)
-        ν/(1-ν) 1 ν/(1-ν)
-        ν/(1-ν) ν/(1-ν) 1
-        ]
-        # E/(1+ν)/(1-2ν)*[
-        #     1-ν ν 0.0
-        #     ν 1-ν 0.0
-        #     0.0 0.0 (1-2ν)/2
-        # ]
+"""
+function compute_elasticity_tangent(E::Float64, ν::Float64)
+    E*(1-ν)/(1+ν)/(1-2ν)*[
+    1 ν/(1-ν) ν/(1-ν)
+    ν/(1-ν) 1 ν/(1-ν)
+    ν/(1-ν) ν/(1-ν) 1
+    ]
+    # E/(1+ν)/(1-2ν)*[
+    #     1-ν ν 0.0
+    #     ν 1-ν 0.0
+    #     0.0 0.0 (1-2ν)/2
+    # ]
+end
+
+"""
+compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+
+Compute the principal stress on the Gauss quadrature nodes. 
+"""
+function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64;
+    b::Float64 = 1.0)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    B = zeros(4, 3, 8)
+    for i = 1:2
+        for j = 1:2
+            ξ = pts[i]; η = pts[j]
+            B[(j-1)*2+i,:,:] = [
+            -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
+            0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+            -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+            ]
+        end
     end
     
-    """
-    compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
-    
-    Compute the principal stress on the Gauss quadrature nodes. 
-    """
-    function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64;
-        b::Float64 = 1.0)
-        I = Int64[]; J = Int64[]; V = Float64[]
-        B = zeros(4, 3, 8)
-        for i = 1:2
-            for j = 1:2
-                ξ = pts[i]; η = pts[j]
-                B[(j-1)*2+i,:,:] = [
-                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
-                0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
-                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
-                ]
-            end
-        end
-        
-        pval = Float64[]
-        for i = 1:m
-            for j = 1:n 
-                idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
-                idx = [idx; idx .+ (m+1)*(n+1)]
-                uA = u[idx]
-                for p = 1:2
-                    for q = 1:2
-                        Bk = B[(q-1)*2+p,:,:]
-                        σ = K * Bk * uA 
-                        # σ[1:2] .-= u[(j-1)*m+i+2(m+1)*(n+1)]*b
-                        v = eigvals([σ[1] σ[3];σ[3] σ[2]])
-                        push!(pval, sqrt(0.5*(v[1]^2+v[2]^2+(v[1]-v[2])^2)))
-                    end
+    pval = Float64[]
+    for i = 1:m
+        for j = 1:n 
+            idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+            idx = [idx; idx .+ (m+1)*(n+1)]
+            uA = u[idx]
+            for p = 1:2
+                for q = 1:2
+                    Bk = B[(q-1)*2+p,:,:]
+                    σ = K * Bk * uA 
+                    # σ[1:2] .-= u[(j-1)*m+i+2(m+1)*(n+1)]*b
+                    v = eigvals([σ[1] σ[3];σ[3] σ[2]])
+                    push!(pval, sqrt(0.5*(v[1]^2+v[2]^2+(v[1]-v[2])^2)))
                 end
             end
         end
-        return pval
+    end
+    return pval
+end
+
+
+@doc raw"""
+compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
+
+Computes the finite element mass matrix 
+
+```math
+\int_{\Omega} u \delta u \mathrm{d}x
+```
+
+The matrix size is $2(m+1)(n+1) \times 2(m+1)(n+1)$.
+"""
+function compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
+    I = Int64[]; J = Int64[]; V = Float64[]
+    function add!(i, j)
+        idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
+        for l1 = 1:4
+            for l2 = 1:4
+                push!(I, idx[l1]); push!(J, idx[l2]); push!(V, A[l1]*A[l2])
+                push!(I, idx[l1]+(m+1)*(n+1)); push!(J, idx[l2]+(m+1)*(n+1)); push!(V, A[l1]*A[l2])
+            end
+        end
+    end
+    A = zeros(4)
+    for p = 1:2
+        for q = 1:2
+            ξ = pts[p]; η = pts[q]
+            A[1] += (1-ξ)*(1-η)*0.25*h^2
+            A[2] += ξ*(1-η)*0.25*h^2
+            A[3] += (1-ξ)*η*0.25*h^2
+            A[4] += ξ*η*0.25*h^2
+        end
     end
     
+    for i = 1:m
+        for j = 1:n 
+            add!(i, j)
+        end
+    end
+    sparse(I, J, V, 2(m+1)*(n+1), 2(m+1)*(n+1))
+end
     
-    @doc raw"""
-    compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
     
-    Computes the finite element mass matrix 
-    
-    ```math
-    \int_{\Omega} u \delta u \mathrm{d}x
-    ```
-    
-    The matrix size is $2(m+1)(n+1) \times 2(m+1)(n+1)$.
-    """
-    function compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
-        I = Int64[]; J = Int64[]; V = Float64[]
-        function add!(i, j)
-            idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
-            for l1 = 1:4
-                for l2 = 1:4
-                    push!(I, idx[l1]); push!(J, idx[l2]); push!(V, A[l1]*A[l2])
-                    push!(I, idx[l1]+(m+1)*(n+1)); push!(J, idx[l2]+(m+1)*(n+1)); push!(V, A[l1]*A[l2])
+@doc raw"""
+eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
+
+Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 Gauss points per element)
+"""
+function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
+    out = zeros(4*m*n)
+    k = 0
+    for i = 1:m 
+        for j = 1:n 
+            x1 = (i-1)*h 
+            y1 = (j-1)*h
+            for p = 1:2
+                for q = 1:2
+                    ξ = pts[p]; η = pts[q]
+                    x = x1 + ξ*h; y = y1 + η*h
+                    k += 1
+                    out[k] = f(x, y)
                 end
             end
         end
-        A = zeros(4)
-        for p = 1:2
-            for q = 1:2
-                ξ = pts[p]; η = pts[q]
-                A[1] += (1-ξ)*(1-η)*0.25*h^2
-                A[2] += ξ*(1-η)*0.25*h^2
-                A[3] += (1-ξ)*η*0.25*h^2
-                A[4] += ξ*η*0.25*h^2
-            end
-        end
-        
-        for i = 1:m
-            for j = 1:n 
-                add!(i, j)
-            end
-        end
-        sparse(I, J, V, 2(m+1)*(n+1), 2(m+1)*(n+1))
     end
-    
-    
+    out
+end
+
+
+@doc raw"""
+    eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+
+Returns a vector of the same length as `bdnode` whose entries corresponding to `bdnode` nodes
+are filled with values computed from `f`.
+
+`f` has the following signature 
+```
+f(x::Float64, y::Float64)::Float64
+```
+"""
+function eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    out = zeros(length(bdnode))
+    for i = 1:length(bdnode)
+        i1, j1 = femidx(bdnode[i], m)
+        out[i] = f((i1-1)*h, (j1-1)*h)
+    end
+    out 
+end
+
+@doc raw"""
+    eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+
+Returns a vector of the same length as `bdedge` whose entries corresponding to `bdedge` nodes
+are filled with values computed from `f`.
+
+`f` has the following signature 
+```
+f(x::Float64, y::Float64)::Float64
+```
+"""
+function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+    out = zeros(size(bdedge,1))
+    for i = 1:size(bdedge,1)
+        i1, j1 = femidx(bdedge[i,1], m)
+        i2, j2 = femidx(bdedge[i,2], m)
+        x = ((i1-1)*h + (i2-1)*h)/2
+        y = ((j1-1)*h + (j2-1)*h)/2
+        out[i] = f(x, y)
+    end
+    out 
+end

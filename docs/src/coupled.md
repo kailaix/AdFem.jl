@@ -143,6 +143,12 @@ $$\int_A u_AB^TDB\delta u_A\mathrm{d}x = u_A \left[\sum_{i=1}^{n_g} B(\xi_i, \et
 
 where $(x_i, \eta_i)$ are Gauss quadrature points and $w_i$ is the corresponding weight. 
 
+
+!!! note
+    We have the following convention for `bdnode` and `bdedge`, which denote the Dirichlet boundary conditions and the Neumann boundary conditions:
+    - `bdnode`$\in \mathbf{R}^{d}$ and each entry in `bdnode` represents the node index. The corresponding row and column indices can be retrieved with [`femidx`](@ref).
+    - `bdedge`$\in \mathbf{R}^{d\times 2}$ and each row in `bdedge` represents indices of two end points of the edge. The corresponding cell row and column can be retrieved with [`fvmidx`](@ref).
+
 ### Fluid
 
 The fluid equation is discretized using finite volume method. 

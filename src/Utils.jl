@@ -1,4 +1,5 @@
-export femidx, fvmidx, get_edge_normal
+export femidx, fvmidx, get_edge_normal,
+plot_u 
 function femidx(i, m)
     ii = mod(i, m+1)
     ii = ii == 0 ? m+1 : ii 
@@ -13,6 +14,14 @@ function fvmidx(i, m)
     return ii, jj
 end
 
+function plot_u(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    x = LinRange(0,m*h,m+1)
+    y = LinRange(0,n*h,n+1)
+    X, Y = np.meshgrid(x, y)
+    U = reshape(u[1:(m+1)*(n+1)], m+1, n+1)'|>Array
+    V = reshape(u[(m+1)*(n+1)+1:end], m+1, n+1)'|>Array
+    X, Y, U, V
+end
 """
     get_edge_normal(edge::Array{Int64,1}, m::Int64, n::Int64, h::Float64)   
 

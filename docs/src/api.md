@@ -22,11 +22,17 @@ compute_fem_normal_traction_term
 compute_principal_stress_term
 ```
 
+## Evaluation Functions
+```@docs
+eval_f_on_gauss_pts
+eval_f_on_boundary_node
+eval_f_on_boundary_edge
+```
+
 ## Misc
 
 ```@docs
-trim_fem
-eval_f_on_gauss_pts
+fem_impose_Dirichlet_boundary_condition
 trim_coupled
 compute_elasticity_tangent
 coupled_impose_pressure
