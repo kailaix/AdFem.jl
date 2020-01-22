@@ -91,7 +91,6 @@ end
     end
     for i = 2:m
         push!(bdnode, n*(m+1)+i)
-        # push!(bdnode, i)
     end
 
     F1 = eval_f_on_gauss_pts((x,y)->3.0, m, n, h)
@@ -112,8 +111,14 @@ end
     u = K\(rhs+res)
     X, Y, U, V = plot_u(u, m, n, h)
 
-    mesh(X, Y, (@. X^2+Y^2-U), alpha=0.6, color="blue")
-    mesh(X, Y, (@. X^2-Y^2-V), alpha=0.6, color="orange")
+    figure(figsize=[10,4])
+    subplot(121)
+    pcolormesh(X, Y, (@. X^2+Y^2-U), alpha=0.6); xlabel("x"); ylabel("y"); title("Error for u")
+    colorbar()
+    subplot(122)
+    pcolormesh(X, Y, (@. X^2-Y^2-V), alpha=0.6); xlabel("x"); ylabel("y"); title("Error for v")
+    colorbar()
+    
 
     @test sum(rhs)≈120
 end
