@@ -92,8 +92,8 @@ function compute_fem_stiffness_matrix1(K::Array{Float64,2}, m::Int64, n::Int64, 
         for j = 1:2
             ξ = pts[i]; η = pts[j]
             B = [
-            -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
-            -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
             ]
             Ω += B'*K*B*0.25*h^2
         end
@@ -152,7 +152,7 @@ function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
 end
 
 @doc raw"""
-    compute_fem_source_term1(f1::Array{Float64}, f2::Array{Float64},
+    compute_fem_source_term1(f::Array{Float64},
     m::Int64, n::Int64, h::Float64)
 
 Computes the term 
@@ -652,17 +652,19 @@ function compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Flo
             end
         end
     end
-    A = zeros(4)
+    
+    Me = zeros(4, 4, 4)
     for p = 1:2
         for q = 1:2
             ξ = pts[p]; η = pts[q]
-            A[1] += (1-ξ)*(1-η)*0.25*h^2
-            A[2] += ξ*(1-η)*0.25*h^2
-            A[3] += (1-ξ)*η*0.25*h^2
-            A[4] += ξ*η*0.25*h^2
+            A = zeros(4)
+            A[1] = (1-ξ)*(1-η)
+            A[2] = ξ*(1-η)
+            A[3] = (1-ξ)*η
+            A[4] = ξ*η
+            Me[(p-1)*2+q,:,:] = A*A'*0.25*h^2
         end
     end
-    Me = A*A'
     k = 0
     for i = 1:m
         for j = 1:n 
@@ -671,7 +673,7 @@ function compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Flo
                 for q = 1:2
                     k += 1
                     ρ_ = ρ[k]
-                    add(idx, idx, ρ_*Me)
+                    add(idx, idx, ρ_*Me[(p-1)*2+q,:,:])
                 end
             end
         end
@@ -689,7 +691,7 @@ Computes the mass matrix for a scalar value $u$
 The output is a $(m+1)*(n+1)$ sparse matrix. 
 """
 function compute_fem_mass_matrix1(m::Int64, n::Int64, h::Float64)
-    ρ = zeros(4*m*n)
+    ρ = ones(4*m*n)
     compute_fem_mass_matrix1(ρ, m, n, h)
 end
 
