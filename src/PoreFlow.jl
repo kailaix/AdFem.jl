@@ -12,6 +12,7 @@ module PoreFlow
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2
 
     include("Struct.jl")
+    include("Utils.jl")
     include("Core.jl")
     include("Visualization.jl")
 
