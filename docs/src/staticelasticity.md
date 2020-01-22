@@ -1,28 +1,28 @@
 # Static Linear Elasticity
 
 The governing equation for static linear elasticity is
-$$
-\begin{aligned}
+
+$$\begin{aligned}
 \mathrm{div}\ \sigma(u) &= f(x) & x\in \Omega \\
 \sigma(u) &= C\varepsilon(u) \\
 u(x) &= u_0(x) & x\in \Gamma_u\\
 \sigma(x) n(x) &= t(x) & x\in \Gamma_n
-\end{aligned}
-$$
+\end{aligned}$$
+
 Here $\varepsilon(u) = \frac{1}{2}(\nabla u + (\nabla u)^T)$ is the Cauchy tensor, $\Gamma_u \cup \Gamma_n = \Omega$, $\Gamma_u \cap \Gamma_n = \emptyset$. The weak formulation is: finding $u$ such that 
-$$
-\int_\Omega \delta \varepsilon(u) : C \varepsilon(u)\mathrm{d} x = \int_{\Gamma_n} t\cdot\delta u \mathrm{d}s - \int_\Omega f\cdot \delta u \mathrm{d}x 
-$$
+
+$$\int_\Omega \delta \varepsilon(u) : C \varepsilon(u)\mathrm{d} x = \int_{\Gamma_n} t\cdot\delta u \mathrm{d}s - \int_\Omega f\cdot \delta u \mathrm{d}x $$
+
 We consider the manufactured solution 
-$$
-u(x) = \begin{bmatrix}
+
+$$u(x) = \begin{bmatrix}
 x_1^2+x_2^2\\
 x_1^2-x_2^2
-\end{bmatrix}
-$$
+\end{bmatrix}$$
+
 and 
-$$
-\begin{bmatrix}
+
+$$\begin{bmatrix}
 \sigma_{xx}\\
 \sigma_{yy}\\
 \sigma_{xy}
@@ -34,17 +34,16 @@ $$
 \varepsilon_{xx}\\
 \varepsilon_{yy}\\
 2\varepsilon_{xy}
-\end{bmatrix} 
-$$
+\end{bmatrix}$$
 
 
 then we have 
-$$
-f(x) = \begin{bmatrix}
+
+$$f(x) = \begin{bmatrix}
 3\\
 -1
-\end{bmatrix}
-$$
+\end{bmatrix}$$
+
 We let $\Gamma_n$ be the top boundary. 
 
 ```julia
