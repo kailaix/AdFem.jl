@@ -328,10 +328,10 @@ function compute_fem_traction_term(t::Array{Float64, 2},
     rhs = zeros(2*(m+1)*(n+1))
     for k = 1:size(bdedge, 1)
         ii, jj = bdedge[k,:]
-        rhs[ii] += t[1]*0.5*h 
-        rhs[jj] += t[1]*0.5*h
-        rhs[ii+(m+1)*(n+1)] += t[2]*0.5*h
-        rhs[jj+(m+1)*(n+1)] += t[2]*0.5*h 
+        rhs[ii] += t[k,1]*0.5*h 
+        rhs[jj] += t[k,1]*0.5*h
+        rhs[ii+(m+1)*(n+1)] += t[k,2]*0.5*h
+        rhs[jj+(m+1)*(n+1)] += t[k,2]*0.5*h 
     end
     rhs
 end

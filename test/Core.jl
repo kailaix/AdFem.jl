@@ -78,11 +78,11 @@ end
 end
 
 @testset "compute_fem_stiffness_matrix compute_fem_traction_term" begin
-    # bdedge = []
-    # for i = 1:m 
-    #     push!(bdedge, [i i+1])
-    # end
-    # bdedge = vcat(bdedge...)
+    bdedge = []
+    for i = 1:m 
+        push!(bdedge, [i i+1])
+    end
+    bdedge = vcat(bdedge...)
 
     bdnode = Int64[]
     for j = 1:n+1
@@ -91,20 +91,20 @@ end
     end
     for i = 2:m
         push!(bdnode, n*(m+1)+i)
-        push!(bdnode, i)
+        # push!(bdnode, i)
     end
 
     F1 = eval_f_on_gauss_pts((x,y)->3.0, m, n, h)
     F2 = eval_f_on_gauss_pts((x,y)->-1.0, m, n, h)
     F = compute_fem_source_term(F1, F2, m, n, h)
 
-    # t1 = eval_f_on_boundary_edge((x,y)->2x, bdedge, m, n, h)
-    # t2 = eval_f_on_boundary_edge((x,y)->x+y, bdedge, m, n, h)
-    # T = compute_fem_traction_term([t1 t2], bdedge, m, n, h)
+    t1 = eval_f_on_boundary_edge((x,y)->-x-y, bdedge, m, n, h)
+    t2 = eval_f_on_boundary_edge((x,y)->2y, bdedge, m, n, h)
+    T = compute_fem_traction_term([t1 t2], bdedge, m, n, h)
     
     D = diagm(0=>[1,1,0.5])
     K = compute_fem_stiffness_matrix(D, m, n, h)
-    rhs =  - F 
+    rhs = T - F 
     bdval = [eval_f_on_boundary_node((x,y)->x^2+y^2, bdnode, m, n, h);
             eval_f_on_boundary_node((x,y)->x^2-y^2, bdnode, m, n, h)]
     rhs[[bdnode;bdnode .+ (m+1)*(n+1)]] = bdval
