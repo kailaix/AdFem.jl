@@ -9,3 +9,4 @@ src/*.png
 *.DS_Store
 docs/build
 test/*.png
+test/*.gif
