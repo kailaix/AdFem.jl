@@ -24,7 +24,7 @@ eval_strain_on_gauss_pts
 
 ####################### Mechanics #######################
 @doc raw"""
-compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
+    compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
 
 Computes the term 
 ```math
@@ -246,7 +246,7 @@ end
 
 ####################### Interaction #######################
 @doc raw"""
-compute_interaction_matrix(m::Int64, n::Int64, h::Float64)
+    compute_interaction_matrix(m::Int64, n::Int64, h::Float64)
 
 Computes the interaction term 
 ```math
@@ -296,7 +296,7 @@ end
 
 ####################### Fluids #######################
 @doc raw"""
-compute_fvm_source_term(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_fvm_source_term(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the source term 
 ```math
@@ -316,7 +316,7 @@ function compute_fvm_source_term(f::Array{Float64}, m::Int64, n::Int64, h::Float
 end
 
 @doc raw"""
-compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the mechanic interaction term 
 ```math
@@ -361,7 +361,7 @@ function compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Fl
 end
 
 @doc raw"""
-compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
+    compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
 
 Computes the term with two-point flux approximation 
 ```math
@@ -396,7 +396,7 @@ end
 
 
 @doc raw"""
-compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the term with two-point flux approximation with distinct permeability at each cell
 ```math
@@ -475,10 +475,10 @@ function compute_fem_flux_term1(q::Array{Float64},
 end
 
 @doc raw"""
-compute_fem_normal_traction_term(t::Array{Float64,1}, bdedge::Array{Int64},
-m::Int64, n::Int64, h::Float64)
-compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
-m::Int64, n::Int64, h::Float64)
+    compute_fem_normal_traction_term(t::Array{Float64,1}, bdedge::Array{Int64},
+    m::Int64, n::Int64, h::Float64)
+    compute_fem_normal_traction_term(t::Float64, bdedge::Array{Int64},
+    m::Int64, n::Int64, h::Float64)
 
 Computes the normal traction term 
 ```math
@@ -637,7 +637,7 @@ end
     compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the mass matrix for a scalar value $u$
-```
+```math
 \int_A \rho u \delta u \mathrm{d} x
 ```
 The output is a $(m+1)*(n+1)$ sparse matrix. 
@@ -697,7 +697,7 @@ function compute_fem_mass_matrix1(m::Int64, n::Int64, h::Float64)
 end
 
 @doc raw"""
-compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
+    compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
 
 Computes the finite element mass matrix 
 
@@ -843,7 +843,7 @@ function eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Floa
                     idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
                     idx = [idx; idx .+ (m+1)*(n+1)]
                     Bk = B[(p-1)*2+q,:,:] # 3 x 8
-                    strain[(j-1)*(m+1)+i] = Bk * u[idx]
+                    strain[(j-1)*(m+1)+i,:] = Bk * u[idx]
                 end
             end
         end
