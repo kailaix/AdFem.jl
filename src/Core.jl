@@ -20,7 +20,8 @@ compute_fem_stiffness_matrix1,
 compute_fem_source_term1,
 compute_fem_flux_term1,
 fem_impose_Dirichlet_boundary_condition1,
-eval_strain_on_gauss_pts
+eval_strain_on_gauss_pts,
+eval_stress_on_gauss_pts
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -843,10 +844,20 @@ function eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Floa
                     idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
                     idx = [idx; idx .+ (m+1)*(n+1)]
                     Bk = B[(p-1)*2+q,:,:] # 3 x 8
-                    strain[(j-1)*(m+1)+i,:] = Bk * u[idx]
+                    strain[4*((j-1)*m+i-1)+(p-1)*2+q,:] = Bk * u[idx]
                 end
             end
         end
     end
     strain
 end    
+
+@doc raw"""
+    eval_stress_on_gauss_pts(u::Array{Float64}, K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
+
+Returns the stress on the Gauss points for elasticity. 
+"""
+function eval_stress_on_gauss_pts(u::Array{Float64}, K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
+    strain = eval_strain_on_gauss_pts(u, m, n, h)
+    strain * K 
+end

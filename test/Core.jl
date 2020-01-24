@@ -249,7 +249,8 @@ end
     M = compute_fem_mass_matrix1(m, n, h)
     S = spzeros((m+1)*(n+1), (m+1)*(n+1))
     M = [M S;S M]
-
+    
+    D = diagm(0=>[1,1,0.5])
     K = compute_fem_stiffness_matrix(D, m, n, h)
     C = a*M + b*K # damping matrix 
 

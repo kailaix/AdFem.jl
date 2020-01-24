@@ -57,7 +57,7 @@ function compute_planestressplasticity_stress_and_stiffness_matrix(
                     gauss_k = 4*((j-1)*m+i-1)+k
                     Bk = B[k, :, :]
                     σ, dΔσΔε, out_α[gauss_k] = _planestressplasticity_get_stress_and_sensitivity(
-                        ε[k,:], ε0[k,:], σ0[k,:], α[k], K, σY, H
+                        ε[gauss_k,:], ε0[gauss_k,:], σ0[gauss_k,:], α[gauss_k], K, σY, H
                     )
                     out_rhs[idx] += (σ'*Bk)[:]*0.25*h^2 # 1 x 8
                     out_σ[gauss_k,:] = σ
@@ -92,17 +92,17 @@ end
 
 function _planestressplasticity_get_stress_and_sensitivity(
     ε::Array{Float64}, ε0::Array{Float64}, σ0::Array{Float64}, 
-    α::Float64, K::Float64, σY::Float64, H::Array{Float64}
+    α0::Float64, K::Float64, σY::Float64, H::Array{Float64}
 )
     local dΔσdΔε
     σ = σ0 + H*(ε-ε0) 
     Δγ = 0.0
-    r2 = _f(σ, α, σY, K)
+    r2 = _f(σ, α0, σY, K)
     if r2<0
         # @info "elasticity"
         dΔσdΔε = H
     else
-        @info "plasticity"
+        # @info "plasticity"
         function compute(σ, Δγ)
             α = α0 + Δγ
             r1 = σ + Δγ * H* _fσ(σ) - σ0 - H*ε + H*ε0 
@@ -131,7 +131,7 @@ function _planestressplasticity_get_stress_and_sensitivity(
 
         dΔσdΔε = compute_sensitivity(σ, Δγ)
     end
-    α = α+Δγ
+    α = α0+Δγ
     return σ[:], dΔσdΔε, α
 end
 
