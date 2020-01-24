@@ -19,7 +19,8 @@ compute_fem_mass_matrix1,
 compute_fem_stiffness_matrix1,
 compute_fem_source_term1,
 compute_fem_flux_term1,
-fem_impose_Dirichlet_boundary_condition1
+fem_impose_Dirichlet_boundary_condition1,
+eval_strain_on_gauss_pts
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -807,3 +808,45 @@ function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64,2}, m::Int64, 
     end
     out 
 end
+
+"""
+    eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+
+Computes the strain on Gauss points. 
+Returns a $4mn \times 3$ matrix
+"""
+function eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    I = Int64[]
+    J = Int64[]
+    V = Float64[]
+    function add(k1, k2, v)
+        push!(I, k1)
+        push!(J, k2)
+        push!(V, v)
+    end
+    B = zeros(4, 3, 8)
+    for i = 1:2
+        for j = 1:2
+            ξ = pts[i]; η = pts[j]
+            B[(i-1)*2+j,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
+                0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+            ]
+        end
+    end
+    strain = zeros(4m*n, 3)
+    for i = 1:m 
+        for j = 1:n 
+            for p = 1:2
+                for q = 1:2
+                    idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+                    idx = [idx; idx .+ (m+1)*(n+1)]
+                    Bk = B[(p-1)*2+q,:,:] # 3 x 8
+                    strain[(j-1)*(m+1)+i] = Bk * u[idx]
+                end
+            end
+        end
+    end
+    strain
+end    
