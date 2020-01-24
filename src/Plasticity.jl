@@ -127,6 +127,9 @@ function _planestressplasticity_get_stress_and_sensitivity(
             if norm(res)/norm(res0) < 1e-6 || norm(res) < 1e-6
                 break
             end
+            if i==100
+                @warn "Element not converging..."
+            end
         end
 
         dΔσdΔε = compute_sensitivity(σ, Δγ)

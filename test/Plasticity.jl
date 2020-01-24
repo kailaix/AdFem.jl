@@ -3,8 +3,6 @@ using PoreFlow
 using SparseArrays
 using LinearAlgebra
 using PyPlot
-# alpha method 
-# table 9.1.1, page 493
 αm = 0.0
 αf = 0.0
 β2 = 0.5*(1 - αm + αf)^2
@@ -30,8 +28,9 @@ M = compute_fem_mass_matrix1(m, n, h)
 S = spzeros((m+1)*(n+1), (m+1)*(n+1))
 M = [M S;S M]
 H = diagm(0=>[1,1,0.5])
-K = 1.0
-σY = 1000.
+K = 0.1
+σY = 0.03
+# σY = 1000.
 
 
 state = zeros(2(m+1)*(n+1),NT+1)
@@ -45,7 +44,7 @@ for i = 1:NT
     @info i 
         ##### STEP 1: Computes the external force ####
 
-    T = eval_f_on_boundary_edge((x,y)->0.01, bdedge, m, n, h)
+    T = eval_f_on_boundary_edge((x,y)->0.02*sin(2π*i*Δt), bdedge, m, n, h)
     # T = eval_f_on_boundary_edge((x,y)->0.0, bdedge, m, n, h)
     T = [zeros(length(T)) -T]
     T = compute_fem_traction_term(T, bdedge, m, n, h)
@@ -69,12 +68,6 @@ for i = 1:NT
 
     global t += (1 - αf)*Δt
     ∂∂up = ∂∂u[:]
-    # compute_fem_stiffness_matrix(H, m, n, h)
-
-    # eval_stress_on_gauss_pts(up*1e6, H, m, n, h)
-    # fint, stiff, α, σ = compute_planestressplasticity_stress_and_stiffness_matrix(
-    #     up*1e6, ε0, σ0, α0, K, σY, H, m, n, h
-    #     )
     iter = 0
     while true
         iter += 1
@@ -118,9 +111,12 @@ for j= 1:n+1
         push!(y, (j-1)*h)
     end
 end
-for i = 1:10:NT+1
+
+for i = 1:5:NT+1
     close("all")
     scatter(x+state[1:(m+1)*(n+1), i], y+state[(m+1)*(n+1)+1:end, i])
+    scatter(x[m+1]+state[m+1, i],
+            y[m+1]+state[(m+1)*(n+1)+m+1, i], color="red")
     xlabel("x")
     ylabel("y")
     k = string(i)
@@ -130,6 +126,15 @@ for i = 1:10:NT+1
     xlim(-0.01, 0.45)
     gca().invert_yaxis()
     savefig("u$k.png")
+
+    close("all"); 
+    plot(1:i, -state[(m+1)*(n+1)+m+1, 1:i])
+    xlim(0, NT+2)
+    ylim(0, 0.03)
+    scatter(i, -state[(m+1)*(n+1)+m+1, i], color="red")
+    savefig("du$k.png")
 end
 
-run(`convert -delay 10 -loop 0 u*.png u.gif`)
+run(`convert -delay 10 -loop 0 u*.png plasticity_u.gif`)
+run(`convert -delay 10 -loop 0 du*.png plasticity_du.gif`)
+
