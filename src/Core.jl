@@ -809,7 +809,7 @@ function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64,2}, m::Int64, 
     out 
 end
 
-"""
+@doc raw"""
     eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the strain on Gauss points. 
