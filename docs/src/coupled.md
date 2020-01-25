@@ -160,6 +160,7 @@ For the divergence term, we use the two-point flux approximation and we have (as
 $$\int_{A_i} \mathrm{div}\mathbf{v} \mathrm{d}x = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (q_j-q_i) = -\frac{k}{B_f\mu}\sum_{j=1}^{n_{\mathrm{faces}}} (p_j^{n+1} - p_i^{n+1}) + \frac{k\rho_f|g|}{B_f\mu}\sum_{j=1}^{n_\mathrm{faces}} (y_j-y_i)$$
 
 where
+
 $$q = p^{n+1} - \rho_f|g|y$$
 
 ### Initial and Boundary Conditions
@@ -179,26 +180,25 @@ The initial displacement and strains are zero. The initial pressure is prescribe
 ## Verification
 
 To verify our numerical scheme, we consider manufactured solution
-$$
-u(x,y) = \begin{bmatrix}
+$$u(x,y) = \begin{bmatrix}
 x^2+y^2\\
 x^2-y^2
-\end{bmatrix}t,\quad p(x,y) = x^2y^2(1-x)^2(1-y)^2e^{-t}
-$$
+\end{bmatrix}t,\quad p(x,y) = x^2y^2(1-x)^2(1-y)^2e^{-t}$$
+
+
 Then we have
-$$
-\begin{aligned}
+
+$$\begin{aligned}
 f(x,y,t)&= (-x^2y^2(x - 1)^2(y - 1)^2 - 2x^2y^2(x - 1)^2 - 2x^2y^2(y - 1)^2 - 8x^2y(x - 1)^2(y - 1) - 2x^2(x - 1)^2(y - 1)^2 - 8xy^2(x - 1)(y - 1)^2 - 2y^2(x - 1)^2(y - 1)^2 + 2(x - y)\exp(t))\exp(-t)\\
 g(x,y,t)&= \begin{bmatrix}
 3t-2xe^{-t}\\
 -t + 2ye^{-t}
 \end{bmatrix}
-\end{aligned}
-$$
+\end{aligned}$$
 
 
-|                  | u displacement                                               | v displacement                                               | Pressure                                                     |
-|:-------------:|:---------:|:-------------:|:-------------:|
+|    Description              | u displacement                                               | v displacement                                               | Pressure                                                     |
+|-------------|---------|-------------|-------------|
 | Numerical Result | ![disp_u_out](./assets/disp_u_out.gif) | ![disp_v_out](./assets/disp_v_out.gif) | ![disp_p_out](./assets/disp_p_out.gif) |
 | Error            | ![disp_u_diff](./assets/disp_u_diff.gif) | ![disp_v_diff](./assets/disp_v_diff.gif) | ![disp_p_diff](./assets/disp_p_diff.gif) |
 
@@ -216,9 +216,9 @@ $$
 
 
 
-| u displacement                                               | v displacement                                               | Pressure                                                     |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) |
+ u displacement                                               | v displacement                                               | Pressure                                                     
+ ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ 
+ ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) 
 
 ### Injection-Production in Homogenious Media
 

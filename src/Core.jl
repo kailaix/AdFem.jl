@@ -386,7 +386,7 @@ Computes the term with two-point flux approximation
 ![](./assets/tpfa.png)
 
 !!! warning
-No flow boundary condition is assumed. 
+    No flow boundary condition is assumed. 
 """
 function compute_fvm_tpfa_matrix(m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
@@ -528,9 +528,9 @@ end
 
 
 @doc raw"""
-trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, 
-M::SparseMatrixCSC{Float64,Int64}, 
-bd::Array{Int64}, Δt::Float64, m::Int64, n::Int64, h::Float64)
+    trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, 
+    M::SparseMatrixCSC{Float64,Int64}, 
+    bd::Array{Int64}, Δt::Float64, m::Int64, n::Int64, h::Float64)
 
 Assembles matrices from mechanics and flow and assemble the coupled matrix 
 
@@ -610,7 +610,7 @@ function compute_elasticity_tangent(E::Float64, ν::Float64)
 end
 
 """
-compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Compute the principal stress on the Gauss quadrature nodes. 
 """

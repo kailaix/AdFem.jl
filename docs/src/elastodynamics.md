@@ -1,17 +1,17 @@
 # Elastodynamics
 
 The governing equation for elastodynamics is 
-$$
-\begin{aligned}
+
+$$\begin{aligned}
 \frac{\partial^2 u}{\partial t^2} &= \mathrm{div}\sigma + f& \Omega\times [0,T]\\
 \sigma n &= t & \Gamma_N\times [0,T]\\
 u &= u_0 & \Gamma_D\times[0,T]
-\end{aligned}
-$$
+\end{aligned}$$
+
 The constitutive law is given by 
-$$
-\sigma = C\varepsilon
-$$
+
+$$\sigma = C\varepsilon$$
+
 We fix the left side of the plate. We use the alpha method [^alpha].
 
 [^alpha]: Hughes, Thomas JR. *The finite element method: linear static and dynamic finite element analysis*. Courier Corporation, 2012. 
