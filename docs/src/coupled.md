@@ -73,7 +73,7 @@ The mechanical equation and fluid equation are coupled through $p$ and $\varepsi
     
     $$\begin{aligned}
     \sigma n = 0,\quad x\in \Gamma_{N}^u, \qquad u=0, \quad x\in \Gamma_D^u\\
-    -\frac{k}{B_f\mu}\frac{\partial p}{\partial n} = 0,\quad x\in \Gamma_{N}^p, \qquad p=g, \quad x\in \Gamma_N^p
+    -\frac{k}{B_f\mu}\frac{\partial p}{\partial n} = 0,\quad x\in \Gamma_{N}^p, \qquad p=g, \quad x\in \Gamma_D^p
     \end{aligned}$$
     
     and the initial condition
@@ -176,32 +176,76 @@ For the flow problem we consider
 
 The initial displacement and strains are zero. The initial pressure is prescribed. 
 
-### Numerical Example
+## Verification
 
-Here is a list of reasonable parameters
+To verify our numerical scheme, we consider manufactured solution
+$$
+u(x,y) = \begin{bmatrix}
+x^2+y^2\\
+x^2-y^2
+\end{bmatrix}t,\quad p(x,y) = x^2y^2(1-x)^2(1-y)^2e^{-t}
+$$
+Then we have
+$$
+\begin{aligned}
+f(x,y,t)&= (-x^2y^2(x - 1)^2(y - 1)^2 - 2x^2y^2(x - 1)^2 - 2x^2y^2(y - 1)^2 - 8x^2y(x - 1)^2(y - 1) - 2x^2(x - 1)^2(y - 1)^2 - 8xy^2(x - 1)(y - 1)^2 - 2y^2(x - 1)^2(y - 1)^2 + 2(x - y)\exp(t))\exp(-t)\\
+g(x,y,t)&= \begin{bmatrix}
+3t-2xe^{-t}\\
+-t + 2ye^{-t}
+\end{bmatrix}
+\end{aligned}
+$$
 
-![](./assets/setting.png)
 
-| Property                | Value                     |
-| ----------------------- | ------------------------- |
-| Permeability $k$        | $10^{-18}$m${}^2$         |
-| Biot coefficient $b$    | 1.0                       |
-| Bulk density $\rho_b$   | 2400 kg/m${}^3$           |
-| Fluid viscosity $\mu$   | 0.001 Pa$\cdot$s${}^{-1}$ |
-| Domain                  | $[0,5]\times [0,10]$      |
-| Fluid density $\rho_f$  | 1000 kg/m${}^3$           |
-| Initial pressure $P_i$  | $10^7$ Pa                 |
-| Traction $|\bar t|$     | 0 Pa                      |
-| Shear modulus $G$       | 15 GPa                    |
-| Lamé constant $\lambda$ | 10 GPa                    |
-| Biot modulus $M$        | 50 GPa                    |
-| Time horizon            | 3 days                    |
-| Time step               | 0.1 days                  |
+|                  | u displacement                                               | v displacement                                               | Pressure                                                     |
+|:-------------:|:---------:|:-------------:|:-------------:|
+| Numerical Result | ![disp_u_out](./assets/disp_u_out.gif) | ![disp_v_out](./assets/disp_v_out.gif) | ![disp_p_out](./assets/disp_p_out.gif) |
+| Error            | ![disp_u_diff](./assets/disp_u_diff.gif) | ![disp_v_diff](./assets/disp_v_diff.gif) | ![disp_p_diff](./assets/disp_p_diff.gif) |
 
-​                                    
 
-![p](./assets/p.png)
 
-![p](./assets/disp.png)
+[Code](./assets/coupled.jl)
 
-![p](./assets/stress.png)
+## Benchmarks
+
+### Flooding
+
+
+
+[Code](./assets/flooding.jl)
+
+
+
+| u displacement                                               | v displacement                                               | Pressure                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) |
+
+### Injection-Production in Homogenious Media
+
+
+
+[Code](./assets/production_injection.jl)
+
+
+
+| u displacement                                               | v displacement                                               | Pressure                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![disp_u_flood](./assets/disp_u_pi.gif) | ![disp_v_flood](./assets/disp_v_pi.gif) | ![disp_p_flood](./assets/disp_p_pi.gif) |
+
+
+
+### Injection-Production in Heterogenious Media
+
+
+[Code](./assets/piheter.jl)
+
+
+
+| u displacement                                               | v displacement                                               | Pressure                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![disp_u_flood](./assets/disp_u_piheter.gif) | ![disp_v_flood](./assets/disp_v_piheter.gif) | ![disp_p_flood](./assets/disp_p_piheter.gif) |
+
+
+
+
+

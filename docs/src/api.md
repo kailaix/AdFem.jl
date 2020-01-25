@@ -9,8 +9,9 @@ PoreData
 ```@docs
 compute_fem_stiffness_matrix
 compute_interaction_matrix
-compute_fluid_tpfa_matrix
+compute_fvm_tpfa_matrix
 compute_fem_mass_matrix
+compute_fvm_mass_matrix
 compute_fem_mass_matrix1
 compute_fem_stiffness_matrix1
 ```

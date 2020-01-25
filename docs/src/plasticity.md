@@ -3,13 +3,12 @@
 ![](./assets/pi.png)
 
 
-
-
-
 |            | Displacement Field             | Vertical Displacement           |
 | ---------- | ------------------------------ | ------------------------------- |
 | Plasticity | ![](./assets/plasticity_u.gif) | ![](./assets/plasticity_du.gif) |
 | Elasticity | ![](./assets/elasticity_u.gif) | ![](./assets/elasticity_du.gif) |
+
+
 
 ```julia
 using Revise

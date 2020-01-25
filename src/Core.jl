@@ -2,10 +2,11 @@ export compute_fem_stiffness_matrix,
 compute_fem_source_term,
 fem_impose_Dirichlet_boundary_condition,
 eval_f_on_gauss_pts,
+compute_fvm_mass_matrix,
 compute_interaction_matrix,
 compute_fvm_source_term,
 compute_fvm_mechanics_term,
-compute_fluid_tpfa_matrix,
+compute_fvm_tpfa_matrix,
 trim_coupled,
 compute_elasticity_tangent,
 compute_fem_traction_term,
@@ -20,8 +21,10 @@ compute_fem_stiffness_matrix1,
 compute_fem_source_term1,
 compute_fem_flux_term1,
 fem_impose_Dirichlet_boundary_condition1,
+fem_impose_coupled_Dirichlet_boundary_condition,
 eval_strain_on_gauss_pts,
-eval_stress_on_gauss_pts
+eval_stress_on_gauss_pts,
+compute_fvm_mass_matrix
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -216,6 +219,18 @@ function fem_impose_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int6
     return A, Q  
 end
 
+"""
+"""
+function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int64}, 
+    bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    bd = [bd; bd .+ (m+1)*(n+1)]
+    Q = A[:, bd]; Q[bd,:] = spzeros(length(bd), length(bd))
+    A[bd,:] = spzeros(length(bd), 2(m+1)*(n+1)+m*n)
+    A[:,bd] = spzeros(2(m+1)*(n+1)+m*n, length(bd))
+    A[bd,bd] = spdiagm(0=>ones(length(bd)))
+    return A, Q  
+end
+
 @doc raw"""
     fem_impose_Dirichlet_boundary_condition1(A::SparseMatrixCSC{Float64,Int64}, 
         bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
@@ -362,7 +377,7 @@ function compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Fl
 end
 
 @doc raw"""
-    compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
+    compute_fvm_tpfa_matrix(m::Int64, n::Int64, h::Float64)
 
 Computes the term with two-point flux approximation 
 ```math
@@ -373,7 +388,7 @@ Computes the term with two-point flux approximation
 !!! warning
 No flow boundary condition is assumed. 
 """
-function compute_fluid_tpfa_matrix(m::Int64, n::Int64, h::Float64)
+function compute_fvm_tpfa_matrix(m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
     function add(i, j, v)
         push!(I, i)
@@ -397,7 +412,7 @@ end
 
 
 @doc raw"""
-    compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_fvm_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the term with two-point flux approximation with distinct permeability at each cell
 ```math
@@ -405,7 +420,7 @@ Computes the term with two-point flux approximation with distinct permeability a
 ```
 
 """
-function compute_fluid_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
+function compute_fvm_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
     function add(i, j, v)
         push!(I, i)
@@ -525,7 +540,7 @@ $$\begin{bmatrix}
 \hat L & \hat Q
 \end{bmatrix}$$
 
-`Q` is obtained from [`compute_fluid_tpfa_matrix`](@ref), `M` is obtained from [`compute_fem_stiffness_matrix`](@ref),
+`Q` is obtained from [`compute_fvm_tpfa_matrix`](@ref), `M` is obtained from [`compute_fem_stiffness_matrix`](@ref),
 and `L` is obtained from [`compute_interaction_matrix`](@ref).
 """
 function trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::SparseMatrixCSC{Float64,Int64}, 
@@ -860,4 +875,16 @@ Returns the stress on the Gauss points for elasticity.
 function eval_stress_on_gauss_pts(u::Array{Float64}, K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
     strain = eval_strain_on_gauss_pts(u, m, n, h)
     strain * K 
+end
+
+@doc raw"""
+    compute_fvm_mass_matrix(m::Int64, n::Int64, h::Float64)
+
+Returns the FVM mass matrix 
+```math
+\int_{A_i} p_i \mathrm{d}x = h^2 p_i 
+```
+"""
+function compute_fvm_mass_matrix(m::Int64, n::Int64, h::Float64)
+    return spdiagm(0=>ones(m*n))*h^2
 end

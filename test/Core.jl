@@ -67,14 +67,14 @@ end
     savefig("compute_fvm_source_term.png")
 end
 
-@testset "compute_fluid_tpfa_matrix" begin
-    M = compute_fluid_tpfa_matrix(m, n, h)
+@testset "compute_fvm_tpfa_matrix" begin
+    M = compute_fvm_tpfa_matrix(m, n, h)
     p = Xv.^2 + Yv.^2
     V = M * p 
     close("all")
     scatter3D(Xv, Yv, V, marker = ".") 
     scatter3D(Xv, Yv, 4h^2 * ones(m*n), marker = "+") 
-    savefig("compute_fluid_tpfa_matrix.png")
+    savefig("compute_fvm_tpfa_matrix.png")
 end
 
 @testset "static linear elasticity" begin

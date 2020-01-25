@@ -1,37 +1,20 @@
 export visualize_pressure, visualize_velocity, visualize_displacement, visualize_stress
-function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; fmt::String="png")
-    close("all")
+function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+    
     vmin = minimum(U[2(m+1)*(n+1)+1:end,:])
     vmax = maximum(U[2(m+1)*(n+1)+1:end,:])
-    V = []
     NT = size(U,2)
-    for k in Int64.(round.(LinRange(1, NT, 9)))
-        push!(V, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)')
+    for k in Int64.(round.(LinRange(1, NT, 20)))
+        close("all")
+        pcolormesh((1:n)*h .-0.5h,(1:m)*h .-0.5h, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', vmin=vmin,vmax=vmax)
+        colorbar()
+        k_ = string(k)
+        k_ = repeat("0", 3-length(k_))*k_
+        title("snapshot = $k_")
+        contour((1:n)*h .-0.5h,(1:m)*h .-0.5h, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', 10, cmap="jet")
+        savefig("__p$k_.png")
     end
-    rc("axes", titlesize=30)
-    rc("axes", labelsize=30)
-    rc("xtick", labelsize=28)
-    rc("ytick", labelsize=28)
-    rc("legend", fontsize=30)
-    fig1,axs = subplots(3,3, figsize=[20,16], sharex=true, sharey=true)
-    ims = Array{Any}(undef, 9)
-    for iPrj = 1:3
-        for jPrj = 1:3
-            ims[(iPrj-1)*3+jPrj] = axs[iPrj,jPrj].imshow(V[(iPrj-1)*3+jPrj], extent=[0,m*h,n*h,0], vmin=vmin, vmax=vmax);
-            if jPrj == 1 || jPrj == 1
-                axs[iPrj,jPrj].set_ylabel("Depth (m)")
-            end
-            if iPrj == 3 || iPrj == 3
-                axs[iPrj,jPrj].set_xlabel("Distance (m)")
-            end
-        end
-    end
-    fig1.subplots_adjust(wspace=0.02, hspace=0.18)
-    cbar_ax = fig1.add_axes([0.91, 0.08, 0.01, 0.82])
-    cb1 = fig1.colorbar(ims[1], cax=cbar_ax)
-    cb1.set_label("Pressure")    
-    savefig("p.$fmt")
-    close("all")
+    run(`convert -delay 10 -loop 0 __p*.png disp_p$name.gif`)
 end
 
 function visualize_velocity(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; fmt::String="png")
@@ -101,52 +84,38 @@ function visualize_velocity(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
 end
 
 function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 
-        h::Float64; fmt::String="png", scale::Float64=1e-6)
-    X = zeros(n+1, m+1)
-    Y = zeros(n+1, m+1)
-    for i = 1:m+1
-        for j = 1:n+1
-            X[j,i] = (i-1)*h
-            Y[j,i] = -(j-1)*h 
-        end
-    end
-    V1 = []; V2 = []
+        h::Float64; name::String = "")
+    vmin = minimum(U[1:(m+1)*(n+1),:])
+    vmax = maximum(U[1:(m+1)*(n+1),:])
     NT = size(U,2)
-    for k in Int64.(round.(LinRange(1, NT, 9)))
-        push!(V1, reshape(U[1:(m+1)*(n+1), k], m+1, n+1)'/scale)
-        push!(V2, reshape(U[(m+1)*(n+1)+1:2(m+1)*(n+1), k], m+1, n+1)'/scale)
+    for k in Int64.(round.(LinRange(1, NT, 20)))
+        close("all")
+        pcolormesh((1:n+1)*h .-h,(1:m+1)*h .-h, reshape(U[1:(m+1)*(n+1), k], m+1, n+1)', vmin=vmin,vmax=vmax)
+        colorbar()
+        contour((1:n+1)*h .-h,(1:m+1)*h .-h, reshape(U[1:(m+1)*(n+1), k], m+1, n+1)', 10, cmap="jet", vmin=vmin,vmax=vmax)
+        k_ = string(k)
+        k_ = repeat("0", 3-length(k_))*k_
+        title("snapshot = $k_")
+        savefig("__u$k_.png")
     end
+    run(`convert -delay 10 -loop 0 __u*.png disp_u$name.gif`)
+
+
+    vmin = minimum(U[(m+1)*(n+1)+1:2*(m+1)*(n+1),:])
+    vmax = maximum(U[(m+1)*(n+1)+1:2*(m+1)*(n+1),:])
+    for k in Int64.(round.(LinRange(1, NT, 20)))
+        close("all")
+        pcolormesh((1:n+1)*h .-h,(1:m+1)*h .-h, reshape(U[(m+1)*(n+1)+1:2*(m+1)*(n+1), k], m+1, n+1)', vmin=vmin,vmax=vmax)
+        colorbar()
+        contour((1:n+1)*h .-h,(1:m+1)*h .-h, reshape(U[(m+1)*(n+1)+1:2*(m+1)*(n+1), k], m+1, n+1)', 10, cmap="jet", vmin=vmin,vmax=vmax)
+        k_ = string(k)
+        k_ = repeat("0", 3-length(k_))*k_
+        title("snapshot = $k_")
+        savefig("__v$k_.png")
+    end
+    run(`convert -delay 10 -loop 0 __v*.png disp_v$name.gif`)
 
     close("all")
-    rc("axes", titlesize=30)
-    rc("axes", labelsize=30)
-    rc("xtick", labelsize=28)
-    rc("ytick", labelsize=28)
-    rc("legend", fontsize=30)
-    fig1,axs = subplots(3,3, figsize=[20,16], sharex=true, sharey=true)
-    ims = Array{Any}(undef, 9)
-    for iPrj = 1:3
-        for jPrj = 1:3
-            ims[(iPrj-1)*3+jPrj] = axs[iPrj,jPrj].scatter(
-                (X + V1[(iPrj-1)*3+jPrj])[:], (Y + V2[(iPrj-1)*3+jPrj])[:], marker="."
-            );
-            # axs[iPrj,jPrj].set_xlim(0, m*h)
-            # axs[iPrj,jPrj].set_ylim(0, n*h)
-            if jPrj == 1 || jPrj == 1
-                axs[iPrj,jPrj].set_ylabel("Depth (m)")
-            end
-            if iPrj == 3 || iPrj == 3
-                axs[iPrj,jPrj].set_xlabel("Distance (m)")
-            end
-        end
-    end
-    fig1.subplots_adjust(wspace=0.02, hspace=0.18)
-    cbar_ax = fig1.add_axes([0.91, 0.08, 0.01, 0.82])
-    cb1 = fig1.colorbar(ims[1], cax=cbar_ax)
-    cb1.set_label("Displacement, scale=$scale") 
-    savefig("disp.$fmt")
-    close("all")
-    
 end
 
 function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, 
