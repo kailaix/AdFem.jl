@@ -3,12 +3,13 @@ using PoreFlow
 using PyCall
 using LinearAlgebra
 using ADCME
+using MAT
 np = pyimport("numpy")
 
 # Domain information 
-NT = 50
+NT = 5
 Δt = 1/NT
-n = 30
+n = 10
 m = n 
 h = 1.0/n 
 bdnode = Int64[]
@@ -21,18 +22,21 @@ for i = 1:m+1
 end
 
 # Physical parameters
-b = 1.0
-H = [1.0 0.0 0.0
-    0.0 1.0 0.0
-    0.0 0.0 0.5]
+# b = 1.0
+# H = [1.0 0.0 0.0
+#     0.0 1.0 0.0
+#     0.0 0.0 0.5]
+H = 10*diagm(0=>ones(3))
+H = Variable(H)
+# H = constant(H)
 Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
-K = SparseTensor(compute_fem_stiffness_matrix(H, m, n, h))
+K = compute_fem_stiffness_matrix(H, m, n, h)
 L = SparseTensor(compute_interaction_matrix(m, n, h))
 M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
 A = [K -b*L'
 b*L/Δt 1/Δt*M-Q]
 A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
-
+# error()
 U = zeros(m*n+2(m+1)*(n+1), NT+1)
 x = Float64[]; y = Float64[]
 for j = 1:n+1
@@ -73,7 +77,14 @@ ta_u = write(ta_u, 1, constant(zeros(2(m+1)*(n+1)+m*n)))
 _, u_out = while_loop(condition, body, [i, ta_u])
 u_out = stack(u_out)
 
+Ue = matread("U.mat")["U"]
+loss = sum((u_out - Ue)^2)
 sess = Session(); init(sess)
-U = run(sess, u_out)
-visualize_displacement(U'|>Array, m, n, h, name="_tf")
-visualize_pressure(U'|>Array, m, n, h, name="_tf")
+BFGS!(sess, loss, 100)
+
+# sess = Session(); init(sess)
+# U = run(sess, u_out)
+# matwrite("U.mat", Dict("U"=> U))
+
+# visualize_displacement(U'|>Array, m, n, h, name="_tf")
+# visualize_pressure(U'|>Array, m, n, h, name="_tf")
