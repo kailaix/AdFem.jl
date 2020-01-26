@@ -25,19 +25,21 @@ sess = Session(); init(sess)
 # run(sess, A[1])
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(fem_stiffness(hmat,m,n,h)^2)
+fix_rhs = constant(rand(2(m+1)*(n+1)))
+function scalar_function(hmat)
+    res = find(fem_stiffness(hmat,m,n,h))[3]
+    return sum(res^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(diagm(0=>[1,1,0.5]))
+v_ = rand(3,3)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)

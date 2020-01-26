@@ -7,6 +7,9 @@
         "array": "cpp",
         "iterator": "cpp",
         "string": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "__split_buffer": "cpp",
+        "deque": "cpp",
+        "list": "cpp"
     }
 }

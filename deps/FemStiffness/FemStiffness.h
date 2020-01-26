@@ -2,6 +2,7 @@
 #include <eigen3/Eigen/Core>
 
 using std::vector;
+static const double pts[] = {(-1/sqrt(3)+1.0)/2.0, (1/sqrt(3)+1.0)/2.0};
 
 class Forward{
   private:
@@ -9,7 +10,6 @@ class Forward{
     vector<double> vv;
   public:
     Forward(const double *hmat, int m, int n, double h){
-      double pts[] = {(-1/sqrt(3)+1.0)/2.0, (1/sqrt(3)+1.0)/2.0};
       Eigen::Matrix<double,8,8> Omega;
       Eigen::Matrix<double,3,8> B;
       Eigen::Matrix<double,3,3> K;
@@ -68,3 +68,42 @@ class Forward{
       }
     }
 };
+
+
+void backward(
+  double *grad_hmat, const double * grad_vv,  
+  int m, int n, double h
+){
+      Eigen::Matrix<double,3,8> B;
+      Eigen::Matrix<double,3,3> dK;
+      Eigen::Matrix<double,8,8> dOmega;
+      for(int i=0;i<9;i++) grad_hmat[i] = 0.0;
+      int k = 0;
+      for(int i=0;i<m;i++){
+        for(int j=0;j<n;j++){
+          dOmega.setZero();
+          for(int p=0;p<8;p++){
+            for(int q=0;q<8;q++){
+              dOmega(p, q) = grad_vv[k++];
+            }
+          }
+
+          dK.setZero();
+          for(int i=0;i<2;i++)
+            for(int j=0;j<2;j++){
+              double xi = pts[i], eta = pts[j];
+              B << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi,
+                -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi, -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta;
+              dK += B * dOmega * B.transpose() * 0.25 * h* h;
+            }
+
+          for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++){
+              grad_hmat[j*3+i] += dK(i,j);
+            }
+          }
+            
+        }
+      }
+    };

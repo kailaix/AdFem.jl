@@ -171,24 +171,23 @@ public:
     
     // // get the corresponding Eigen tensors for data access
     
-    // auto hmat_tensor = hmat.flat<double>().data();
-    // auto m_tensor = m.flat<int32>().data();
-    // auto n_tensor = n.flat<int32>().data();
-    // auto h_tensor = h.flat<double>().data();
-    // auto grad_ii_tensor = grad_ii.flat<int64>().data();
-    // auto grad_jj_tensor = grad_jj.flat<int64>().data();
-    // auto grad_vv_tensor = grad_vv.flat<double>().data();
-    // auto ii_tensor = ii.flat<int64>().data();
-    // auto jj_tensor = jj.flat<int64>().data();
-    // auto vv_tensor = vv.flat<double>().data();
-    // auto grad_hmat_tensor = grad_hmat->flat<double>().data();
-    // auto grad_m_tensor = grad_m->flat<int32>().data();
-    // auto grad_n_tensor = grad_n->flat<int32>().data();
-    // auto grad_h_tensor = grad_h->flat<double>().data();   
+    auto hmat_tensor = hmat.flat<double>().data();
+    auto m_tensor = m.flat<int32>().data();
+    auto n_tensor = n.flat<int32>().data();
+    auto h_tensor = h.flat<double>().data();
+    auto grad_vv_tensor = grad_vv.flat<double>().data();
+    auto ii_tensor = ii.flat<int64>().data();
+    auto jj_tensor = jj.flat<int64>().data();
+    auto vv_tensor = vv.flat<double>().data();
+    auto grad_hmat_tensor = grad_hmat->flat<double>().data();
 
     // implement your backward function here 
 
     // TODO:
+    backward(
+      grad_hmat_tensor, grad_vv_tensor,
+      *m_tensor, *n_tensor, *h_tensor
+    );
     
   }
 };
