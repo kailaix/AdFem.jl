@@ -73,6 +73,21 @@ class Forward{
   }
 };
 
-void backward(){
+void backward(
+  double * grad_vv, const int64 * ii, const int64 * jj,
+  const double * grad_vv1, const double * grad_vv2, int N, 
+      const int*bd, int bdn, int m, int n, double h){
+    set<int> bdset(bd, bd+bdn);
+    for(int i=0;i<N;i++) grad_vv[i] = 0.0;
+    for(int i=0;i<bdn;i++) bdset.insert(bd[i]+(m+1)*(n+1));
 
+
+    int k1 = 0, k2 = 0;
+    for(int i=0;i<N;i++){
+      if(bdset.count(ii[i])>0 || bdset.count(jj[i])>0) continue;
+      grad_vv[i] += grad_vv1[k1++];
+      if(bdset.count(jj[i])>0 && bdset.count(ii[i])==0){
+          grad_vv[i] += grad_vv2[k2++];
+      }
+    }
 }

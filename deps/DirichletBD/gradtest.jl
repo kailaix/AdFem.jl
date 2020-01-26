@@ -14,24 +14,31 @@ end
 
 
 # TODO: specify your input parameters
+m = 10
+n = 10
+ii = rand(1:2(m+1)*(n+1), 200)
+jj = rand(1:2(m+1)*(n+1), 200)
+vv = rand(100)
+bd = rand(1:(m+1)*(n+1), 10)
+h = 0.1
 u = dirichlet_bd(ii,jj,vv,bd,m,n,h)
 sess = Session(); init(sess)
-@show run(sess, u)
+# @show run(sess, u)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(dirichlet_bd(ii,jj,vv,bd,m,n,h)^2)
+function scalar_function(vv)
+    return sum(dirichlet_bd(ii,jj,vv,bd,m,n,h)[3]^2 + dirichlet_bd(ii,jj,vv,bd,m,n,h)[6]^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(100))
+v_ = rand(100)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)

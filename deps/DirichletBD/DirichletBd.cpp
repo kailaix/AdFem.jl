@@ -242,36 +242,32 @@ public:
     
     // get the corresponding Eigen tensors for data access
     
-    // auto ii_tensor = ii.flat<int64>().data();
-    // auto jj_tensor = jj.flat<int64>().data();
-    // auto vv_tensor = vv.flat<double>().data();
-    // auto bd_tensor = bd.flat<int32>().data();
-    // auto m_tensor = m.flat<int32>().data();
-    // auto n_tensor = n.flat<int32>().data();
-    // auto h_tensor = h.flat<double>().data();
-    // auto grad_ii1_tensor = grad_ii1.flat<int64>().data();
-    // auto grad_jj1_tensor = grad_jj1.flat<int64>().data();
-    // auto grad_vv1_tensor = grad_vv1.flat<double>().data();
-    // auto grad_ii2_tensor = grad_ii2.flat<int64>().data();
-    // auto grad_jj2_tensor = grad_jj2.flat<int64>().data();
-    // auto grad_vv2_tensor = grad_vv2.flat<double>().data();
-    // auto ii1_tensor = ii1.flat<int64>().data();
-    // auto jj1_tensor = jj1.flat<int64>().data();
-    // auto vv1_tensor = vv1.flat<double>().data();
-    // auto ii2_tensor = ii2.flat<int64>().data();
-    // auto jj2_tensor = jj2.flat<int64>().data();
-    // auto vv2_tensor = vv2.flat<double>().data();
-    // auto grad_ii_tensor = grad_ii->flat<int64>().data();
-    // auto grad_jj_tensor = grad_jj->flat<int64>().data();
-    // auto grad_vv_tensor = grad_vv->flat<double>().data();
-    // auto grad_bd_tensor = grad_bd->flat<int32>().data();
-    // auto grad_m_tensor = grad_m->flat<int32>().data();
-    // auto grad_n_tensor = grad_n->flat<int32>().data();
-    // auto grad_h_tensor = grad_h->flat<double>().data();   
+    auto ii_tensor = ii.flat<int64>().data();
+    auto jj_tensor = jj.flat<int64>().data();
+    auto vv_tensor = vv.flat<double>().data();
+    auto bd_tensor = bd.flat<int32>().data();
+    auto m_tensor = m.flat<int32>().data();
+    auto n_tensor = n.flat<int32>().data();
+    auto h_tensor = h.flat<double>().data();
+    auto grad_vv1_tensor = grad_vv1.flat<double>().data();
+    auto grad_vv2_tensor = grad_vv2.flat<double>().data();
+    auto ii1_tensor = ii1.flat<int64>().data();
+    auto jj1_tensor = jj1.flat<int64>().data();
+    auto vv1_tensor = vv1.flat<double>().data();
+    auto ii2_tensor = ii2.flat<int64>().data();
+    auto jj2_tensor = jj2.flat<int64>().data();
+    auto vv2_tensor = vv2.flat<double>().data();
+    auto grad_vv_tensor = grad_vv->flat<double>().data();
+    auto grad_h_tensor = grad_h->flat<double>().data();   
 
     // implement your backward function here 
-
+    
     // TODO:
+    int N = vv_shape.dim_size(0), bdn = bd_shape.dim_size(0);
+    backward(
+      grad_vv_tensor, ii_tensor, jj_tensor,
+      grad_vv1_tensor, grad_vv2_tensor, N, bd_tensor, bdn,
+      *m_tensor, *n_tensor, *h_tensor);
     
   }
 };
