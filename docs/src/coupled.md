@@ -234,8 +234,19 @@ g(x,y,t)&= \begin{bmatrix}
 
 
 
-### Injection-Production in Heterogenious Media
+### Injection-Production in Homogenious Media and with J2 plasticity
 
+[Code](./assets/plasticity_pi.jl)
+
+| Description                | u displacement                | v displacement                | Pressure                      |
+| -------------------------- | ----------------------------- | ----------------------------- | ----------------------------- |
+| $K = 0.5,\ \sigma_Y = 0.3$ | ![](./assets/disp_u_ppi1.gif) | ![](./assets/disp_v_ppi1.gif) | ![](./assets/disp_p_ppi1.gif) |
+| $K = 0,\ \sigma_Y = 0.3$   | ![](./assets/disp_u_ppi2.gif) | ![](./assets/disp_v_ppi2.gif) | ![](./assets/disp_p_ppi2.gif) |
+| $K = 0.5,\ \sigma_Y = 1.0$ | ![](./assets/disp_u_ppi3.gif) | ![](./assets/disp_v_ppi3.gif) | ![](./assets/disp_p_ppi3.gif) |
+
+
+
+### Injection-Production in Heterogenious Media
 
 [Code](./assets/piheter.jl)
 
