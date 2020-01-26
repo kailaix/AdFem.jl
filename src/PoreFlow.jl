@@ -6,6 +6,8 @@ module PoreFlow
     using PyCall
     using PyPlot
     using Parameters
+    using Reexport
+    @reexport using ADCME
     np = pyimport("numpy")
     interpolate = pyimport("scipy.interpolate")
 
@@ -15,6 +17,7 @@ module PoreFlow
     include("Utils.jl")
     include("Core.jl")
     include("Plasticity.jl")
+    include("InvCore.jl")
     include("Visualization.jl")
 
 end
