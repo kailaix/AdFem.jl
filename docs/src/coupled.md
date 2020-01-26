@@ -1,4 +1,4 @@
-# Coupled Geomechanics and Multiphase Flow
+# Coupled Geomechanics and Single Phase Flow
 
 ## Mathematical Formulation
 
@@ -23,16 +23,16 @@ $$\sigma = \sigma' - bp\mathbf{I},\quad \sigma' = \begin{bmatrix}
 \end{bmatrix},
 \quad\begin{bmatrix}
 \delta\sigma'_{xx}\\\delta\sigma'_{yy}\\\delta\sigma'_{xy}
-\end{bmatrix} = D\begin{bmatrix}
+\end{bmatrix} = H\begin{bmatrix}
 \delta\varepsilon_{xx}\\\delta\varepsilon_{yy}\\2\delta\varepsilon_{xy}
 \end{bmatrix}$$
 
 where $\mathbf{I}$ is the identity matrix, $p$ is the pressure, $b$ is the Biot coefficient, $D$ is the elasticity matrix
 
-$$D = \frac{E(1-\nu)}{(1+\nu)(1-2\nu)}\begin{bmatrix}
-1 & \frac{\nu}{1-\nu}& \frac{\nu}{1-\nu}\\
-\frac{\nu}{1-\nu} & 1 & \frac{\nu}{1-\nu}\\
-\frac{\nu}{1-\nu} & \frac{\nu}{1-\nu} & 1
+$$H = \frac{E}{(1-\nu^2)}\begin{bmatrix}
+1 & \nu& 0\\
+\nu & 1 & 0\\
+0 & 0 & 1-\nu
 \end{bmatrix}$$
 
 Here $E$ is the Young modulus,  $\nu$ is the Poisson ratio and  $\varepsilon$ is the strain

@@ -5,8 +5,8 @@ push!(LOAD_PATH, "../src/")
 using Documenter, PoreFlow
 makedocs(sitename="PoreFlow", modules=[PoreFlow],
 pages = Any[
-    "Examples"=>Any["coupled.md", "staticelasticity.md", "heatequation.md","elastodynamics.md"],
-    "plasticity.md",
+    "Examples"=>Any["coupled.md", "staticelasticity.md", "plasticity.md", "heatequation.md","elastodynamics.md"],
+    "Inverse Modeling"=>Any["inverse.md"],
     "api.md"
 ],
 authors = "Kailai Xu")
