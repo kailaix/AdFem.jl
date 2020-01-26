@@ -1,7 +1,7 @@
 test/.ipynb_checkpoints
 test/*.ipynb 
 test/grid.png
-deps/*
+*build/
 !deps/build.jl
 src/fully_coupled.jl
 src/tests.jl
@@ -10,3 +10,4 @@ src/*.png
 docs/build
 test/*.png
 test/*.gif
+.vscode/*
