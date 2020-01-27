@@ -7,7 +7,7 @@ np = pyimport("numpy")
 # Domain information 
 NT = 10
 Δt = 0.1/NT
-n = 20
+n = 15
 m = n 
 h = 1.0/n 
 bdnode = Int64[]
@@ -45,7 +45,7 @@ injection = (div(n,2)-1)*m + 3
 production = (div(n,2)-1)*m + m-3
 
 
-K, σY = 0.5, 100000.#0.01
+K, σY = 0.5, 0.01
 σ0 = zeros(4*m*n, 3)
 α0 = zeros(4*m*n)
 for i = 1:NT 
@@ -72,7 +72,7 @@ for i = 1:NT
         rhs = [rhs1;rhs2]        
         rhs[[bdnode; bdnode.+ (m+1)*(n+1)]] = bdval 
         err = norm(rhs)
-        @info err
+        # @info err
         if err<1e-8
             break 
         end
@@ -82,7 +82,6 @@ for i = 1:NT
         A, _ = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
         Δu = A\rhs
         up -= Δu
-        
     end
 
     global σ0, α0 = σ, α

@@ -562,8 +562,8 @@ function trim_coupled(pd::PoreData, Q::SparseMatrixCSC{Float64,Int64}, L::Sparse
 end
 
 """
-coupled_impose_pressure(A::SparseMatrixCSC{Float64,Int64}, pnode::Array{Int64}, 
-m::Int64, n::Int64, h::Float64)
+    coupled_impose_pressure(A::SparseMatrixCSC{Float64,Int64}, pnode::Array{Int64}, 
+    m::Int64, n::Int64, h::Float64)
 
 Returns a trimmed matrix.
 """

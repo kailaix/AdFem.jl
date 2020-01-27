@@ -1,6 +1,73 @@
 # Plasticity
 
-![](./assets/pi.png)
+
+
+## Plasticity Theory
+
+>  The constitutive theory is about _relating stress $\sigma$ and strain $\varepsilon$_. 
+
+The total inelastic strain $\varepsilon^i$ can be decomposed into 
+
+$$\varepsilon = \varepsilon^p + \varepsilon^e$$
+
+The constitutive relation must characterize the relation between the stress $\varepsilon$ for both $\varepsilon^p$ and $\varepsilon^e$ . The constitutive law for $\varepsilon^e$ is linear, i.e., 
+
+$$\sigma = C\varepsilon^e\Leftrightarrow\varepsilon^e = C^{-1}\sigma$$
+
+The constitutive law for $\varepsilon^p$ is described by an ordinary differential equation 
+
+$$\boxed{\dot\varepsilon^p_{ij} = \phi h_{ij}}\tag{1}$$
+
+Here $h_{ij}$ may arise from a potential function $g(\sigma, \xi)$, where $\xi$ is called **internal variables**
+
+$$h_{ij} = \frac{\partial g}{\partial \sigma_{ij}}$$
+
+and $\phi$ is a scalar function of the form 
+
+$$\phi = \eta(\sigma,\xi) f(\sigma, \xi)_+ := \eta(\sigma,\xi)\max(0, f(\sigma, \xi))$$
+
+where $f$ is the yield surface. 
+
+!!! example
+    The Tresca yield surface is given by 
+    
+    $$f(\sigma, \xi) = \frac{1}{4}(|\sigma_1-\sigma_2|+|\sigma_2-\sigma_3|+|\sigma_3-\sigma_1|)-k(\xi)$$
+
+
+!!! example
+    ​In $J_2$ plasticity, we have
+
+    $$g(\sigma, \xi) = J_2(\sigma) - k(\xi)^2$$
+
+    ​Thus we have
+
+    $$\dot\varepsilon^p_{ij} = \mathrm{const}\times\left(1-\frac{k(\xi)}{J_2(\sigma)}\right)_+ s_{ij}$$
+    
+    ![](./assets/pi.png)
+
+In the rate-indpendent plasticity, there exists $\lambda$ such that 
+
+$$\phi = \dot\lambda$$
+
+Since both sides of (1) has derivatives with respect to time, it is time scale independent. That's why we call it rate-independent. Then the **flow rule** requires that 
+
+$$\boxed{\dot \lambda f = 0\quad \lambda\geq 0\quad f\leq 0}\tag{2}$$
+
+If $f<0$ (the yield surface is not hit), the inelasticity strain is not "active"; once $f=0$ is hit, the material reacts by increasing plasticity strain (since $\dot \lambda$ can be nonzero). 
+
+The **deformation theory** studies how $g$ is related to $\sigma$ and $\xi$. If $h$ directs along the outward normal of the yield surface, we can the consequent $g$ the **normality rule**.  For example, $J_2$ plasticity can be formulated is subjected to normality rule. A particular case where normality rule holds is $g=f$, in which case we call (1) the associated flow rule with the yield surface.
+
+Finally, the **dynamics of internal variable** is given by 
+
+$$\boxed{\dot\xi_\alpha = \tilde h_\alpha(\sigma, \xi)}\tag{3}$$
+
+The three equations (1), (2) and (3) fully characterizes the constitutive relation of $\varepsilon^p$.
+
+ 
+
+## Code Example
+
+
 
 
 |  Description          | Displacement Field             | Vertical Displacement           |
