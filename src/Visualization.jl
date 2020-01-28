@@ -66,7 +66,7 @@ function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64,
     close("all")
 end
 
-""" 
+@doc raw""" 
     visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
 
 Visualizes displacement. `U` is the solution vector, `K` is the elasticity matrix ($3\times 3$).
