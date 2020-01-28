@@ -55,58 +55,50 @@ function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64,
     close("all")
 end
 
-function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, 
-    h::Float64; fmt::String="png", scale::Float64=1e-6)
-    x = LinRange(0, m*h, 50)|>collect
-    y = LinRange(-n*h, 0, 50)|>collect
-    X, Y = np.meshgrid(x, y)
-    Xv = Float64[]; Yv = Float64[]
+function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+    NT = size(U,2)
+
+    x0 = Float64[]; y0 = Float64[]
     for i = 1:m
         for j = 1:n 
             for p = 1:2
                 for q = 1:2
-                    η = pts[p]; ξ = pts[q]
-                    push!(Xv, (i-1)*h+ξ*h)
-                    push!(Yv, -(j-1)*h+η*h)
+                    ξ = pts[p]; η = pts[q]
+                    x = (i-1)*h + ξ*h 
+                    y = (j-1)*h + η*h 
+                    push!(x0, x); push!(y0, y)
                 end
             end
         end
     end
-    T = []
-    NT = size(U,2)
-    for k in Int64.(round.(LinRange(1, NT, 9)))
-        push!(T, compute_principal_stress_term(K, U[:, k], m, n, h))
-    end
-    vmax = maximum([maximum(t) for t in T])
-    vmin = minimum([minimum(t) for t in T])
-    function helper(ax, T)
-        Z = interpolate.griddata((Xv, Yv), T, (X, Y))
-        return ax.pcolormesh(X, Y, Z)
-    end
+    x1 = LinRange(0.5h,n*h,n)|>collect
+    y1 = LinRange(0.5h,m*h,m)|>collect
+    X1, Y1 = np.meshgrid(x1,y1)
 
-    close("all")
-    rc("axes", titlesize=30)
-    rc("axes", labelsize=30)
-    rc("xtick", labelsize=28)
-    rc("ytick", labelsize=28)
-    rc("legend", fontsize=30)
-    fig1,axs = subplots(3,3, figsize=[20,16], sharex=true, sharey=true)
-    ims = Array{Any}(undef, 9)
-    for iPrj = 1:3
-        for jPrj = 1:3
-            ims[(iPrj-1)*3+jPrj] = helper(axs[iPrj,jPrj], T[(iPrj-1)*3+jPrj])
-            if jPrj == 1 || jPrj == 1
-                axs[iPrj,jPrj].set_ylabel("Depth (m)")
-            end
-            if iPrj == 3 || iPrj == 3
-                axs[iPrj,jPrj].set_xlabel("Distance (m)")
+    S = zeros(20, n, m)
+
+    for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
+        s = compute_von_mises_stress_term(K, U[:,k], m, n, h)
+        for i = 1:m 
+            for j = 1:n 
+                S[ix,j,i] = sum(s[4*(m*(j-1)+i-1)+1:4*(m*(j-1)+i)])/4.0
             end
         end
     end
-    fig1.subplots_adjust(wspace=0.02, hspace=0.18)
-    cbar_ax = fig1.add_axes([0.91, 0.08, 0.01, 0.82])
-    cb1 = fig1.colorbar(ims[1], cax=cbar_ax)
-    cb1.set_label("Displacement") 
-    savefig("stress.$fmt")
-    close("all")
+    μ = mean(S); σ = std(S)
+    vmin = μ - 2σ
+    vmax = μ + 2σ
+
+    for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
+        Z = S[ix,:,:]
+        close("all")
+        pcolormesh(X1,Y1,Z, vmin=vmin,vmax=vmax)
+        colorbar()
+        k_ = string(k)
+        k_ = repeat("0", 3-length(k_))*k_
+        title("snapshot = $k_")
+        contour(X1, Y1, Z, 10, cmap="jet")
+        savefig("__s$k_.png")
+    end
+    run(`convert -delay 10 -loop 0 __s*.png disp_s$name.gif`)
 end

@@ -216,9 +216,9 @@ g(x,y,t)&= \begin{bmatrix}
 
 
 
- u displacement                                               | v displacement                                               | Pressure                                                     
- ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ 
- ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) 
+ u displacement                             | v displacement                             | Pressure                                   | Von Mises Stress               
+ ------------------------------------------ | ------------------------------------------ | ------------------------------------------ | ------------------------------ 
+ ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) | ![](./assets/disp_s_flood.gif) 
 
 ### Injection-Production in Homogenious Media
 

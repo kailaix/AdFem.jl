@@ -22,7 +22,7 @@ compute_fem_source_term
 compute_fvm_source_term
 compute_fvm_mechanics_term
 compute_fem_normal_traction_term
-compute_principal_stress_term
+compute_von_mises_stress_term
 compute_fem_source_term1
 compute_fem_flux_term1
 ```

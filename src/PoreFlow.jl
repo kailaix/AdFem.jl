@@ -7,6 +7,7 @@ module PoreFlow
     using PyPlot
     using Parameters
     using Reexport
+    using Statistics
     @reexport using ADCME
     np = pyimport("numpy")
     interpolate = pyimport("scipy.interpolate")

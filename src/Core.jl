@@ -12,7 +12,7 @@ compute_elasticity_tangent,
 compute_fem_traction_term,
 compute_fem_normal_traction_term,
 coupled_impose_pressure,
-compute_principal_stress_term,
+compute_von_mises_stress_term,
 compute_fem_mass_matrix,
 eval_f_on_boundary_node,
 eval_f_on_boundary_edge,
@@ -610,11 +610,11 @@ function compute_elasticity_tangent(E::Float64, ν::Float64)
 end
 
 """
-    compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
-Compute the principal stress on the Gauss quadrature nodes. 
+Compute the [von Mises stress](https://en.wikipedia.org/wiki/Von_Mises_yield_criterion#Multi-axial_(2D_or_3D)_stress) on the Gauss quadrature nodes. 
 """
-function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64;
+function compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64;
     b::Float64 = 1.0)
     I = Int64[]; J = Int64[]; V = Float64[]
     B = zeros(4, 3, 8)
@@ -622,9 +622,9 @@ function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::
         for j = 1:2
             ξ = pts[i]; η = pts[j]
             B[(j-1)*2+i,:,:] = [
-            -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
-            0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
-            -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
+                0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
             ]
         end
     end
@@ -638,10 +638,10 @@ function compute_principal_stress_term(K::Array{Float64}, u::Array{Float64}, m::
             for p = 1:2
                 for q = 1:2
                     Bk = B[(q-1)*2+p,:,:]
-                    σ = K * Bk * uA 
-                    # σ[1:2] .-= u[(j-1)*m+i+2(m+1)*(n+1)]*b
-                    v = eigvals([σ[1] σ[3];σ[3] σ[2]])
-                    push!(pval, sqrt(0.5*(v[1]^2+v[2]^2+(v[1]-v[2])^2)))
+                    σ = K * Bk * uA # 3 components
+                    σ11, σ22, σ12 = σ
+                    σv = sqrt(σ11^2 - σ11*σ22 + σ22^2 + 3σ12^2)
+                    push!(pval, σv)
                 end
             end
         end
