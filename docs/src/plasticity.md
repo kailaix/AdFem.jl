@@ -6,7 +6,7 @@
 
 >  The constitutive theory is about _relating stress $\sigma$ and strain $\varepsilon$_. 
 
-The total inelastic strain $\varepsilon^i$ can be decomposed into 
+The total strain $\varepsilon$ can be decomposed into 
 
 $$\varepsilon = \varepsilon^p + \varepsilon^e$$
 
