@@ -65,7 +65,7 @@ The three equations (1), (2) and (3) fully characterizes the constitutive relati
 
  
 
-## Code Example
+## Numerical Example
 
 
 
