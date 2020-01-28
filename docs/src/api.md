@@ -35,6 +35,13 @@ eval_f_on_boundary_edge
 eval_strain_on_gauss_pts
 ```
 
+## Visualization 
+```@docs
+visualize_pressure
+visualize_displacement
+visualize_stress
+```
+
 ## Misc
 
 ```@docs

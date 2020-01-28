@@ -1,4 +1,10 @@
 export visualize_pressure, visualize_displacement, visualize_stress
+
+""" 
+    visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+
+Visualizes pressure. `U` is the solution vector. 
+"""
 function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
     
     vmin = minimum(U[2(m+1)*(n+1)+1:end,:])
@@ -18,6 +24,11 @@ function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
     run(`convert -delay 10 -loop 0 __p*.png disp_p$name.gif`)
 end
 
+""" 
+    visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+
+Visualizes displacement. `U` is the solution vector. 
+"""
 function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 
         h::Float64; name::String = "")
     vmin = minimum(U[1:(m+1)*(n+1),:])
@@ -55,22 +66,14 @@ function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64,
     close("all")
 end
 
+""" 
+    visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+
+Visualizes displacement. `U` is the solution vector, `K` is the elasticity matrix ($3\times 3$).
+"""
 function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
     NT = size(U,2)
 
-    x0 = Float64[]; y0 = Float64[]
-    for i = 1:m
-        for j = 1:n 
-            for p = 1:2
-                for q = 1:2
-                    ξ = pts[p]; η = pts[q]
-                    x = (i-1)*h + ξ*h 
-                    y = (j-1)*h + η*h 
-                    push!(x0, x); push!(y0, y)
-                end
-            end
-        end
-    end
     x1 = LinRange(0.5h,n*h,n)|>collect
     y1 = LinRange(0.5h,m*h,m)|>collect
     X1, Y1 = np.meshgrid(x1,y1)
@@ -84,6 +87,42 @@ function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, 
                 S[ix,j,i] = sum(s[4*(m*(j-1)+i-1)+1:4*(m*(j-1)+i)])/4.0
             end
         end
+    end
+    μ = mean(S); σ = std(S)
+    vmin = μ - 2σ
+    vmax = μ + 2σ
+
+    for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
+        Z = S[ix,:,:]
+        close("all")
+        pcolormesh(X1,Y1,Z, vmin=vmin,vmax=vmax)
+        colorbar()
+        k_ = string(k)
+        k_ = repeat("0", 3-length(k_))*k_
+        title("snapshot = $k_")
+        contour(X1, Y1, Z, 10, cmap="jet")
+        savefig("__s$k_.png")
+    end
+    run(`convert -delay 10 -loop 0 __s*.png disp_s$name.gif`)
+end
+
+
+"""
+    visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+
+Visualizes the Von Mises stress. `Se` is the Von Mises at the cell center. 
+"""
+function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+    NT = size(Se,2)
+
+    x1 = LinRange(0.5h,n*h,n)|>collect
+    y1 = LinRange(0.5h,m*h,m)|>collect
+    X1, Y1 = np.meshgrid(x1,y1)
+
+    S = zeros(20, n, m)
+
+    for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
+        S[ix,:,:] = reshape(Se[:,k], m, n)'
     end
     μ = mean(S); σ = std(S)
     vmin = μ - 2σ
