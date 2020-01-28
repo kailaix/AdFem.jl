@@ -6,7 +6,7 @@
 
 To describe the viscoelasticity, we need to relate both the viscosity strain $\varepsilon^{vp}$ and the elasticity strain $\varepsilon^e$ to the stress $\sigma$. The latter is given by 
 
-$$\boxed{\varepsilon^e= \frac{\sigma}{E}} $$
+$$\boxed{\varepsilon^e= \frac{\sigma}{E}}$$
 
 The constitutive relation of $\varepsilon^{vp}$ is given by 
 

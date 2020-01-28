@@ -2,9 +2,9 @@ export compute_viscoplasticity_stress_and_stiffness_matrix
 @doc raw"""
      
 """
-function compute_viscoplasticity_stress_and_stiffness_matrix(
+function compute_Maxwell_viscoplasticity_stress_and_stiffness_matrix(
     u::Array{Float64}, ε0::Array{Float64}, σ0::Array{Float64}, 
-    α::Array{Float64}, K::Float64, σY::Float64, H::Array{Float64}, m::Int64, n::Int64, h::Float64
+    K::Float64, k::Float64, η::Float64, Δt::Float64, m::Int64, n::Int64, h::Float64
 )
     I = Int64[]; J = Int64[]; V = Float64[]
     function add(ii, jj, kk)
