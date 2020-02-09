@@ -61,10 +61,10 @@ The parameters used in the simulation are
 
 | Description                      | Linear Elasticity                                            | Viscoelasticity                                              |
 | -------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| $x$ displacement                 | ![disp_u_linear](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_u_linear.gif) | ![disp_scattered_u](./assets/visco/disp_u_viscoelasticity.gif) |
-| $y$ displacement                 | ![disp_u_linear](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_v_linear.gif) | ![disp_u_linear](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_v_viscoelasticity.gif) |
-| Von Mises Stress                 | ![disp_s_linear](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_s_linear.gif) | ![disp_s_viscoelasticity](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_s_viscoelasticity.gif) |
-| Statistics of Middle Right point | ![linear](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/linear.png) | ![visco](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/visco.png) |
+| $x$ displacement                 | ![disp_u_linear](./assets/visco/disp_u_linear.gif) | ![disp_scattered_u](./assets/visco/disp_u_viscoelasticity.gif) |
+| $y$ displacement                 | ![disp_u_linear](./assets/visco/disp_v_linear.gif) | ![disp_u_linear](./assets/visco/disp_v_viscoelasticity.gif) |
+| Von Mises Stress                 | ![disp_s_linear](./assets/visco/disp_s_linear.gif) | ![disp_s_viscoelasticity](./assets/visco/disp_s_viscoelasticity.gif) |
+| Statistics of Middle Right point | ![linear](./assets/visco/linear.png) | ![visco](./assets/visco/visco.png) |
 
 
 
