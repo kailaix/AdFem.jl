@@ -24,7 +24,8 @@ fem_impose_Dirichlet_boundary_condition1,
 fem_impose_coupled_Dirichlet_boundary_condition,
 eval_strain_on_gauss_pts,
 eval_stress_on_gauss_pts,
-compute_fvm_mass_matrix
+compute_fvm_mass_matrix,
+compute_strain_energy_term
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -32,7 +33,7 @@ compute_fvm_mass_matrix
 
 Computes the term 
 ```math
-\int_{A}\delta \varepsilon :\sigma'\mathrm{d}x = \int_A u_AB^TDB\delta u_A\mathrm{d}x
+\int_{A}\delta \varepsilon :\sigma'\mathrm{d}x = \int_A u_AB^TKB\delta u_A\mathrm{d}x
 ```
 """
 function compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
@@ -829,7 +830,8 @@ end
     eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the strain on Gauss points. 
-Returns a $4mn \times 3$ matrix
+Returns a $4mn \times 3$ matrix, where each row denotes $(\varepsilon_{11}, \varepsilon_{22}, 2\varepsilon_{12})$
+at the corresponding Gauss point. 
 """
 function eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
     I = Int64[]
@@ -887,4 +889,47 @@ Returns the FVM mass matrix
 """
 function compute_fvm_mass_matrix(m::Int64, n::Int64, h::Float64)
     return spdiagm(0=>ones(m*n))*h^2
+end
+
+
+@doc raw"""
+    compute_strain_energy_term(S::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+
+Computes the strain energy 
+```math
+\int_{A} \sigma : \delta \varepsilon \mathrm{d}x
+```
+where $\sigma$ is provided by `S`, a $4mn \times 3$ matrix. 
+The values $\sigma_{11}, \sigma_{22}, \sigma_{12}$ are defined on 4 Gauss points per element. 
+"""
+function compute_strain_energy_term(S::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+    f = zeros(2(m+1)*(n+1))
+    
+    B = zeros(4, 3, 8)
+    for i = 1:2
+        for j = 1:2
+            ξ = pts[i]; η = pts[j]
+            B[(i-1)*2+j,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
+                0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+            ]
+        end
+    end
+
+    for i = 1:m
+        for j = 1:n 
+            elem = (j-1)*m + i 
+            σ = S[4(elem-1)+1:4elem, :] # 4×3
+            dof = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+            dof = [dof; dof .+ (m+1)*(n+1)]
+            for p = 1:2
+                for q = 1:2
+                    idx = 2(q-1) + p
+                    f[dof] += (σ[p,:]' * B[idx,:,:])[:]*0.25*h^2 # length 8 vector
+                end
+            end
+        end
+    end
+    f
 end
