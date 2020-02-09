@@ -630,8 +630,8 @@ function compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::
     end
     
     pval = Float64[]
-    for i = 1:m
-        for j = 1:n 
+    for j = 1:n 
+        for i = 1:m
             idx = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
             idx = [idx; idx .+ (m+1)*(n+1)]
             uA = u[idx]
