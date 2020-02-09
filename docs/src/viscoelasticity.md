@@ -46,13 +46,13 @@ For high dimensional case, assume that the bulk modulus is $K$, then we have [^l
 ## Numerical Example
 
 We consider the two dimensional Maxwell material
-$$
-\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}
-$$
+
+$$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}$$
+
 along with the balance of linear momentum equation
-$$
-\sigma_{ij,j} + \rho f_i = \rho \ddot u_i
-$$
+
+$$\sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
+
 The parameters used in the simulation are
 
 | $\lambda$ | $\mu$ | $\eta$ | $\Delta t$ and $T$ | Domain and $h$                   |
