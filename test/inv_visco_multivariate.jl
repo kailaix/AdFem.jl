@@ -9,16 +9,16 @@ np = pyimport("numpy")
 
 # mode = "data" generate data 
 # mode != "data" train 
-mode = "data"
+mode = "train"
 
 
 β = 1/4; γ = 1/2
 a = b = 0.1
-m = 40
-n = 20
+m = 20
+n = 10
 h = 0.01
 NT = 50
-Δt = 5/NT 
+Δt = 2/NT 
 bdedge = []
 for j = 1:n 
   push!(bdedge, [(j-1)*(m+1)+m+1 j*(m+1)+m+1])
@@ -36,11 +36,44 @@ end
 
 function eta_model(idx)
   if idx == 1
-    out = 15*ones(m, n)
-    out[:,1:div(n,3)] .= 20
-    out[:,2div(n,3):end] .= 10
+    out = 11.0*ones(4, m, n)
+    out[:, :, 1:div(n,3)] .= 12.0
+    # out[:, :, div(n,3)*2:end] .= 8.0
+    out[:]
+  elseif idx == 2
+    out = ones(4, m, n)
+    for i = 1:m 
+        for j = 1:n 
+            x = i*h; y = j*h 
+            out[1,i,j] = (x^2 + y^2) 
+            out[2,i,j] = (x^2 + y^2) 
+            out[3,i,j] = (x^2 + y^2) 
+            out[4,i,j] = (x^2 + y^2) 
+        end
+    end
     out[:]
   end
+end
+
+function visualize_inv_eta(X, k)
+    x = LinRange(0.5h,m*h, m)
+    y = LinRange(0.5h,n*h, n)
+    V = zeros(m, n)
+    for i = 1:m  
+        for j = 1:n 
+            elem = (j-1)*m + i 
+            V[i, j] = mean(X[4(elem-1)+1:4elem])
+        end
+    end
+    close("all")
+    pcolormesh(x, y, V', vmin=5.0, vmax=15.0)
+    colorbar()
+    xlabel("x")
+    ylabel("y")
+    title("Iteration = $k")
+    axis("equal")
+    gca().invert_yaxis()
+    savefig("iter$k.png")
 end
 
 λ = constant(2.0)
@@ -48,7 +81,12 @@ end
 if mode=="data"
   global invη = constant(eta_model(1))
 else
-  global invη = Variable(ones(m*n))
+    global invη_ = Variable(10.0*ones(4*m*n))
+    # global invη = repeat(invη_, 1, 4)[:]
+    # global invη = [invη_[1] * ones(2*m*n); invη_[2] * ones(2*m*n)]
+
+    # global invη_ = Variable(8.0)*ones(4*m*n)
+    global invη = invη_ 
 end
 
 
@@ -64,7 +102,7 @@ S = tensor([2μ/Δt+λ/Δt λ/Δt 0.0
     λ/Δt 2μ/Δt+λ/Δt 0.0
     0.0 0.0 μ/Δt])
 
-
+# error()
 # invG = Variable([1.0 0.0 0.0
 #                 0.0 1.0 0.0
 #                 0.0 0.0 1.0])
@@ -94,12 +132,13 @@ Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1,zeros(4*m*n, 3)
 Forces = zeros(NT, 2(m+1)*(n+1))
 for i = 1:NT
   T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
-  T = [T zeros(length(T))]
+  T = [-T zeros(length(T))]
+#   T = [T T]
   rhs = compute_fem_traction_term(T, bdedge, m, n, h)
 
-  if i*Δt>3.0
-    rhs = zero(rhs)
-  end
+#   if i*Δt>0.5
+#     rhs = zero(rhs)
+#   end
   Forces[i, :] = rhs
 end
 Forces = constant(Forces)
@@ -117,7 +156,8 @@ function body(i, tas...)
   Sigma = read(Sigma_, i)
   Varepsilon = read(Varepsilon_, i)
 
-  F = compute_strain_energy_term(Sigma*invG/Δt, m, n, h) - K * U
+  res = squeeze(tf.matmul(tf.reshape(Sigma, (size(Sigma,1), 1, 3)),(invG/Δt)))
+  F = compute_strain_energy_term(res, m, n, h) - K * U
   rhs = Forces[i] - Δt^2 * F
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
   tv = v + (1-γ)*Δt*a 
@@ -132,7 +172,10 @@ function body(i, tas...)
   v = tv + γ*Δt*a 
   U_new = d
   Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
-  Sigma_new = Sigma*invG/Δt +  (Varepsilon_new-Varepsilon)*(invG*S)
+
+  res2 = squeeze(tf.matmul(tf.reshape(Varepsilon_new-Varepsilon, (size(Sigma,1), 1, 3)),
+                        tf.matmul(invG, S)))
+  Sigma_new = res +  res2
 
   i+1, write(a_, i+1, a), write(v_, i+1, v), write(d_, i+1, d), write(U_, i+1, U_new),
         write(Sigma_, i+1, Sigma_new), write(Varepsilon_, i+1, Varepsilon_new)
@@ -140,7 +183,6 @@ end
 
 
 i = constant(1, dtype=Int32)
-# error()
 _, _, _, _, u, sigma, varepsilon = while_loop(condition, body, 
                   [i, a, v, d, U, Sigma, Varepsilon])
 
@@ -149,42 +191,53 @@ Sigma = stack(sigma)
 Varepsilon = stack(varepsilon)
 
 if mode!="data"
-  global Uval = matread("U.mat")["U"]
+    data = matread("U.mat")
+  global Uval,Sigmaval, Varepsilonval = data["U"], data["Sigma"], data["Varepsilon"]
   U.set_shape((NT+1, size(U, 2)))
+  idx0 = 1:4m*n
+  Sigma = map(x->x[idx0,:], Sigma)
+
   idx = 1:m+1
-  global loss = sum((U[:, idx] - Uval[:, idx])^2)
+  global loss = sum((U - Uval)^2)  + 
+                sum((Sigma - Sigmaval[:, idx0, :])^2) #+ sum((Varepsilon - Varepsilonval)^2)
 end
 
-# opt = AdamOptimizer(1.0).minimize(loss)
+# opt = AdamOptimizer(0.1).minimize(loss)
 sess = Session(); init(sess)
-
+cb = (v, i, l)->begin
+  println("[$i] loss = $l")
+  inv_eta = v[1]
+  visualize_inv_eta(inv_eta, i)
+end
 if mode=="data"
-  matwrite("U.mat", Dict("U"=>run(sess, U)))
+    Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
+  matwrite("U.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
   # visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
     # # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
     # # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 
-    # close("all")
-    # figure(figsize=(15,5))
-    # subplot(1,3,1)
-    # idx = div(n,2)*(m+1) + m+1
-    # plot((0:NT)*Δt, Uval[:, idx])
-    # xlabel("time")
-    # ylabel("\$u_x\$")
+    close("all")
+    figure(figsize=(15,5))
+    subplot(1,3,1)
+    idx = div(n,2)*(m+1) + m+1
+    plot((0:NT)*Δt, Uval[:, idx])
+    xlabel("time")
+    ylabel("\$u_x\$")
 
-    # subplot(1,3,2)
-    # idx = 4*(div(n,2)*m + m)
-    # plot((0:NT)*Δt, Sigmaval[:,idx,1])
-    # xlabel("time")
-    # ylabel("\$\\sigma_{xx}\$")
+    subplot(1,3,2)
+    idx = 4*(div(n,2)*m + m)
+    plot((0:NT)*Δt, Sigmaval[:,idx,1])
+    xlabel("time")
+    ylabel("\$\\sigma_{xx}\$")
 
-    # subplot(1,3,3)
-    # idx = 4*(div(n,2)*m + m)
-    # plot((0:NT)*Δt, Varepsilonval[:,idx,1])
-    # xlabel("time")
-    # ylabel("\$\\varepsilon_{xx}\$")
-    # savefig("visco_eta$η.png")
+    subplot(1,3,3)
+    idx = 4*(div(n,2)*m + m)
+    plot((0:NT)*Δt, Varepsilonval[:,idx,1])
+    xlabel("time")
+    ylabel("\$\\varepsilon_{xx}\$")
+    savefig("visco_eta.png")
 
+    cb([run(sess, invη)], "true", 0)
   error()
 end
 
@@ -193,19 +246,14 @@ end
 v_ = []
 i_ = []
 l_ = []
-cb = (v, i, l)->begin
-  println("[$i] loss = $l")
-  println(v)
-  push!(v_, [x for x in v])
-  push!(i_, i)
-  push!(l_, l)
-end
-loss_ = BFGS!(sess, loss, vars=[λ, μ, invη], callback=cb)
+
+loss_ = BFGS!(sess, loss, vars=[invη], callback=cb, var_to_bounds=Dict(invη_=>(5.0,15.0)))
 # matwrite("R.mat", Dict("V"=>v_, "L"=>l_))
 
 # for i = 1:1000
 #   _, l, invη_ = run(sess, [opt, loss, invη])
-#   @show i, l, invη_
+#   @show i, l #, invη_
+#   mod(i,5)==1 && cb([invη_], i, l)
 # end
 
 
