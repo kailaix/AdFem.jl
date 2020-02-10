@@ -9,7 +9,7 @@ np = pyimport("numpy")
 
 # mode = "data" generate data 
 # mode != "data" train 
-mode = "train"
+mode = "data"
 
 
 β = 1/4; γ = 1/2
@@ -34,22 +34,37 @@ end
 # μ = Variable(1.0)
 # invη = Variable(1.0)
 
+function eta_model(idx)
+  if idx == 1
+    out = 15*ones(m, n)
+    out[:,1:div(n,3)] .= 20
+    out[:,2div(n,3):end] .= 10
+    out[:]
+  end
+end
+
 λ = constant(2.0)
 μ = constant(0.5)
 if mode=="data"
-  global invη = placeholder(12.0)
+  global invη = constant(eta_model(1))
 else
-  global invη = Variable(1.0)
+  global invη = Variable(ones(m*n))
 end
 
-G = tensor([1/Δt+μ*invη -μ/3*invη 0.0
-  -μ/3*invη 1/Δt+μ*invη-μ/3*invη 0.0
-  0.0 0.0 1/Δt+μ*invη])
+
+
+fn_G = invη->begin 
+  G = tensor([1/Δt+μ*invη -μ/3*invη 0.0
+    -μ/3*invη 1/Δt+μ*invη-μ/3*invη 0.0
+    0.0 0.0 1/Δt+μ*invη])
+  invG = inv(G)
+end
+invG = map(fn_G, invη)
 S = tensor([2μ/Δt+λ/Δt λ/Δt 0.0
     λ/Δt 2μ/Δt+λ/Δt 0.0
     0.0 0.0 μ/Δt])
 
-invG = inv(G)
+
 # invG = Variable([1.0 0.0 0.0
 #                 0.0 1.0 0.0
 #                 0.0 0.0 1.0])
@@ -145,6 +160,31 @@ sess = Session(); init(sess)
 
 if mode=="data"
   matwrite("U.mat", Dict("U"=>run(sess, U)))
+  # visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
+    # # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
+    # # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
+
+    # close("all")
+    # figure(figsize=(15,5))
+    # subplot(1,3,1)
+    # idx = div(n,2)*(m+1) + m+1
+    # plot((0:NT)*Δt, Uval[:, idx])
+    # xlabel("time")
+    # ylabel("\$u_x\$")
+
+    # subplot(1,3,2)
+    # idx = 4*(div(n,2)*m + m)
+    # plot((0:NT)*Δt, Sigmaval[:,idx,1])
+    # xlabel("time")
+    # ylabel("\$\\sigma_{xx}\$")
+
+    # subplot(1,3,3)
+    # idx = 4*(div(n,2)*m + m)
+    # plot((0:NT)*Δt, Varepsilonval[:,idx,1])
+    # xlabel("time")
+    # ylabel("\$\\varepsilon_{xx}\$")
+    # savefig("visco_eta$η.png")
+
   error()
 end
 
@@ -183,27 +223,4 @@ loss_ = BFGS!(sess, loss, vars=[λ, μ, invη], callback=cb)
 
 
 
-# visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
-# # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
-# # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 
-# close("all")
-# figure(figsize=(15,5))
-# subplot(1,3,1)
-# idx = div(n,2)*(m+1) + m+1
-# plot((0:NT)*Δt, Uval[:, idx])
-# xlabel("time")
-# ylabel("\$u_x\$")
-
-# subplot(1,3,2)
-# idx = 4*(div(n,2)*m + m)
-# plot((0:NT)*Δt, Sigmaval[:,idx,1])
-# xlabel("time")
-# ylabel("\$\\sigma_{xx}\$")
-
-# subplot(1,3,3)
-# idx = 4*(div(n,2)*m + m)
-# plot((0:NT)*Δt, Varepsilonval[:,idx,1])
-# xlabel("time")
-# ylabel("\$\\varepsilon_{xx}\$")
-# savefig("visco_eta$η.png")

@@ -15,17 +15,38 @@ function fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
     L, Lbd
 end
 
-"""
-    compute_fem_stiffness_matrix(hmat::PyObject, m::Int64, n::Int64, h::Float64)
 
-A differentiable kernel
+@doc raw"""
+    compute_fem_stiffness_matrix(hmat::PyObject,m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel. `hmat` is either 
+- $3\times 3$
+- $mn \times 3 \times 3$ 
 """
 function compute_fem_stiffness_matrix(hmat::PyObject, m::Int64, n::Int64, h::Float64)
+    if length(size(hmat))==2
+        compute_fem_stiffness_matrix2(hmat, m, n, h)
+    elseif length(size(hmat))==3
+        compute_fem_stiffness_matrix3(hmat, m, n, h)
+    else 
+        error("size hmat not valid")
+    end
+end
+
+function compute_fem_stiffness_matrix2(hmat::PyObject, m::Int64, n::Int64, h::Float64)
     fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/FemStiffness/build/libFemStiffness","fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
     ii, jj, vv = fem_stiffness_(hmat,m_,n_,h)
     SparseTensor(ii, jj, vv, 2(m+1)*(n+1), 2(m+1)*(n+1))
     # ii, jj, vv
+end
+
+function compute_fem_stiffness_matrix3(hmat::PyObject,m::Int64, n::Int64, h::Float64)
+    spatial_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/SpatialFemStiffness/build/libSpatialFemStiffness",
+                                    "spatial_fem_stiffness", multiple=true)
+    hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
+    ii, jj, vv = spatial_fem_stiffness_(hmat,m_,n_,h)
+    SparseTensor(ii, jj, vv, 2(m+1)*(n+1), 2(m+1)*(n+1))
 end
 
 """
@@ -53,3 +74,4 @@ function eval_strain_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
     out.set_shape((4*m*n, 3))
     out 
 end
+

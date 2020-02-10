@@ -1,0 +1,8 @@
+SpatialFemStiffness
+double hmat(?,3,3)
+int32 m()
+int32 n()
+double h()
+int64 ii(?) -> output 
+int64 jj(?) -> output
+double vv(?) -> output
