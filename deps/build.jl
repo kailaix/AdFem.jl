@@ -11,8 +11,8 @@ function compile(DIR)
 end
 
 
-compile("$(@__DIR__)/deps/DirichletBD")
-compile("$(@__DIR__)/deps/FemStiffness")
-compile("$(@__DIR__)/deps/Strain")
-compile("$(@__DIR__)/deps/StrainEnergy")
-compile("$(@__DIR__)/deps/SpatialFemStiffness")
+compile("$(@__DIR__)/DirichletBD")
+compile("$(@__DIR__)/FemStiffness")
+compile("$(@__DIR__)/Strain")
+compile("$(@__DIR__)/StrainEnergy")
+compile("$(@__DIR__)/SpatialFemStiffness")

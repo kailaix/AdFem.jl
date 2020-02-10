@@ -12,3 +12,4 @@ test/*.png
 test/*.gif
 .vscode/*
 deps/ADLaw
+!*CMakeLists.txt
