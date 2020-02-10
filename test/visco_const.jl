@@ -8,7 +8,7 @@ np = pyimport("numpy")
 
 λ = 0.0
 μ = 0.5
-η = Inf
+η = 0.1 # change η to +∞ for linear elasticity 
 
 β = 1/4; γ = 1/2
 a = b = 0.1
@@ -28,6 +28,11 @@ for j = 1:n+1
   push!(bdnode, (j-1)*(m+1)+1)
 end
 
+mvnode = Int64[]
+for j = 1:n+1
+  push!(mvnode, (j-1)*(m+1)+m+1)
+end
+
 G = [1/Δt+μ/η -μ/3η 0.0
   -μ/3η 1/Δt+μ/η-μ/3η 0.0
   0.0 0.0 1/Δt+μ/η]
@@ -45,7 +50,7 @@ K = compute_fem_stiffness_matrix(H, m, n, h)
 C = a*M + b*K # damping matrix 
 
 L = M + γ*Δt*C + β*Δt^2*K
-L, Lbd = fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
+L, Lbd = fem_impose_Dirichlet_boundary_condition(L, [bdnode;mvnode], m, n, h)
 
 a = zeros(2(m+1)*(n+1))
 v = zeros(2(m+1)*(n+1))
@@ -55,26 +60,28 @@ Sigma = zeros(NT+1, 4m*n, 3)
 Varepsilon = zeros(NT+1, 4m*n, 3)
 for i = 1:NT 
     global a, v, d
-    T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
-    T = [T zeros(length(T))]
-    rhs = compute_fem_traction_term(T, bdedge, m, n, h)
-
-    if i*Δt>3.0
-      rhs = zero(rhs)
-    end
+    rhs = zeros(2*(m+1)*(n+1)) # no external force
 
     F = compute_strain_energy_term(Sigma[i,:,:]*invG/Δt, m, n, h) - K * U[:,i]
-    # @show norm(compute_strain_energy_term(Sigma[i,:,:]*invG/Δt, m, n, h)), norm(K * U[:,i])
     rhs -= Δt^2 * F
 
     td = d + Δt*v + Δt^2/2*(1-2β)*a 
+
     tv = v + (1-γ)*Δt*a 
+    tv[mvnode] .= 0.01
+    tv[mvnode.+(m+1)*(n+1)] .= 0.0
+    
     rhs = rhs - C*tv - K*td
-    rhs[[bdnode; bdnode.+(m+1)*(n+1)]] .= 0.0
+    rhs[[bdnode; mvnode; bdnode.+(m+1)*(n+1); mvnode.+(m+1)*(n+1)]] .= 0.0
+
 
     a = L\rhs 
     d = td + β*Δt^2*a 
     v = tv + γ*Δt*a 
+
+    v[mvnode] .= 0.01
+    v[mvnode.+(m+1)*(n+1)] .= 0.0
+
     U[:,i+1] = d
 
     Varepsilon[i+1,:,:] = eval_strain_on_gauss_pts(U[:,i+1], m, n, h)
@@ -82,7 +89,7 @@ for i = 1:NT
 end
 
 
-visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
+# visualize_scattered_displacement(U, m, n, h; name = "_viscoelasticity", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
 # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
 # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 
@@ -105,4 +112,4 @@ idx = 4*(div(n,2)*m + m)
 plot((0:NT)*Δt, Varepsilon[:,idx,1])
 xlabel("time")
 ylabel("\$\\varepsilon_{xx}\$")
-savefig("visco_eta$η.png")
+savefig("visco.png")
