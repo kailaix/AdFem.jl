@@ -26,3 +26,16 @@ function compute_strain_energy_term(S::PyObject,m::Int64, n::Int64, h::Float64)
     out.set_shape(2*(m+1)*(n+1))
     out
 end
+
+"""
+    eval_strain_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel.
+"""
+function eval_strain_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
+    strain_op_ = load_op_and_grad("$(@__DIR__)/../deps/Strain/build/libStrainOp","strain_op")
+    u,m,n,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
+    out = strain_op_(u,m,n,h)
+    out.set_shape((4*m*n, 3))
+    out 
+end
