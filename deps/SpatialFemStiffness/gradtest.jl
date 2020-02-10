@@ -26,7 +26,7 @@ for i = 1:m
 end
 u = spatial_fem_stiffness(Ds,m,n,h)
 sess = Session(); init(sess)
-@show run(sess, u);
+run(sess, u);
 
 # uncomment it for testing gradients
 # error() 
@@ -40,7 +40,7 @@ function scalar_function(m_)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(Ds)
+m_ = constant(rand(size(Ds)...))
 v_ = rand(4*m*n,3,3)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
