@@ -1,0 +1,6 @@
+StrainEnergy
+double sigma(?,3)
+int32 m()
+int32 n()
+double h()
+double out(?) -> output 

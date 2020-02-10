@@ -926,7 +926,7 @@ function compute_strain_energy_term(S::Array{Float64, 2}, m::Int64, n::Int64, h:
             for p = 1:2
                 for q = 1:2
                     idx = 2(q-1) + p
-                    f[dof] += (σ[p,:]' * B[idx,:,:])[:]*0.25*h^2 # length 8 vector
+                    f[dof] += (σ[idx,:]' * B[idx,:,:])[:]*0.25*h^2 # length 8 vector
                 end
             end
         end

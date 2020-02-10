@@ -13,3 +13,16 @@ function compute_fem_stiffness_matrix(hmat::PyObject, m::Int64, n::Int64, h::Flo
     SparseTensor(ii, jj, vv, 2(m+1)*(n+1), 2(m+1)*(n+1))
     # ii, jj, vv
 end
+
+"""
+    compute_strain_energy_term(S::PyObject,m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel. 
+"""
+function compute_strain_energy_term(S::PyObject,m::Int64, n::Int64, h::Float64)
+    strain_energy_ = load_op_and_grad("$(@__DIR__)/../deps/StrainEnergy/build/libStrainEnergy","strain_energy")
+    sigma,m,n,h = convert_to_tensor([S,m,n,h], [Float64,Int32,Int32,Float64])
+    out = strain_energy_(sigma,m,n,h)
+    out.set_shape(2*(m+1)*(n+1))
+    out
+end
