@@ -4,19 +4,20 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using SparseArrays
+using MAT
 np = pyimport("numpy")
 
-λ = 0.0
+λ = 2.0
 μ = 0.5
-η = Inf
+η = 0.1
 
 β = 1/4; γ = 1/2
 a = b = 0.1
-m = 40
-n = 20
+m = 20
+n = 10
 h = 0.01
-NT = 200
-Δt = 5/NT 
+NT = 10
+Δt = 1/NT 
 bdedge = []
 for j = 1:n 
   push!(bdedge, [(j-1)*(m+1)+m+1 j*(m+1)+m+1])
@@ -47,6 +48,19 @@ C = a*M + b*K # damping matrix
 L = M + γ*Δt*C + β*Δt^2*K
 L, Lbd = fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
 
+Forces = zeros(NT, 2(m+1)*(n+1))
+for i = 1:NT
+  T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
+  T = [T zeros(length(T))]
+  rhs = compute_fem_traction_term(T, bdedge, m, n, h)
+
+  if i*Δt>0.5
+    rhs = zero(rhs)
+  end
+  Forces[i, :] = rhs
+end
+
+
 a = zeros(2(m+1)*(n+1))
 v = zeros(2(m+1)*(n+1))
 d = zeros(2(m+1)*(n+1))
@@ -54,18 +68,11 @@ U = zeros(2(m+1)*(n+1),NT+1)
 Sigma = zeros(NT+1, 4m*n, 3)
 Varepsilon = zeros(NT+1, 4m*n, 3)
 for i = 1:NT 
+  @info i 
     global a, v, d
-    T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
-    T = [T zeros(length(T))]
-    rhs = compute_fem_traction_term(T, bdedge, m, n, h)
-
-    if i*Δt>3.0
-      rhs = zero(rhs)
-    end
-
     F = compute_strain_energy_term(Sigma[i,:,:]*invG/Δt, m, n, h) - K * U[:,i]
     # @show norm(compute_strain_energy_term(Sigma[i,:,:]*invG/Δt, m, n, h)), norm(K * U[:,i])
-    rhs -= Δt^2 * F
+    rhs = Forces[i,:] - Δt^2 * F
 
     td = d + Δt*v + Δt^2/2*(1-2β)*a 
     tv = v + (1-γ)*Δt*a 
@@ -81,8 +88,10 @@ for i = 1:NT
     Sigma[i+1,:,:] = Sigma[i,:,:]*invG/Δt +  (Varepsilon[i+1,:,:]-Varepsilon[i,:,:])*(invG*S)
 end
 
+matwrite("U.mat", Dict("U"=>U'|>Array))
 
-visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
+
+# visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
 # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
 # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 
