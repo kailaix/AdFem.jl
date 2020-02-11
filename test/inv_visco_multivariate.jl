@@ -10,6 +10,7 @@ np = pyimport("numpy")
 # mode = "data" generate data 
 # mode != "data" train 
 mode = "train"
+# mode = "data"
 
 
 β = 1/4; γ = 1/2
@@ -17,8 +18,10 @@ a = b = 0.1
 m = 20
 n = 10
 h = 0.01
-NT = 50
-Δt = 2/NT 
+NT = 500
+Δt = 20/NT
+ηmax = 1
+ηmin = 0.5
 bdedge = []
 for j = 1:n 
   push!(bdedge, [(j-1)*(m+1)+m+1 j*(m+1)+m+1])
@@ -36,8 +39,9 @@ end
 
 function eta_model(idx)
   if idx == 1
-    out = 11.0*ones(4, m, n)
-    out[:, :, 1:div(n,3)] .= 12.0
+    out = ηmin * ones(4, m, n)
+    out[:, :, 1:div(n,3)] .= ηmax
+    # out[:, 1:div(m,3), :] .= 12.0
     # out[:, :, div(n,3)*2:end] .= 8.0
     out[:]
   elseif idx == 2
@@ -66,12 +70,12 @@ function visualize_inv_eta(X, k)
         end
     end
     close("all")
-    pcolormesh(x, y, V', vmin=5.0, vmax=15.0)
-    colorbar()
+    pcolormesh(x, y, V', vmin=ηmin-(ηmax-ηmin)/4, vmax=ηmax+(ηmax-ηmin)/4)
+    colorbar(shrink=0.5)
     xlabel("x")
     ylabel("y")
     title("Iteration = $k")
-    axis("equal")
+    axis("scaled")
     gca().invert_yaxis()
     savefig("iter$k.png")
 end
@@ -81,7 +85,28 @@ end
 if mode=="data"
   global invη = constant(eta_model(1))
 else
-    global invη_ = Variable(10.0*ones(4*m*n))
+    # global invη_ = Variable(10.0*ones(4*m*n))
+
+    # invη1d_ = Variable(10*ones(2m))
+    # invη_ = repeat(invη1d_, 1, 2)[:]
+    # global invη_ = repeat(invη_, n)
+
+    invη_ = Variable((ηmin + ηmax)/2*ones(n))
+    # invη1d_ = repeat(invη1d_, 1, 2)[:]
+    invη_ = tf.reshape(repeat(invη_, 1, 4m), (-1,))
+    # invη_ = repeat(invη_, m)
+    # global invη_ = tf.transpose(invη2d_)[:]
+    global invη_ = invη_
+
+    # invη1d_ = Variable(10*ones(1,2m))
+    # invη_ = repeat(invη1d_, 2, 1)[:]
+    # global invη_ = repeat(invη_, n, 1)
+
+    # invη1d_ = Variable(10*ones(1,2n))
+    # invη_ = repeat(invη1d_, 2, 1)[:]
+    # global invη_ = repeat(invη_, m, 1)
+
+
     # global invη = repeat(invη_, 1, 4)[:]
     # global invη = [invη_[1] * ones(2*m*n); invη_[2] * ones(2*m*n)]
 
@@ -198,8 +223,13 @@ if mode!="data"
   Sigma = map(x->x[idx0,:], Sigma)
 
   idx = 1:m+1
-  global loss = sum((U - Uval)^2)  + 
-                sum((Sigma - Sigmaval[:, idx0, :])^2) #+ sum((Varepsilon - Varepsilonval)^2)
+  # idx = [idx; idx .+ (m+1)*(n+1)]
+  # global loss = sum((U[:,idx] - Uval[:,idx])^2)  + sum((Sigma - Sigmaval[:, idx0, :])^2) #+ sum((Varepsilon - Varepsilonval)^2)
+  # global loss = sum((U - Uval)^2)  + sum((Sigma - Sigmaval[:, idx0, :])^2) #+ sum((Varepsilon - Varepsilonval)^2)
+  # global loss = sum((U[:,idx] - Uval[:,idx])^2) #+ sum((Varepsilon - Varepsilonval)^2)
+  # global loss = sum((U - Uval)^2) 
+  global loss = sum((U[NT÷2:end, :] - Uval[NT÷2:end, :])^2) 
+  # global loss = sum((Sigma - Sigmaval[:, idx0, :])^2)
 end
 
 # opt = AdamOptimizer(0.1).minimize(loss)
@@ -220,18 +250,44 @@ if mode=="data"
     figure(figsize=(15,5))
     subplot(1,3,1)
     idx = div(n,2)*(m+1) + m+1
+    plot((NT÷2-1:NT)*Δt, Uval[NT÷2:end, idx])
+    # plot((0:NT)*Δt, Uval[:, idx])
+    xlabel("time")
+    ylabel("\$u_x\$")
+
+    subplot(1,3,2)
+    idx = 4*(div(n,2)*m + m)
+    plot((NT÷2-1:NT)*Δt, Sigmaval[NT÷2:end,idx,1])
+    # plot((0:NT)*Δt, Sigmaval[:,idx,1])
+    xlabel("time")
+    ylabel("\$\\sigma_{xx}\$")
+
+    subplot(1,3,3)
+    idx = 4*(div(n,2)*m + m)
+    plot((NT÷2-1:NT)*Δt, Varepsilonval[NT÷2:end,idx,1])
+    # plot((0:NT)*Δt, Varepsilonval[:,idx,1])
+    xlabel("time")
+    ylabel("\$\\varepsilon_{xx}\$")
+    savefig("visco_eta_zoom.png")
+
+    figure(figsize=(15,5))
+    subplot(1,3,1)
+    idx = div(n,2)*(m+1) + m+1
+    # plot((NT÷2-1:NT)*Δt, Uval[NT÷2:end, idx])
     plot((0:NT)*Δt, Uval[:, idx])
     xlabel("time")
     ylabel("\$u_x\$")
 
     subplot(1,3,2)
     idx = 4*(div(n,2)*m + m)
+    # plot((NT÷2-1:NT)*Δt, Sigmaval[NT÷2:end,idx,1])
     plot((0:NT)*Δt, Sigmaval[:,idx,1])
     xlabel("time")
     ylabel("\$\\sigma_{xx}\$")
 
     subplot(1,3,3)
     idx = 4*(div(n,2)*m + m)
+    # plot((NT÷2-1:NT)*Δt, Varepsilonval[NT÷2:end,idx,1])
     plot((0:NT)*Δt, Varepsilonval[:,idx,1])
     xlabel("time")
     ylabel("\$\\varepsilon_{xx}\$")
@@ -247,7 +303,7 @@ v_ = []
 i_ = []
 l_ = []
 
-loss_ = BFGS!(sess, loss, vars=[invη], callback=cb, var_to_bounds=Dict(invη_=>(5.0,15.0)))
+loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_=>(5.0,15.0)))
 # matwrite("R.mat", Dict("V"=>v_, "L"=>l_))
 
 # for i = 1:1000
