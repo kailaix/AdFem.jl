@@ -52,9 +52,9 @@ We implement the forward simulation using finite element analysis discretization
 
 We formulate the loss function as the discrepancy between observations and predictions
 
-$$\mathcal{J}(\eta) = \sum_{i=1}^{N_T} \sum_{k=1}^{m+1} (\mathbf{u}_{ik}^{\mathrm{obs}}- \mathbf{u}_i(x_k, 0))$$
+$$\mathcal{J}(\eta) = \sum_{i=1}^{N_T} \sum_{k=1}^{m+1} (\mathbf{u}_{ik}^{\mathrm{obs}}- \mathbf{u}_i(x_k, 0))^2$$
 
-Unlike the linear elasticity case, in the viscoelasticity case, the stress is time dependent. Therefore, when we calculate the gradients $\frac{\partial\mathcal{J}}{\partial \eta}$, the state variables are both $\mathbf{u}$ and $\bm{\sigma}$. Additionally, in each time step, since we have used an implicit scheme, we need to solve an equation 
+Unlike the linear elasticity case, in the viscoelasticity case, the stress is history-dependent. Therefore, when we calculate the gradients $\frac{\partial\mathcal{J}}{\partial \eta}$, the state variables are both $\mathbf{u}$ and $\bm{\sigma}$. Additionally, in each time step, since we have used an implicit scheme, we need to solve an equation 
 
 $$A(\eta, \bm{\sigma}^{n+1}) \mathbf{u}^{n+1} = \mathbf{f}(\bm{\sigma}^n, \mathbf{u}^{n})$$ 
 
@@ -93,7 +93,7 @@ The highlights of the implementation are
 
 - `while_loop`. `while_loop` mechanism allows us to create only one computational graph for all the iterations. This is essential for simulations that span large time horizons. Fortunately, TensorFlow offers this functionality. 
 
-- Custom sparse solver. We have used [custom sparse solvers](https://kailaix.github.io/ADCME.jl/dev/api/#Base.:\) in `ADCME`, which uses Eigen `SparseLU` as the backend. The sparse solver is the key for efficient implementation of physics constrained learning; otherwise, direct implementation in TensorFlow will convert the sparse matrix to dense and then invokes BLAS libraries. 
+- Custom sparse solver. We have used [custom sparse solvers](https://kailaix.github.io/ADCME.jl/dev/api/#Base.:\) in `ADCME`, which uses Eigen `SparseLU` as the backend. The sparse solver is the key for efficient implementation of physics constrained learning; otherwise, direct implementation in TensorFlow will convert the sparse matrix to dense and then invoke BLAS libraries. 
 
 ```julia
 using Revise
