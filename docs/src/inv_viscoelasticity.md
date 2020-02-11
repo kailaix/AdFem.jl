@@ -3,7 +3,7 @@
 
 ## Viscoelastic model based with Maxwell material:
 
-- Momentum balance equation:
+- Momentum balance:
 
 $$\sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
 
@@ -15,10 +15,10 @@ $$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}
 
 $$\bm{\sigma} \mathbf{n} = \mathbf{t}$$
 
-$$\begin{align}
+&&\begin{aligned}
 \mathbf{t} &= 0 & \mbox{Top or Bottom} \\ 
 \mathbf{t} &= [-T, 0] & \mbox{Right}
-\end{align}$$
+\end{aligned}&&
 
 $$u=0 \ \mbox{Left}$$
 
