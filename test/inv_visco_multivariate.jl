@@ -9,16 +9,19 @@ np = pyimport("numpy")
 
 # mode = "data" generate data 
 # mode != "data" train 
-mode = "train"
-# mode = "data"
+# mode = "train"
+mode = "data"
 
-
+## alpha-scheme
 β = 1/4; γ = 1/2
 a = b = 0.1
+
+
 m = 20
 n = 10
 h = 0.01
 NT = 500
+it0 = NT÷2
 Δt = 20/NT
 ηmax = 1
 ηmin = 0.5
@@ -74,7 +77,8 @@ function visualize_inv_eta(X, k)
     colorbar(shrink=0.5)
     xlabel("x")
     ylabel("y")
-    title("Iteration = $k")
+    # title("Iteration = $k")
+    title("True model")
     axis("scaled")
     gca().invert_yaxis()
     savefig("iter$k.png")
@@ -181,9 +185,11 @@ function body(i, tas...)
   Sigma = read(Sigma_, i)
   Varepsilon = read(Varepsilon_, i)
 
+  # Sigma * (invG/Δt) Sigma 800x3, invG/Δt: 800x3x3
   res = squeeze(tf.matmul(tf.reshape(Sigma, (size(Sigma,1), 1, 3)),(invG/Δt)))
   F = compute_strain_energy_term(res, m, n, h) - K * U
   rhs = Forces[i] - Δt^2 * F
+
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
   tv = v + (1-γ)*Δt*a 
   rhs = rhs - C*tv - K*td
@@ -192,6 +198,8 @@ function body(i, tas...)
 
   rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
 
+
+  ## alpha-scheme
   a = L\rhs # bottleneck  
   d = td + β*Δt^2*a 
   v = tv + γ*Δt*a 
@@ -228,7 +236,8 @@ if mode!="data"
   # global loss = sum((U - Uval)^2)  + sum((Sigma - Sigmaval[:, idx0, :])^2) #+ sum((Varepsilon - Varepsilonval)^2)
   # global loss = sum((U[:,idx] - Uval[:,idx])^2) #+ sum((Varepsilon - Varepsilonval)^2)
   # global loss = sum((U - Uval)^2) 
-  global loss = sum((U[NT÷2:end, :] - Uval[NT÷2:end, :])^2) 
+  # global loss = sum((U[it0:end, :] - Uval[it0:end, :])^2) 
+  global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
   # global loss = sum((Sigma - Sigmaval[:, idx0, :])^2)
 end
 
@@ -247,50 +256,47 @@ if mode=="data"
     # # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 
     close("all")
-    figure(figsize=(15,5))
-    subplot(1,3,1)
-    idx = div(n,2)*(m+1) + m+1
-    plot((NT÷2-1:NT)*Δt, Uval[NT÷2:end, idx])
-    # plot((0:NT)*Δt, Uval[:, idx])
-    xlabel("time")
-    ylabel("\$u_x\$")
-
-    subplot(1,3,2)
-    idx = 4*(div(n,2)*m + m)
-    plot((NT÷2-1:NT)*Δt, Sigmaval[NT÷2:end,idx,1])
-    # plot((0:NT)*Δt, Sigmaval[:,idx,1])
-    xlabel("time")
-    ylabel("\$\\sigma_{xx}\$")
-
-    subplot(1,3,3)
-    idx = 4*(div(n,2)*m + m)
-    plot((NT÷2-1:NT)*Δt, Varepsilonval[NT÷2:end,idx,1])
-    # plot((0:NT)*Δt, Varepsilonval[:,idx,1])
-    xlabel("time")
-    ylabel("\$\\varepsilon_{xx}\$")
-    savefig("visco_eta_zoom.png")
 
     figure(figsize=(15,5))
     subplot(1,3,1)
     idx = div(n,2)*(m+1) + m+1
-    # plot((NT÷2-1:NT)*Δt, Uval[NT÷2:end, idx])
+    # idx = (m+1)÷2
+    # plot((it0-1:NT)*Δt, Uval[it0:end, idx])
     plot((0:NT)*Δt, Uval[:, idx])
     xlabel("time")
     ylabel("\$u_x\$")
+    plt.gca().ticklabel_format(style="sci", scilimits=(0,0), axis="y")
+
+    ax = plt.gca().inset_axes([0.3, 0.2, 0.6, 0.7])
+    ax.plot((it0-1:NT)*Δt, Uval[it0:end, idx])
+    ax.ticklabel_format(style="sci", scilimits=(0,0), axis="y")
 
     subplot(1,3,2)
     idx = 4*(div(n,2)*m + m)
-    # plot((NT÷2-1:NT)*Δt, Sigmaval[NT÷2:end,idx,1])
+    # idx = (m+1)*2
+    # plot((it0-1:NT)*Δt, Sigmaval[it0:end,idx,1])
     plot((0:NT)*Δt, Sigmaval[:,idx,1])
     xlabel("time")
     ylabel("\$\\sigma_{xx}\$")
+    plt.gca().ticklabel_format(style="sci", scilimits=(0,0), axis="y")
+
+    ax = plt.gca().inset_axes([0.4, 0.1, 0.5, 0.5])
+    ax.plot((it0-1:NT)*Δt, Sigmaval[it0:end,idx,1])
+    ax.ticklabel_format(style="sci", scilimits=(0,0), axis="y")
 
     subplot(1,3,3)
     idx = 4*(div(n,2)*m + m)
-    # plot((NT÷2-1:NT)*Δt, Varepsilonval[NT÷2:end,idx,1])
+    # idx = (m+1)*2
+    # plot((it0-1:NT)*Δt, Varepsilonval[it0:end,idx,1])
     plot((0:NT)*Δt, Varepsilonval[:,idx,1])
     xlabel("time")
     ylabel("\$\\varepsilon_{xx}\$")
+    plt.gca().ticklabel_format(style="sci", scilimits=(0,0), axis="y")
+
+    ax = plt.gca().inset_axes([0.3, 0.2, 0.6, 0.7])
+    ax.plot((it0-1:NT)*Δt, Varepsilonval[it0:end,idx,1])
+    ax.ticklabel_format(style="sci", scilimits=(0,0), axis="y")
+
     savefig("visco_eta.png")
 
     cb([run(sess, invη)], "true", 0)
