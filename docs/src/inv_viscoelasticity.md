@@ -13,14 +13,16 @@ $$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}
 
 - Boundary conditions:
 
-$$\bm{\sigma} \mathbf{n} = \mathbf{t}$$
-
-&&\begin{aligned}
-\mathbf{t} &= 0 & \mbox{Top or Bottom} \\ 
-\mathbf{t} &= [-T, 0] & \mbox{Right}
-\end{aligned}&&
-
-$$u=0 \ \mbox{Left}$$
+$$
+\begin{aligned}
+\bm{\sigma} \mathbf{\hat{n}} &=
+\begin{cases}
+\mathbf{t} &= 0 & \text{Top or Bottom} \\ 
+\mathbf{t} &= [-T, 0] & \text{Right} \\
+\end{cases}  \\
+u &=0 \text{\hspace{3.1cm} Left} &
+\end{aligned}
+$$
 
 
 - The model consists of two layers of differnt vicosity. 
@@ -33,7 +35,7 @@ $$u=0 \ \mbox{Left}$$
 ![](./assets/visco/visco_time.png)
 
 
-## Inversion based on horizontal displacement ($x$) on the surface.
+## Inversion based on horizontal displacement $u_x$ on the surface.
 
 | True model                                     | Inverted result                                   | 
 | -----------------------------------------------| --------------------------------------------------| 
