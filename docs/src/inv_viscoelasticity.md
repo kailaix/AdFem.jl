@@ -10,7 +10,7 @@ In this example, we consider the Maxwell viscoelasticity model. The governing eq
 
 $$\sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
 
-- Constitutive Relation (Plane Stress Viscoelasticity):
+- Constitutive Relation (Plane Strain Viscoelasticity):
 
 $$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}$$
 
@@ -24,6 +24,8 @@ $$\begin{aligned}
 \end{cases}  \\
 \mathbf{u} &=0 \text{\hspace{3.1cm} Left} &
 \end{aligned}$$
+
+
 
 ![](./assets/visco1.png)
 
@@ -41,7 +43,7 @@ We assume that the Lamé constants $\lambda$ and $\mu$ are given. The viscosity 
 
 ## Forward simulation:
 
-We implement the forward simulation using $\alpha$-scheme, an implicit time stepping scheme that offers good stability and accuracy. We show the displacement in $x$ direction, the stress $\sigma_{xx}$ and the strain $\varepsilon_{xx}$ of the right middle point (red dot in the first graph in this section).  
+We implement the forward simulation using finite element analysis discretization and $\alpha$-scheme, an implicit time stepping scheme that offers good stability and accuracy. We show the displacement in $x$ direction, the stress $\sigma_{xx}$ and the strain $\varepsilon_{xx}$ of the right middle point (red dot in the first graph in this section).  
 
 ![](./assets/visco/visco_time.png)
 
@@ -52,18 +54,18 @@ We formulate the loss function as the discrepancy between observations and predi
 
 $$\mathcal{J}(\eta) = \sum_{i=1}^{N_T} \sum_{k=1}^{m+1} (\mathbf{u}_{ik}^{\mathrm{obs}}- \mathbf{u}_i(x_k, 0))$$
 
-Unlike the linear elasticity case, in the viscoelasticity case the stress is time dependent. Therefore, when we calculate the gradients $\frac{\mathcal{J}}{\partial \eta}$ the state variables are $\mathbf{u}$ and $\bm{\sigma}$. Additionally, in each time step, since we have used an implicit scheme, we need to solve an equation 
+Unlike the linear elasticity case, in the viscoelasticity case, the stress is time dependent. Therefore, when we calculate the gradients $\frac{\partial\mathcal{J}}{\partial \eta}$, the state variables are both $\mathbf{u}$ and $\bm{\sigma}$. Additionally, in each time step, since we have used an implicit scheme, we need to solve an equation 
 
 $$A(\eta, \bm{\sigma}^{n+1}) \mathbf{u}^{n+1} = \mathbf{f}(\bm{\sigma}^n, \mathbf{u}^{n})$$ 
 
 The state adjoint method requires us to compute the gradients of 
 
-$$\mathbf{u}^{n+1} = A(\eta, \bm{\sigma}^{n+1})^{-1} \mathbf{f}(\bm{\sigma}^n, \mathbf{u}^{n})\tag{1}$$
+$$\mathbf{u}^{n+1}(\bm{\sigma}^n, \eta, \mathbf{u}^{n}) = A(\eta, \bm{\sigma}^{n+1})^{-1} \mathbf{f}(\bm{\sigma}^n, \mathbf{u}^{n})\tag{1}$$
 
 with respect to $\bm{\sigma}^n$, $\eta$ and $\mathbf{u}^{n}$. 
 
 
-Surprisingly, the seemingly complex formula (1) admits a simple implementation using automatic differentiation (of course a special technique called physics constrained learning is needed). Only the gradients $\frac{\mathcal{J}}{\partial \eta}$ is computed, the inversion problem can be solved using gradient-based optimization techniques (e.g., LBFGS).
+Surprisingly, the seemingly complex formula (1) admits a simple implementation using automatic differentiation (of course a special technique called **physics constrained learning** is needed). Once the gradients $\frac{\partial\mathcal{J}}{\partial \eta}$ is computed, the inversion problem can be solved using gradient-based optimization techniques (e.g., LBFGS).
 
 
 ![](./assets/gd.jpeg)
@@ -87,11 +89,11 @@ We also show the inversion results in each iteration:
 The highlights of the implementation are
 
 
-- $\alpha$-scheme for time stepping. A stable scheme is important for inversion since we need to try out different parameters, which may crash the simulation if the scheme is sensitive to physical parameters. Therefore, we chose the $\alpha$ scheme, which is an implicit scheme that offers satisfactory stability. 
+- The $\alpha$-scheme for time stepping. A stable scheme is important for inversion since we need to try out different parameters, which may crash the simulation if the scheme is sensitive to physical parameters. Therefore, we chose the $\alpha$ scheme, which is an implicit scheme that offers satisfactory stability. 
 
-- `while_loop`. `while_loop` mechanism allows us to create only one computational graph for all the iterations. This is essential for simulations that span large time horizons. Currently, this is  only possible using TensorFlow backend. 
+- `while_loop`. `while_loop` mechanism allows us to create only one computational graph for all the iterations. This is essential for simulations that span large time horizons. Fortunately, TensorFlow offers this functionality. 
 
-- Custom sparse solver. We have used custom sparse solvers in `ADCME`, which uses Eigen `SparseLU` as the backend. The sparse solver is the key for efficient implementation of physics constrained learning; otherwise, direct implementation in TensorFlow will convert the sparse matrix to dense and then invokes BLAS libraries. 
+- Custom sparse solver. We have used [custom sparse solvers](https://kailaix.github.io/ADCME.jl/dev/api/#Base.:\) in `ADCME`, which uses Eigen `SparseLU` as the backend. The sparse solver is the key for efficient implementation of physics constrained learning; otherwise, direct implementation in TensorFlow will convert the sparse matrix to dense and then invokes BLAS libraries. 
 
 ```julia
 using Revise
