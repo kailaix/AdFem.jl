@@ -41,7 +41,7 @@ We assume that the Lamé constants $\lambda$ and $\mu$ are given. The viscosity 
 
 
 
-## Forward simulation:
+## Forward simulation
 
 We implement the forward simulation using finite element analysis discretization and $\alpha$-scheme, an implicit time stepping scheme that offers good stability and accuracy. We show the displacement in $x$ direction, the stress $\sigma_{xx}$ and the strain $\varepsilon_{xx}$ of the right middle point (red dot in the first graph in this section).  
 
