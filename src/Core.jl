@@ -657,7 +657,7 @@ end
 @doc raw"""
     compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64, h::Float64)
 
-`Se` is a $4mn \times 3$ array that stores the stress data at each Gauss point. 
+`Se` is a $4mn\times3$ array that stores the stress data at each Gauss point. 
 """
 function compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64, h::Float64)
     pval = Float64[]
@@ -849,7 +849,7 @@ end
     eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
 
 Computes the strain on Gauss points. 
-Returns a $4mn \times 3$ matrix, where each row denotes $(\varepsilon_{11}, \varepsilon_{22}, 2\varepsilon_{12})$
+Returns a $4mn\times3$ matrix, where each row denotes $(\varepsilon_{11}, \varepsilon_{22}, 2\varepsilon_{12})$
 at the corresponding Gauss point. 
 """
 function eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
