@@ -33,7 +33,11 @@ compute_strain_energy_term
 
 Computes the term 
 ```math
-\int_{A}\delta \varepsilon :\sigma'\mathrm{d}x = \int_A u_AB^TKB\delta u_A\mathrm{d}x
+\int_{A}\delta \varepsilon :\sigma\mathrm{d}x = \int_A u_AB^TKB\delta u_A\mathrm{d}x
+```
+where the constitutive relation is given by 
+```math 
+\begin{bmatrix}\sigma_{xx}\\\sigma_{yy}\\\sigma_{xy}\end{bmatrix} = K \begin{bmatrix}\varepsilon_{xx}\\\varepsilon_{yy}\\2\varepsilon_{xy}\end{bmatrix}
 ```
 """
 function compute_fem_stiffness_matrix(K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)

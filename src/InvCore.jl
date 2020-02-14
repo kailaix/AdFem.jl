@@ -19,9 +19,9 @@ end
 @doc raw"""
     compute_fem_stiffness_matrix(hmat::PyObject,m::Int64, n::Int64, h::Float64)
 
-A differentiable kernel. `hmat` is either 
+A differentiable kernel. `hmat` has one of the following sizes 
 - $3\times 3$
-- $mn \times 3 \times 3$ 
+- $4mn \times 3 \times 3$ 
 """
 function compute_fem_stiffness_matrix(hmat::PyObject, m::Int64, n::Int64, h::Float64)
     if length(size(hmat))==2

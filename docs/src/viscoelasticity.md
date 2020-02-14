@@ -1,7 +1,6 @@
 #  Viscoelasticity
 
 
-
 ## Viscoelasticity Theory
 
 To describe the viscoelasticity, we need to relate both the viscosity strain $\varepsilon^{vp}$ and the elasticity strain $\varepsilon^e$ to the stress $\sigma$. The latter is given by 
@@ -47,11 +46,55 @@ For high dimensional case, assume that the bulk modulus is $K$, then we have [^l
 
 We consider the two dimensional Maxwell material
 
-$$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}$$
+$$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}\tag{1}$$
 
 along with the balance of linear momentum equation
 
 $$\sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
+
+
+We use the implicit discretization for Eq. (1) 
+```math
+\begin{bmatrix}
+1 + \frac{2}{3}\frac{\mu\Delta t}{\eta} & -\frac{1}{3}\frac{\mu\Delta t}{\eta} & 0\\
+-\frac{1}{3}\frac{\mu\Delta t}{\eta} & 1 + \frac{2}{3}\frac{\mu\Delta t}{\eta} & 0 \\
+0 & 0 & 1 + \frac{\mu\Delta t}{\eta}
+\end{bmatrix}
+\begin{bmatrix}
+	\sigma_{xx}^{n+1}\\
+	\sigma_{yy}^{n+1}\\
+	\sigma_{xy}^{n+1}
+\end{bmatrix} = \begin{bmatrix}
+	\sigma_{xx}^{n}\\
+	\sigma_{yy}^{n}\\
+	\sigma_{xy}^{n}
+\end{bmatrix}  + \begin{bmatrix}
+	2\mu+\lambda & \lambda & 0\\
+	\lambda & 2\mu+\lambda & 0\\
+	0 & 0 & \mu 
+\end{bmatrix}\begin{bmatrix}
+	\varepsilon_{xx}^{n}\\
+	\varepsilon_{yy}^{n}\\
+	\varepsilon_{xy}^{n}
+\end{bmatrix}
+```
+or in a simpler form
+
+$$\sigma^{n+1} = H \varepsilon^{n+1} + S \sigma^n  - H\varepsilon^n$$
+
+Here $S$ and $H$ are defined as 
+
+$$S = \begin{bmatrix}
+1 + \frac{2}{3}\frac{\mu\Delta t}{\eta} & -\frac{1}{3}\frac{\mu\Delta t}{\eta} & 0\\
+-\frac{1}{3}\frac{\mu\Delta t}{\eta} & 1 + \frac{2}{3}\frac{\mu\Delta t}{\eta} & 0 \\
+0 & 0 & 1 + \frac{\mu\Delta t}{\eta}
+\end{bmatrix}^{-1}$$
+
+$$S^{-1}\begin{bmatrix}
+	2\mu+\lambda & \lambda & 0\\
+	\lambda & 2\mu+\lambda & 0\\
+	0 & 0 & \mu 
+\end{bmatrix}$$
 
 The parameters used in the simulation are
 
