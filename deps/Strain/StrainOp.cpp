@@ -91,7 +91,7 @@ public:
     int m_ = *m_tensor, n_ = *n_tensor;
     double h_ = *h_tensor;
     TensorShape strain_shape({4*m_*n_,3});
-    DCHECK_EQ(u_shape.dim_size(0), 2*(m_+1)*(n_+1));
+    DCHECK_GE(u_shape.dim_size(0), 2*(m_+1)*(n_+1));
             
     // create output tensor
     

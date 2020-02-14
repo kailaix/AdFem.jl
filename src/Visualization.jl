@@ -10,16 +10,18 @@ function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
     vmin = minimum(U[2(m+1)*(n+1)+1:end,:])
     vmax = maximum(U[2(m+1)*(n+1)+1:end,:])
     NT = size(U,2)
-    X, Y = np.meshgrid((1:n)*h .-0.5h,(1:m)*h .-0.5h)
+    x1 = LinRange(0.0,m*h,m)|>collect
+    y1 = LinRange(0.0,n*h,n)|>collect
     for k in Int64.(round.(LinRange(1, NT, 20)))
         close("all")
-        pcolormesh(X, Y, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', vmin=vmin,vmax=vmax)
+        pcolormesh(x1, y1, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', vmin=vmin,vmax=vmax)
         # scatter( (1:m)*h .-0.5*h, div(n,3) * ones(n) * h .-0.5h, marker="^", color="r")
         colorbar()
         k_ = string(k)
         k_ = repeat("0", 3-length(k_))*k_
         title("snapshot = $k_")
-        contour((1:n)*h .-0.5h,(1:m)*h .-0.5h, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', 10, cmap="jet")
+        contour(x1, y1, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', 10, cmap="jet")
+        axis("equal")
         gca().invert_yaxis()
         savefig("__p$k_.png")
     end
@@ -125,11 +127,19 @@ Visualizes the Von Mises stress. `Se` is the Von Mises at the cell center.
 function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
     NT = size(Se,2)
 
-    x1 = LinRange(0.5h,n*h,n)|>collect
-    y1 = LinRange(0.5h,m*h,m)|>collect
+    x1 = LinRange(0.5h,m*h,m)|>collect
+    y1 = LinRange(0.5h,n*h,n)|>collect
     X1, Y1 = np.meshgrid(x1,y1)
 
     S = zeros(20, n, m)
+
+    if size(Se, 1)==4*m*n 
+        Sep = zeros(m*n, NT)
+        for k = 1:NT 
+            Sep[:,k] = mean([Se[1:4:end, k], Se[2:4:end, k], Se[3:4:end, k], Se[4:4:end, k]])
+        end
+        Se = Sep
+    end
 
     for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
         S[ix,:,:] = reshape(Se[:,k], m, n)'
@@ -147,6 +157,7 @@ function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
         k_ = repeat("0", 3-length(k_))*k_
         title("snapshot = $k_")
         contour(X1, Y1, Z, 10, cmap="jet")
+        axis("equal")
         gca().invert_yaxis()
         savefig("__s$k_.png")
     end
@@ -168,7 +179,7 @@ function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int
             
     for (i,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
         close("all")
-        scatter(x+U[1:(m+1)*(n+1), i], y+U[(m+1)*(n+1)+1:end, i])
+        scatter(x+U[1:(m+1)*(n+1), i], y+U[(m+1)*(n+1)+1:2(m+1)*(n+1), i])
         xlabel("x")
         ylabel("y")
         k = string(i)
@@ -177,10 +188,14 @@ function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int
         # if !isnothing(xlim_)
              
         # end
-        # axis("equal")
+        axis("equal")
         gca().invert_yaxis()
-        xlim(xlim_...)
-        ylim(ylim_...)
+        if !isnothing(xlim_)
+            xlim(xlim_...)
+        end
+        if !isnothing(ylim_)
+            ylim(ylim_...)
+        end
         
         
         savefig("__Scattered$i.png")
