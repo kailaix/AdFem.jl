@@ -127,14 +127,14 @@ function get_disp(ipval)
 
     idx = 1:m+1
     ux_disp = u_out[:, idx]
-    ux_disp, u_out
+    ux_disp, u_out, σ_out
 end
 
 disps = []
 for i = 1:5
     push!(disps, get_disp(0.2*i)[1])
 end
-_, test_disp = get_disp(0.5)
+_, test_disp, test_sigma = get_disp(0.5)
 
 if occursin("training", mode)
     @load "invdata.jld2" Udata_
@@ -147,9 +147,10 @@ if mode=="data"
     Udata_ = run(sess, disps)
     @save "invdata.jld2" Udata_
     @show run(sess, [H,S])
-    TDISP = run(sess, test_disp)
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_tfinv_visco_ref", 
+    TDISP, Sigma = run(sess, [test_disp, test_sigma])
+    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_ref", 
                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_ref")
 else
     # @show run(sess, gradients(loss, invη))
     BFGS!(sess, loss, 500)
@@ -158,9 +159,10 @@ else
     #     @show i, l , e
     # end
 
-    TDISP = run(sess, test_disp)
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_tfinv_visco", 
+    TDISP, Sigma = run(sess, [test_disp, test_sigma])
+    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test", 
                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test")
 end
 
 

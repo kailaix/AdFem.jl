@@ -169,9 +169,12 @@ end
 
 Visualizes the Von Mises stress. 
 """
-function visualize_von_mises_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
-    Se = compute_von_mises_stress_term(Se)
-    visualize_stress(Se, m, n, h; name = name)
+function visualize_von_mises_stress(Se::Array{Float64, 3}, m::Int64, n::Int64, h::Float64; name::String="")
+    S = zeros(size(Se, 1), m*n)
+    for i = 1:size(Se, 1)
+        S[i,:] = compute_von_mises_stress_term(Se[i,:,:], m, n, h)
+    end
+    visualize_stress(S'|>Array, m, n, h; name = name)
 end
 
 function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 

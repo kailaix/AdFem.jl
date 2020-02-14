@@ -654,10 +654,10 @@ function compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::
     return pval
 end
 
-"""
+@doc raw"""
     compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64, h::Float64)
 
-`Se` is a $4mn \\times 3$ array that stores the stress data at each Gauss point. 
+`Se` is a $4mn \times 3$ array that stores the stress data at each Gauss point. 
 """
 function compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64, h::Float64)
     pval = Float64[]
