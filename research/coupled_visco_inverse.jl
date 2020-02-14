@@ -4,11 +4,12 @@ using PyCall
 using LinearAlgebra
 using ADCME
 using MAT
+using JLD2
 using PyPlot
 np = pyimport("numpy")
 
 
-mode = "training"
+mode = "data"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -31,44 +32,52 @@ invη = 1.0
 μ = constant(0.5)
 invη = constant(invη)
 
-if mode=="training"
+if mode=="training1"
     global invη = Variable(10.0)
 end
 
 
-
-function get_disp(ipval)
-    iS = tensor(
+iS = tensor(
         [1+2/3*μ*Δt*invη -1/3*μ*Δt*invη 0.0
         -1/3*μ*Δt*invη 1+2/3*μ*Δt*invη 0.0 
         0.0 0.0 1+μ*Δt*invη]
     )
-    S = inv(iS)
-    H = S * tensor([
-        2μ+λ λ 0.0
-        λ 2μ+λ 0.0
-        0.0 0.0 μ
-    ])
+S = inv(iS)
+H = S * tensor([
+    2μ+λ λ 0.0
+    λ 2μ+λ 0.0
+    0.0 0.0 μ
+])
 
-    Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
-    K = compute_fem_stiffness_matrix(H, m, n, h)
-    L = SparseTensor(compute_interaction_matrix(m, n, h))
-    M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
-    A = [K -b*L'
-    b*L/Δt 1/Δt*M-Q]
-    A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
-    # error()
-    U = zeros(m*n+2(m+1)*(n+1), NT+1)
-    x = Float64[]; y = Float64[]
-    for j = 1:n+1
-        for i = 1:m+1
-            push!(x, (i-1)*h)
-            push!(y, (j-1)*h)
-        end
+if mode=="training2"
+    S_ = Variable(diagm(0=>ones(3))); global S = S_'*S_;
+    H_ = Variable(diagm(0=>ones(3))); global H = H_;
+end
+
+
+Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
+K = compute_fem_stiffness_matrix(H, m, n, h)
+L = SparseTensor(compute_interaction_matrix(m, n, h))
+M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
+A = [K -b*L'
+b*L/Δt 1/Δt*M-Q]
+A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
+# error()
+U = zeros(m*n+2(m+1)*(n+1), NT+1)
+x = Float64[]; y = Float64[]
+for j = 1:n+1
+    for i = 1:m+1
+        push!(x, (i-1)*h)
+        push!(y, (j-1)*h)
     end
-        
-    injection = (div(n,2)-1)*m + 3
-    production = (div(n,2)-1)*m + m-3
+end
+    
+injection = (div(n,2)-1)*m + 3
+production = (div(n,2)-1)*m + m-3
+
+
+function get_disp(ipval)
+    
 
     function condition(i, tas...)
         i<=NT
@@ -118,17 +127,18 @@ function get_disp(ipval)
 
     idx = 1:m+1
     ux_disp = u_out[:, idx]
-    ux_disp
+    ux_disp, u_out
 end
 
 disps = []
-for i = 1:1
-    push!(disps, get_disp(0.2*i))
+for i = 1:5
+    push!(disps, get_disp(0.2*i)[1])
 end
+_, test_disp = get_disp(0.5)
 
-if mode=="training"
+if occursin("training", mode)
     @load "invdata.jld2" Udata_
-    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:1])
+    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:5])
     # global opt = AdamOptimizer().minimize(loss)
 end
 sess = Session(); init(sess)
@@ -136,10 +146,32 @@ sess = Session(); init(sess)
 if mode=="data"
     Udata_ = run(sess, disps)
     @save "invdata.jld2" Udata_
+    @show run(sess, [H,S])
+    TDISP = run(sess, test_disp)
+    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_tfinv_visco_ref", 
+                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
 else
-    BFGS!(sess, loss)
+    # @show run(sess, gradients(loss, invη))
+    BFGS!(sess, loss, 500)
     # for i = 1:1000
     #     l, _, e = run(sess, [loss, opt, invη])
     #     @show i, l , e
     # end
+
+    TDISP = run(sess, test_disp)
+    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_tfinv_visco", 
+                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
 end
+
+
+# julia> run(sess, H)
+# 3×3 Array{Float64,2}:
+#   2.24497    1.68432   -0.0577557
+#  -0.82159    0.512678   0.484218 
+#  -0.918737  -0.688694   0.361021 
+
+# julia> run(sess, S)
+# 3×3 Array{Float64,2}:
+#   0.419232  -0.116582   -0.103483 
+#  -0.116582   0.356347   -0.0379917
+#  -0.103483  -0.0379917   0.599339 

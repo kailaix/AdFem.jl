@@ -654,6 +654,21 @@ function compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::
     return pval
 end
 
+"""
+    compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64, h::Float64)
+
+`Se` is a $4mn \\times 3$ array that stores the stress data at each Gauss point. 
+"""
+function compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64, h::Float64)
+    pval = Float64[]
+    S = zeros(4*m*n)
+    for i = 1:4*m*n 
+        σ11, σ22, σ12 = Se[i,:]
+        S[i] = sqrt(σ11^2 - σ11*σ22 + σ22^2 + 3σ12^2)
+    end
+    return (S[1:4:end]+S[2:4:end]+S[3:4:end]+S[4:4:end])/4
+end
+
 @doc raw"""
     compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Float64)
 

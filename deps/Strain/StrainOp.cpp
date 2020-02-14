@@ -189,6 +189,8 @@ public:
     double h_ = *h_tensor;
 
 
+    int uN = u_shape.dim_size(0);
+    for(int i=0;i<uN;i++) grad_u_tensor[i] = 0.0;
     backward(grad_u_tensor, grad_strain_tensor, strain_tensor, u_tensor, m_, n_, h_);
     
   }

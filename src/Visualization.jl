@@ -1,4 +1,4 @@
-export visualize_pressure, visualize_displacement, visualize_stress, visualize_scattered_displacement
+export visualize_pressure, visualize_displacement, visualize_stress, visualize_scattered_displacement, visualize_von_mises_stress
 
 """ 
     visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
@@ -164,6 +164,16 @@ function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
     run(`convert -delay 10 -loop 0 __s*.png disp_s$name.gif`)
 end
 
+"""
+    visualize_von_mises_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+
+Visualizes the Von Mises stress. 
+"""
+function visualize_von_mises_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+    Se = compute_von_mises_stress_term(Se)
+    visualize_stress(Se, m, n, h; name = name)
+end
+
 function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 
             h::Float64; name::String = "", xlim_=nothing, ylim_=nothing)
 
@@ -184,12 +194,11 @@ function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int
         ylabel("y")
         k = string(i)
         k = repeat("0", 3-length(k))*k 
-        title("t = $i")
+        title("Iteration = $i")
         # if !isnothing(xlim_)
              
         # end
         axis("equal")
-        gca().invert_yaxis()
         if !isnothing(xlim_)
             xlim(xlim_...)
         end
@@ -197,8 +206,10 @@ function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int
             ylim(ylim_...)
         end
         
-        
-        savefig("__Scattered$i.png")
+        gca().invert_yaxis()
+        k_ = string(i)
+        k_ = repeat("0", 3-length(k_))*k_
+        savefig("__Scattered$k_.png")
     end
-    run(`convert -delay 10 -loop 0 __Scattered*.png disp_scattered_u.gif`)
+    run(`convert -delay 20 -loop 0 __Scattered*.png disp_scattered_u$name.gif`)
 end

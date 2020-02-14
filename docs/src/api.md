@@ -42,6 +42,7 @@ eval_strain_on_gauss_pts
 visualize_pressure
 visualize_displacement
 visualize_stress
+visualize_von_mises_stress
 ```
 
 ## Misc
