@@ -19,4 +19,7 @@ research/*.gif
 research/visco_inverse/*.png
 research/visco_inverse/*.gif
 research/visco_inverse/*.jpeg
+research/poroelasticity/*.png
+research/poroelasticity/*.gif
+research/poroelasticity/*.jpeg
 *.jld2

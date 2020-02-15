@@ -8,15 +8,15 @@ using PyPlot
 np = pyimport("numpy")
 
 # Domain information 
-NT = 10
+NT = 50
 Δt = 1/NT
 n = 20
-m = n 
+m = 2n 
 h = 1.0/n 
 bdnode = Int64[]
 for i = 1:m+1
     for j = 1:n+1
-        if i==1 || i==m+1 || j==1|| j==n+1
+        if j==n+1
             push!(bdnode, (j-1)*(m+1)+i)
         end
     end
@@ -83,25 +83,27 @@ u_out = stack(u_out)
 u_out.set_shape((NT+1, size(u_out,2)))
 
 
-upper_idx = Int64[]
-for i = 1:m+1
-    push!(upper_idx, (div(n,3)-1)*(m+1)+i)
-    push!(upper_idx, (div(n,3)-1)*(m+1)+i + (m+1)*(n+1))
-end
-for i = 1:m 
-    push!(upper_idx, (div(n,3)-1)*m+i+2(m+1)*(n+1))
-end
+# upper_idx = Int64[]
+# for i = 1:m+1
+#     push!(upper_idx, (div(n,3)-1)*(m+1)+i)
+#     push!(upper_idx, (div(n,3)-1)*(m+1)+i + (m+1)*(n+1))
+# end
+# for i = 1:m 
+#     push!(upper_idx, (div(n,3)-1)*m+i+2(m+1)*(n+1))
+# end
+upper_idx = collect(1:m+1)
 
 if is_training
     Ue = matread("U.mat")["U"]
     loss = sum((u_out[:, upper_idx] - Ue)^2)
     sess = Session(); init(sess)
-    loss_ = BFGS!(sess, loss, 100)
+    loss_ = BFGS!(sess, loss, 200)
 
     close("all")
     semilogy(loss_)
     xlabel("Iterations")
     ylabel("Loss")
+    grid("both")
     savefig("loss.png")
 else
     sess = Session(); init(sess)
