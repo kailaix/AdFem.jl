@@ -80,19 +80,19 @@ The observation data is the $x$-direction displacement at all time steps on the 
 
   $$\sigma = H\varepsilon$$
 
-Here $H$ is an unknown SPD matrix. 
+    Here $H$ is an unknown SPD matrix. 
 
 * **Direct inversion**. The constitutive relation is substituted by 
 
-$$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n)$$
+    $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n)$$
 
-where $\mathcal{NN}$ is a neural network. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn_direct.jl)
+    where $\mathcal{NN}$ is a neural network. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn_direct.jl)
 
 * **Implicit inversion**. The constitutive relation is subsituted by 
 
-$$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n) + H\varepsilon^{n+1}$$
+    $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n) + H\varepsilon^{n+1}$$
 
-where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The advantage of this form is to improve the conditioning of the implicit numerical scheme.  [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
+    where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The motivation of this form is to improve the conditioning of the implicit numerical scheme.  [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
 
 
 
@@ -125,7 +125,7 @@ For the other three types of inversion, the results are presented below
 
 
 
-The results are reported at 2000-th iteration. In terms of the Von Mises stress, we see that the direct training gives us the best result (note the scale of the colorbar). 
+The results are reported at 2000-th iteration. In terms of the Von Mises stress, we see that the direct training gives us the best result (note the **scale of the colorbar**). 
 
 
 
