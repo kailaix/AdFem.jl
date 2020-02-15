@@ -74,9 +74,9 @@ We have 5 sets of training data, each corresponds to a Delta production (injecti
 
 The observation data is the $x$-direction displacement at all time steps on the surface. We will consider several kinds of inversion. 
 
-* Parametric inversion. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$.
+* Parametric inversion. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_param.jl)
 
-* Linear elasticity approximation. In this case, the constitutive relation is assumed to have the linear elasticity form 
+* Linear elasticity approximation. In this case, the constitutive relation is assumed to have the linear elasticity form [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_simple.jl)
 
   $$\sigma = H\varepsilon$$
 
@@ -86,13 +86,13 @@ Here $H$ is an unknown SPD matrix.
 
 $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n)$$
 
-where $\mathcal{NN}$ is a neural network.
+where $\mathcal{NN}$ is a neural network. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn_direct.jl)
 
 * Implicit inversion. The constitutive relation is subsituted by 
 
 $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n) + H\varepsilon^{n+1}$$
 
-​	where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The advantage of this form is to improve the conditioning of the implicit numerical scheme. 
+​	where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The advantage of this form is to improve the conditioning of the implicit numerical scheme. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
 
 
 
