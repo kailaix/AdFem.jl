@@ -5,7 +5,7 @@ A more complex case is when the constitutive relation is given by the [viscoelas
 
 
 $$\begin{align}
-\mathrm{div}\sigma(u) - b \nabla p &= 0 \tag{1}\\
+\mathrm{div}\sigma(u) - b \nabla p &= 0\\
 \frac{1}{M} \frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v(u)}{\partial t} - \nabla\cdot\left(\frac{k}{B_f\mu}\nabla p\right) &= f(x,t)
 \end{align}$$
 
@@ -32,11 +32,11 @@ $$\int_\Omega H \varepsilon^{n+1} : \delta \varepsilon \;\mathrm{d}x- \int_\Omeg
 
 
 
-## Numerical Results
+## Forward Simulation
 
-We run the results with three different viscosity $\eta = 1/10000, 1$, and $10$. We have the following results
+To have an overview of the viscoelasticiy, we conduct the forward simulation in the injection-production model. An injection well is located on the left while a production well is located on the right. We impose the Dirichlet boundary conditions for $u$  and no flow boundary conditions for the pressure on four sides. We run the results with Lamé constants $\lambda=2.0$ and $\mu=0.5$, and three different viscosity $\eta = 10000, 1$, and $0.1$. The case  $\eta = 10000$ corresponds to a nearly linear elastic constitutive relation. The typical characteristics of viscoelasticity in our experiments are that they usually possess larger stress and smaller displacement. 
 
-| Description                            | $\eta=1/10000$                                               | $\eta=1$ | $\eta=10$ |
+| Description                            | $\eta=10000$                                               | $\eta=1$ | $\eta=0.1$ |
 | -------------------------------------- | ------------------------------------------------------------ | -------- | --------- |
 | Pressure                               | ![](./assets/visco/disp_p_visco10000.0.gif) |  ![](./assets/visco/disp_p_visco1.0.gif)        | ![](./assets/visco/disp_p_visco0.1.gif)          |
 | $\sigma_{xx}$                          | ![](./assets/visco/disp_sxx_visco10000.0.gif) |  ![](./assets/visco/disp_sxx_visco1.0.gif)        | ![](./assets/visco/disp_sxx_visco0.1.gif)          |
@@ -50,7 +50,85 @@ We run the results with three different viscosity $\eta = 1/10000, 1$, and $10$.
 
 
 
-## Simulation Codes
+## Inverse Modeling	
+
+In the inverse modeling, the initial conditions and boundary conditions are 
+
+* $u$, $\sigma$, and $p$ are all initialized to zero. 
+
+* Fixed Dirichlet boundaries for $u$ on the bottom. 
+* Traction-free boundary conditions (free surface) for $u$ on the other three sides
+* No-flow condition for $p$ on all sides. 
+
+We have 5 sets of training data, each corresponds to a Delta production (injection) source with the magnitude $0.2i$, $i=1,2,3,4$ and 5​. We show a typical dataset below. 
+
+| Pressure                                                     | $\sigma_{xx}$                                                | $\sigma_{yy}$                                                | $\sigma_{xy}$                                                | $u$                                                          | $v$                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![disp_p_inv_visco1.0](./assets/visco/disp_p_inv_visco1.0.gif) | ![disp_sxx_inv_visco1.0](./assets/visco/disp_sxx_inv_visco1.0.gif) | ![disp_syy_inv_visco1.0](./assets/visco/disp_syy_inv_visco1.0.gif) | ![disp_sxy_inv_visco1.0](./assets/visco/disp_sxy_inv_visco1.0.gif) | ![disp_u_inv_visco1.0](./assets/visco/disp_u_inv_visco1.0.gif) | ![disp_v_inv_visco1.0](./assets/visco/disp_v_inv_visco1.0.gif) |
+
+
+
+| Displacement                                                 | $\sigma_{xx}$ at the center point                            | $\varepsilon_{xx}$  at the center point                      | $u$ at the center point                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![disp_scattered_u](./assets/visco/disp_scattered_u.gif) | ![sigmaxx1.0](./assets/visco/inverse/sigmaxx1.0.jpeg) | ![varepsilonxx1.0](./assets/visco/inverse/varepsilonxx1.0.jpeg) | ![ux1.0](./assets/visco/inverse/ux1.0.jpeg) |
+
+The observation data is the $x$-direction displacement at all time steps on the surface. We will consider several kinds of inversion. 
+
+* Parametric inversion. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$.
+
+* Linear elasticity approximation. In this case, the constitutive relation is assumed to have the linear elasticity form 
+
+  $$\sigma = H\varepsilon$$
+
+Here $H$ is an unknown SPD matrix. 
+
+* Direct inversion. The constitutive relation is substituted by 
+
+$$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n)$$
+
+where $\mathcal{NN}$ is a neural network.
+
+* Implicit inversion. The constitutive relation is subsituted by 
+
+$$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n) + H\varepsilon^{n+1}$$
+
+​	where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The advantage of this form is to improve the conditioning of the implicit numerical scheme. 
+
+
+
+To evaluate the inverse modeling result, we consider a test dataset which corresponds to the magnitude 0.5 for the Delta sources. We measure the displacement and Von Mises stress. For the first inversion, we report the values. 
+
+
+
+For the parametric inversion, we have the following result
+
+| ![loss](./assets/visconn/loss.png) | ![s_param](./assets/visconn/s_param.gif) | ![u_param](./assets/visconn/u_param.gif) |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Loss Function                                                | Von Mises Stress                                             | Displacement                                                 |
+
+
+
+| Parameter | Initial Guess | Estimated           | True |
+| --------- | ------------- | ------------------- | ---- |
+| $\mu$     | 1.5           | 0.49999986292871396 | 0.5  |
+| $\lambda$ | 1.5           | 1.9999997784851993  | 2.0  |
+| $\eta$    | 1.5           | 0.9999969780184615  | 1.0  |
+
+
+
+| Reference                                                    | Linear Elasticity                                            | Direct                                                       | Implicit                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![disp_s_inv_visco_ref](./assets/visconn/disp_s_inv_visco_ref.gif) | ![s_l](./assets/visconn/s_l.gif) | ![s_di](./assets/visconn/s_di.gif) | ![s_nn](./assets/visconn/s_nn.gif) |
+| ![disp_scattered_u_inv_visco_ref](./assets/visconn/disp_scattered_u_inv_visco_ref.gif) | ![u_l](./assets/visconn/u_l.gif) | ![u_di](./assets/visconn/u_di.gif) | ![u_nn](./assets/visconn/u_nn.gif) |
+
+
+
+The results are reported at 2000-th iteration. We see that the direct training gives us the best result. 
+
+
+
+
+## Forward Simulation Codes
 
 ```julia
 using Revise
@@ -198,22 +276,3 @@ xlabel("time")
 ylabel("\$u_x\$")
 savefig("ux$ev.jpeg")
 ```
-
-
-
-## Inverse Modeling	
-
-In the inverse modeling, we fix the bottom boundary and impose no traction condition on all other three boundaries. 
-
-
-
-| Pressure                                                     | $\sigma_{xx}$                                                | $\sigma_{yy}$                                                | $\sigma_{xy}$                                                | $u$                                                          | $v$                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ![disp_p_inv_visco1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_p_inv_visco1.0.gif) | ![disp_sxx_inv_visco1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_sxx_inv_visco1.0.gif) | ![disp_syy_inv_visco1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_syy_inv_visco1.0.gif) | ![disp_sxy_inv_visco1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_sxy_inv_visco1.0.gif) | ![disp_u_inv_visco1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_u_inv_visco1.0.gif) | ![disp_v_inv_visco1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_v_inv_visco1.0.gif) |
-
-
-
-| Displacement                                                 | $\sigma_{xx}$ at the center point                            | $\varepsilon_{xx}$  at the center point                      | $u$ at the center point                                      |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ![disp_scattered_u](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/disp_scattered_u.gif) | ![sigmaxx1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/inverse/sigmaxx1.0.jpeg) | ![varepsilonxx1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/inverse/varepsilonxx1.0.jpeg) | ![ux1.0](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/visco/inverse/ux1.0.jpeg) |
-

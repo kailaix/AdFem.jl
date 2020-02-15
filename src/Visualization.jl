@@ -124,7 +124,7 @@ end
 
 Visualizes the Von Mises stress. `Se` is the Von Mises at the cell center. 
 """
-function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="", kwargs...)
     NT = size(Se,2)
 
     x1 = LinRange(0.5h,m*h,m)|>collect
@@ -151,7 +151,7 @@ function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
     for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
         Z = S[ix,:,:]
         close("all")
-        pcolormesh(X1,Y1,Z, vmin=vmin,vmax=vmax)
+        pcolormesh(X1,Y1,Z, vmin=vmin,vmax=vmax, kwargs...)
         colorbar()
         k_ = string(k)
         k_ = repeat("0", 3-length(k_))*k_
@@ -169,12 +169,12 @@ end
 
 Visualizes the Von Mises stress. 
 """
-function visualize_von_mises_stress(Se::Array{Float64, 3}, m::Int64, n::Int64, h::Float64; name::String="")
+function visualize_von_mises_stress(Se::Array{Float64, 3}, m::Int64, n::Int64, h::Float64; name::String="", kwargs...)
     S = zeros(size(Se, 1), m*n)
     for i = 1:size(Se, 1)
         S[i,:] = compute_von_mises_stress_term(Se[i,:,:], m, n, h)
     end
-    visualize_stress(S'|>Array, m, n, h; name = name)
+    visualize_stress(S'|>Array, m, n, h; name = name, kwargs...)
 end
 
 function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 

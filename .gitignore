@@ -16,3 +16,7 @@ deps/ADLaw
 research/*.png
 research/*.jpeg
 research/*.gif
+research/visco_inverse/*.png
+research/visco_inverse/*.gif
+research/visco_inverse/*.jpeg
+*.jld2

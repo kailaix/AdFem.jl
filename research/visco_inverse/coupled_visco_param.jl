@@ -32,11 +32,12 @@ invη = 1.0
 μ = constant(0.5)
 invη = constant(invη)
 
-if mode=="training1"
-    global invη = Variable(10.0)
+
+if mode=="training2"
+    global λ = Variable(1.5)
+    global μ = Variable(1.5)
+    global invη = Variable(1.5)
 end
-
-
 iS = tensor(
         [1+2/3*μ*Δt*invη -1/3*μ*Δt*invη 0.0
         -1/3*μ*Δt*invη 1+2/3*μ*Δt*invη 0.0 
@@ -48,12 +49,6 @@ H = S * tensor([
     λ 2μ+λ 0.0
     0.0 0.0 μ
 ])
-
-if mode=="training2"
-    S_ = Variable(diagm(0=>ones(3))); global S = S_'*S_;
-    H_ = Variable(diagm(0=>ones(3))); global H = H_'*H_;
-end
-
 
 Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
 K = compute_fem_stiffness_matrix(H, m, n, h)
@@ -89,6 +84,7 @@ function get_disp(ipval)
         σ0 = read(ta_σ, i)
         ε0 = read(ta_ε, i)
         rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
+        rhs1 = scatter_update(rhs1, [bdnode; bdnode .+ (m+1)*(n+1)], zeros(2length(bdnode)))
         rhs2 = zeros(m*n)
         rhs2[injection] += 1.0 
         rhs2[production] -= 1.0
@@ -152,20 +148,18 @@ if mode=="data"
                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
     visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_ref")
 else
-    # @show run(sess, gradients(loss, invη))
-    BFGS!(sess, loss, 1000)
-    # for i = 1:1000
-    #     l, _, e = run(sess, [loss, opt, invη])
-    #     @show i, l , e
-    # end
-
+    global loss_ = BFGS!(sess, loss, 1000)
     TDISP, Sigma = run(sess, [test_disp, test_sigma])
     visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test", 
                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
     visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test")
 end
 
+# semilogy(loss_)
+# xlabel("Iteration")
+# ylabel("Loss")
 
+# plot()
 # julia> run(sess, H)
 # 3×3 Array{Float64,2}:
 #   2.24497    1.68432   -0.0577557
