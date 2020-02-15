@@ -1,6 +1,6 @@
 # Coupled Viscoelasticity and Single Phase Flow 
 
-A more complex case is when the constitutive relation is given by the [viscoelasticity](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/). We consider the same governing equation as the [linear elasticity case](https://kailaix.github.io/PoreFlow.jl/dev/coupled/)
+We have considered [inverse modeling for viscoelasticity](https://kailaix.github.io/PoreFlow.jl/dev/inv_viscoelasticity/) and [coupled elasticity and single phase flow inversion](https://kailaix.github.io/PoreFlow.jl/dev/inverse/). A more complex case is when the constitutive relation is given by the [viscoelasticity](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/) and the dynamics is governed by the coupled viscoelasticity and single phase flow equation. We consider the same governing equation as the [poreelasticity](https://kailaix.github.io/PoreFlow.jl/dev/coupled/)
 
 
 
@@ -20,17 +20,17 @@ $$\begin{aligned}
 
 and the initial condition
 
-$$p(x,0) = p_0,\ u(x,0) =0,\ x\in \Omega$$
+$$p(x,0) = 0,\ u(x,0) =0,\ x\in \Omega$$
 
-The only difference is that the consitutive relation is given by the [Maxwell material equation](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example-1), which has the following form in the discretization 
+The only difference is that the consitutive relation is given by the [Maxwell material equation](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example-1), which has the following form in the discretization (for the definition of $H$ and $S$, see [here](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example-1))
 
 $$\sigma^{n+1} = H \varepsilon^{n+1} + S \sigma^n  - H\varepsilon^n$$
 
-The discretization for Eq. (1) is 
+Then the discretization for the mechanics is 
 
-$$\int_\Omega H \varepsilon^{n+1} : \delta \varepsilon \;\mathrm{d}x- \int_\Omega b p \delta u \;\mathrm{d}x = \int_{\partial \Omega} \mathbf{t} \;\mathrm{d}s + \int_{\Omega} H\varepsilon^n : \delta\varepsilon \;\mathrm{d} x - \int_\Omega S\sigma^n : \delta \varepsilon \;\mathrm{d} x$$
+$$\int_\Omega H \varepsilon^{n+1} : \delta \varepsilon \;\mathrm{d}x- \int_\Omega b p \delta u \;\mathrm{d}x = \int_{\partial \Omega} \mathbf{t}\delta u \;\mathrm{d}s + \int_{\Omega} H\varepsilon^n : \delta\varepsilon \;\mathrm{d} x - \int_\Omega S\sigma^n : \delta \varepsilon \;\mathrm{d} x$$
 
-
+For the discretization of the fluid equation, see [here](https://kailaix.github.io/PoreFlow.jl/dev/coupled/).
 
 ## Forward Simulation
 
@@ -123,7 +123,7 @@ For the parametric inversion, we have the following result
 
 
 
-The results are reported at 2000-th iteration. We see that the direct training gives us the best result. 
+The results are reported at 2000-th iteration. In terms of the Von Mises stress, we see that the direct training gives us the best result (note the scale of the colorbar). 
 
 
 
