@@ -20,7 +20,7 @@ We estimate the elasticity tensor $H$ by solving a minimization problem
 
 $$\min_H \sum_{i\in\mathcal{I}} (u^{\mathrm{obs}}_i-u_i)^2$$
 
-where $\mathcal{I}$ is the index set for horizontal displacement  on the top side, $u^{\mathrm{obs}}_i$ is the corresponding observation. 
+where $\mathcal{I}$ is the index set for horizontal displacement  on the top side, $u^{\mathrm{obs}}_i$ is the corresponding observation. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/poroelasticity/invpi.jl)
 
 
 
