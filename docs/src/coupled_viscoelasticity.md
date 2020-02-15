@@ -54,7 +54,7 @@ To have an overview of the viscoelasticiy, we conduct the forward simulation in 
 
 In the inverse modeling, the initial conditions and boundary conditions are 
 
-* $u$, $\sigma$, and $p$ are all initialized to zero. 
+* Here $u$, $\sigma$, and $p$ are all initialized to zero. 
 
 * Fixed Dirichlet boundaries for $u$ on the bottom. 
 * Traction-free boundary conditions (free surface) for $u$ on the other three sides
