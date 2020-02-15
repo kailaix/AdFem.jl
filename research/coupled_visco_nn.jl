@@ -160,17 +160,13 @@ if mode=="data"
                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
     visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_ref")
 else
-    # @show run(sess, gradients(loss, invη))
-    BFGS!(sess, loss, 1000)
-    # for i = 1:1000
-    #     l, _, e = run(sess, [loss, opt, invη])
-    #     @show i, l , e
-    # end
-
-    TDISP, Sigma = run(sess, [test_disp, test_sigma])
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test", 
-                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test")
+    for iter = 1:50
+        BFGS!(sess, loss, 1000)
+        TDISP, Sigma = run(sess, [test_disp, test_sigma])
+        visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test$iter", 
+                    xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+        visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test$iter")
+    end
 end
 
 
