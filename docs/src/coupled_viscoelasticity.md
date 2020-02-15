@@ -34,7 +34,7 @@ For the discretization of the fluid equation, see [here](https://kailaix.github.
 
 ## Forward Simulation
 
-To have an overview of the viscoelasticiy, we conduct the forward simulation in the injection-production model. An injection well is located on the left while a production well is located on the right. We impose the Dirichlet boundary conditions for $u$  and no flow boundary conditions for the pressure on four sides. We run the results with Lamé constants $\lambda=2.0$ and $\mu=0.5$, and three different viscosity $\eta = 10000, 1$, and $0.1$. The case  $\eta = 10000$ corresponds to a nearly linear elastic constitutive relation. The typical characteristics of viscoelasticity in our experiments are that they usually possess larger stress and smaller displacement. 
+To have an overview of the viscoelasticiy, we conduct the forward simulation in the injection-production model. An injection well is located on the left while a production well is located on the right. We impose the Dirichlet boundary conditions for $u$  and no flow boundary conditions for the pressure on four sides. We run the results with Lamé constants $\lambda=2.0$ and $\mu=0.5$, and three different viscosity $\eta = 10000, 1$, and $0.1$. The case  $\eta = 10000$ corresponds to a nearly linear elastic constitutive relation. The typical characteristics of viscoelasticity in our experiments are that they usually possess larger stresses and smaller displacements. 
 
 | Description                            | $\eta=10000$                                               | $\eta=1$ | $\eta=0.1$ |
 | -------------------------------------- | ------------------------------------------------------------ | -------- | --------- |
@@ -74,25 +74,25 @@ We have 5 sets of training data, each corresponds to a Delta production (injecti
 
 The observation data is the $x$-direction displacement at all time steps on the surface. We will consider several kinds of inversion. 
 
-* Parametric inversion. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_param.jl)
+* **Parametric inversion**. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_param.jl)
 
-* Linear elasticity approximation. In this case, the constitutive relation is assumed to have the linear elasticity form [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_simple.jl)
+* **Linear elasticity approximation**. In this case, the constitutive relation is assumed to have the linear elasticity form [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_simple.jl)
 
   $$\sigma = H\varepsilon$$
 
 Here $H$ is an unknown SPD matrix. 
 
-* Direct inversion. The constitutive relation is substituted by 
+* **Direct inversion**. The constitutive relation is substituted by 
 
 $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n)$$
 
 where $\mathcal{NN}$ is a neural network. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn_direct.jl)
 
-* Implicit inversion. The constitutive relation is subsituted by 
+* **Implicit inversion**. The constitutive relation is subsituted by 
 
 $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n) + H\varepsilon^{n+1}$$
 
-​	where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The advantage of this form is to improve the conditioning of the implicit numerical scheme. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
+where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The advantage of this form is to improve the conditioning of the implicit numerical scheme.  [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
 
 
 
@@ -100,7 +100,7 @@ To evaluate the inverse modeling result, we consider a test dataset which corres
 
 
 
-For the parametric inversion, we have the following result
+For the **parametric inversion**, we have the following result
 
 | ![loss](./assets/visconn/loss.png) | ![s_param](./assets/visconn/s_param.gif) | ![u_param](./assets/visconn/u_param.gif) |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -115,6 +115,8 @@ For the parametric inversion, we have the following result
 | $\eta$    | 1.5           | 0.9999969780184615  | 1.0  |
 
 
+
+For the other three types of inversion, the results are presented below
 
 | Reference                                                    | Linear Elasticity                                            | Direct                                                       | Implicit                                                     |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
