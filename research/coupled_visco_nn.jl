@@ -9,6 +9,10 @@ using PyPlot
 np = pyimport("numpy")
 
 
+function nnlaw(σ, ε)
+    x = [σ ε]
+    ae(x, [20,20,20,20,3])
+end
 mode = "training2"
 # Domain information 
 NT = 20
@@ -50,7 +54,6 @@ H = S * tensor([
 ])
 
 if mode=="training2"
-    S_ = Variable(diagm(0=>ones(3))); global S = S_'*S_;
     H_ = Variable(diagm(0=>ones(3))); global H = H_'*H_;
 end
 
@@ -88,7 +91,12 @@ function get_disp(ipval)
         u = read(ta_u, i)
         σ0 = read(ta_σ, i)
         ε0 = read(ta_ε, i)
-        rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
+        if occursin("training", mode)
+            G = nnlaw(σ0, ε0)
+            rhs1 = compute_strain_energy_term(G, m, n, h)
+        else 
+            rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
+        end
         rhs2 = zeros(m*n)
         rhs2[injection] += 1.0 
         rhs2[production] -= 1.0
