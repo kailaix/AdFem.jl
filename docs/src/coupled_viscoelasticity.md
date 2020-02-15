@@ -4,10 +4,10 @@ We have considered [inverse modeling for viscoelasticity](https://kailaix.github
 
 
 
-$$\begin{align}
+$$\begin{aligned}
 \mathrm{div}\sigma(u) - b \nabla p &= 0\\
 \frac{1}{M} \frac{\partial p}{\partial t} + b\frac{\partial \varepsilon_v(u)}{\partial t} - \nabla\cdot\left(\frac{k}{B_f\mu}\nabla p\right) &= f(x,t)
-\end{align}$$
+\end{aligned}$$
 
 
 
