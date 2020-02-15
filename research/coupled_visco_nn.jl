@@ -97,6 +97,7 @@ function get_disp(ipval)
         else 
             rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
         end
+        rhs1 = scatter_update(rhs1, [bdnode; bdnode .+ (m+1)*(n+1)], zeros(2length(bdnode)))
         rhs2 = zeros(m*n)
         rhs2[injection] += 1.0 
         rhs2[production] -= 1.0
@@ -162,6 +163,7 @@ if mode=="data"
 else
     for iter = 1:50
         BFGS!(sess, loss, 1000)
+        ADCME.save(sess, "nn$iter.mat")
         TDISP, Sigma = run(sess, [test_disp, test_sigma])
         visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test$iter", 
                     xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
@@ -169,6 +171,7 @@ else
     end
 end
 
+# ADCME.load(sess, "nn.mat")
 
 # julia> run(sess, H)
 # 3×3 Array{Float64,2}:
