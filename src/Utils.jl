@@ -1,5 +1,5 @@
 export femidx, fvmidx, get_edge_normal,
-plot_u 
+plot_u,bcnode,bcedge
 function femidx(i, m)
     ii = mod(i, m+1)
     ii = ii == 0 ? m+1 : ii 
@@ -49,3 +49,80 @@ function get_edge_normal(edges::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
         out[i,:] = get_edge_normal(edges[i,:], m, n, h)
     end
 end
+
+"""
+    bcedge(desc::String, m::Int64, n::Int64, h::Float64)
+
+Returns the edge indices for description. See [`bcnode`](@ref)
+"""
+function bcedge(desc::String, m::Int64, n::Int64, h::Float64)
+    desc=="all" && (desc="left|right|upper|lower")
+    descs = strip.(split(desc, '|'))
+    edges = bcedge_.(descs, m, n, h)
+    unique(vcat(edges...), dims=1)
+end
+
+
+
+function bcedge_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
+    nodes = bcnode_(desc, m, n, h)
+    [nodes[1:end-1] nodes[2:end]]
+end
+
+
+
+
+
+
+
+
+"""
+Abstract    bcnode(desc::String, m::Int64, n::Int64, h::Float64)
+
+Returns the node indices for the description. Multiple descriptions can be concatented via `|`
+
+```
+                upper
+        |------------------|
+left    |                  | right
+        |                  |
+        |__________________|
+
+                lower
+```
+
+# Example
+```julia
+bcnode("left|upper", m, n, h)
+```
+"""
+function bcnode(desc::String, m::Int64, n::Int64, h::Float64)
+    desc=="all" && (desc="left|right|upper|lower")
+    descs = strip.(split(desc, '|'))
+    nodes = bcnode_.(descs, m, n, h)
+    unique(vcat(nodes...))
+end
+
+function bcnode_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
+    nodes = []
+    if desc=="upper"
+        for i = 1:m+1
+            push!(nodes, i)
+        end
+    elseif desc=="lower"
+        for i = 1:m+1
+            push!(nodes, i+n*(m+1))
+        end
+    elseif desc=="left"
+        for j = 1:n+1
+            push!(nodes, 1+(j-1)*(m+1))
+        end
+    elseif desc=="right"
+        for j = 1:n+1
+            push!(nodes, m+1+(j-1)*(m+1))
+        end
+    end
+    return nodes
+end
+
+

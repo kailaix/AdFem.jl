@@ -448,6 +448,62 @@ function compute_fvm_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float
 end
 
 @doc raw"""
+    compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+
+Computes the term with two-point flux approximation with distinct permeability at each cell
+```math
+\int_{A_i} K_i \Delta p \mathrm{d}x = K_i\sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
+```
+Additionally, Dirichlet boundary conditions are imposed on the boundary edges `bc`.
+
+Returns both the sparse matrix `A` and the right hand side `rhs`
+"""
+function compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+    bval = Dict{Tuple{Int64, Int64}, Float64}()
+    for i = 1:size(bc, 1)
+        bval[(minimum(bc[i,:]), maximum(bc[i,:]))] = pval[i] 
+    end
+    I = Int64[]; J = Int64[]; V = Float64[]
+    function add(i, j, v)
+        push!(I, i)
+        push!(J, j)
+        push!(V, v)
+    end
+    rhs = zeros(m*n)
+    for i = 1:m 
+        for j = 1:n 
+            k = (j-1)*m + i
+            for (ii,jj) in [(i+1,j),(i-1,j),(i,j+1),(i,j-1)]
+                if 1<=ii<=m && 1<=jj<=n
+                    kp = (jj-1)*m + ii
+                    add(k, kp, K[k])
+                    add(k, k, -K[k])
+                    # if k==1
+                    #     @show k, k, K[k]
+                    # end
+                else  # boundary edges 
+                    ed = (0, 0)
+                    if ii<=0 # left 
+                        ed = ((j-1)*(m+1)+1, j*(m+1)+1)
+                    elseif ii>m # right 
+                        ed = ((j-1)*(m+1)+m+1, j*(m+1)+m+1)
+                    elseif jj<=0 # upper
+                        ed = (i, i+1)
+                    elseif jj>n # lower
+                        ed = (n*(m+1)+i, n*(m+1)+i+1)
+                    end
+                    if haskey(bval, ed)
+                        add(k, k, -2*K[k])
+                        rhs[k] = 2*K[k]*bval[ed]
+                    end
+                end
+            end
+        end
+    end
+    sparse(I, J, V, m*n, m*n), rhs
+end
+
+@doc raw"""
     compute_fem_traction_term(t::Array{Float64, 2},
     bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
 
@@ -722,7 +778,7 @@ end
     compute_fem_mass_matrix1(m::Int64, n::Int64, h::Float64)
 
 Computes the mass matrix for a scalar value $u$
-```
+```math
 \int_A u \delta u \mathrm{d} x
 ```
 The output is a $(m+1)*(n+1)$ sparse matrix. 

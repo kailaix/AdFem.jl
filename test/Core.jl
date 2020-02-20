@@ -305,3 +305,55 @@ end
         savefig("u$k.png")
     end
 end
+
+@testset "tpfa" begin 
+    
+    n = 50
+    m = 2n
+    h = 1/n
+    X = zeros((m+1)*(n+1))
+    Y = zeros((m+1)*(n+1))
+    for i = 1:m+1
+        for j = 1:n+1
+            k = i+(j-1)*(m+1)
+            X[k] = (i-1)*h 
+            Y[k] = (j-1)*h 
+        end
+    end
+    bd = bcedge("all", m, n, h)
+    bdval = Float64[]
+    for i = 1:size(bd,1)
+        x = X[bd[i,1]]; y = Y[bd[i,1]]
+        p1 = x^2+y^2
+        x = X[bd[i,2]]; y = Y[bd[i,2]]
+        p2 = x^2+y^2
+        push!(bdval, (p1+p2)/2)
+    end
+        
+
+    A, rhs = compute_fvm_tpfa_matrix(ones(m*n), bd, bdval, m, n, h)
+    f = compute_fvm_source_term(4*ones(4*m*n), m, n, h)
+    f -= rhs 
+    sol = A\f
+    figure(figsize=(4,10))
+    subplot(211)
+    pcolormesh(LinRange(h,2,m)|>collect, LinRange(h,1,n)|>collect, reshape(sol, m, n)',
+        vmin = -1.0, vmax = 3.5)
+    gca().invert_yaxis()
+    axis("equal")
+    colorbar()
+    subplot(212)
+    x0 = LinRange(h,2,m)|>collect
+    y0 = LinRange(h,1,n)|>collect
+    X, Y = np.meshgrid(x0, y0)
+    Z = @. X^2+Y^2
+    pcolormesh(x0, y0, Z,
+        vmin = -1.0, vmax = 3.5)
+    gca().invert_yaxis()
+    axis("equal")
+    colorbar()
+
+    figure()
+    pcolormesh(log.(abs.(reshape(sol, m, n)'-Z))/log(10))
+    colorbar()
+end

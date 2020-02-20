@@ -53,4 +53,6 @@ fem_impose_Dirichlet_boundary_condition1
 trim_coupled
 compute_elasticity_tangent
 coupled_impose_pressure
+bcnode
+bcedge
 ```
