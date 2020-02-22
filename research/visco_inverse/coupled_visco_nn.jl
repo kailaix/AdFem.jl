@@ -11,9 +11,15 @@ np = pyimport("numpy")
 
 function nnlaw(σ, ε)
     x = [σ ε]
-    ae(x, [20,20,20,20,3])
+    ae(x, [20,20,20,20,3], "law")
 end
-mode = "training2"
+
+function predict_H(σ, ε)
+    x = [σ ε]
+    reshape(ae(x, [20,20,20,20,9], "stiffmat"), (-1, 3, 3))
+end
+# end
+mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -36,11 +42,6 @@ invη = 1.0
 μ = constant(0.5)
 invη = constant(invη)
 
-if mode=="training1"
-    global invη = Variable(10.0)
-end
-
-
 iS = tensor(
         [1+2/3*μ*Δt*invη -1/3*μ*Δt*invη 0.0
         -1/3*μ*Δt*invη 1+2/3*μ*Δt*invη 0.0 
@@ -53,19 +54,18 @@ H = S * tensor([
     0.0 0.0 μ
 ])
 
-if mode=="training2"
-    H_ = Variable(diagm(0=>ones(3))); global H = H_'*H_;
-end
-
-
 Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
-K = compute_fem_stiffness_matrix(H, m, n, h)
 L = SparseTensor(compute_interaction_matrix(m, n, h))
 M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
-A = [K -b*L'
-b*L/Δt 1/Δt*M-Q]
-A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
-# error()
+function assemble(H)
+    K = compute_fem_stiffness_matrix(H, m, n, h)
+    A = [K -b*L'
+    b*L/Δt 1/Δt*M-Q]
+    A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
+    return A
+end
+A = assemble(H)
+
 U = zeros(m*n+2(m+1)*(n+1), NT+1)
 x = Float64[]; y = Float64[]
 for j = 1:n+1
@@ -74,7 +74,6 @@ for j = 1:n+1
         push!(y, (j-1)*h)
     end
 end
-    
 injection = (div(n,2)-1)*m + 3
 production = (div(n,2)-1)*m + m-3
 
@@ -93,7 +92,9 @@ function get_disp(ipval)
         ε0 = read(ta_ε, i)
         if occursin("training", mode)
             G = nnlaw(σ0, ε0)
+            H = predict_H(σ0, ε0)
             rhs1 = compute_strain_energy_term(G, m, n, h)
+            # A = assemble(H)
         else 
             rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
         end
@@ -105,10 +106,14 @@ function get_disp(ipval)
                 M * u[2(m+1)*(n+1)+1:end]/Δt
         
         rhs = [rhs1;rhs2]
-        o = A\rhs 
+        o = A\rhs
 
         ε = eval_strain_on_gauss_pts(o, m, n, h)
-        σ = σ0*S + (ε - ε0)*H
+        if occursin("training", mode)
+            σ = G
+        else
+            σ = σ0*S + (ε - ε0)*H
+        end
         ta_u = write(ta_u, i+1, o)
         ta_ε = write(ta_ε, i+1, ε)
         ta_σ = write(ta_σ, i+1, σ)

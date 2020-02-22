@@ -19,7 +19,7 @@ function predict_H(σ, ε)
     reshape(ae(x, [20,20,20,20,9], "stiffmat"), (-1, 3, 3))
 end
 # end
-mode = "training"
+mode = "data"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -54,17 +54,18 @@ H = S * tensor([
     0.0 0.0 μ
 ])
 
-Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
-L = SparseTensor(compute_interaction_matrix(m, n, h))
-M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
+
 function assemble(H)
     K = compute_fem_stiffness_matrix(H, m, n, h)
+    Q = SparseTensor(compute_fvm_tpfa_matrix(m, n, h))
+    L = SparseTensor(compute_interaction_matrix(m, n, h))
+    M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
     A = [K -b*L'
     b*L/Δt 1/Δt*M-Q]
     A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
-    return A
+    return A, L, M
 end
-A = assemble(H)
+A, L, M  = assemble(H)
 
 U = zeros(m*n+2(m+1)*(n+1), NT+1)
 x = Float64[]; y = Float64[]
@@ -79,7 +80,7 @@ production = (div(n,2)-1)*m + m-3
 
 
 function get_disp(ipval)
-    
+    global H, L, M, A
 
     function condition(i, tas...)
         i<=NT
@@ -94,7 +95,7 @@ function get_disp(ipval)
             G = nnlaw(σ0, ε0)
             H = predict_H(σ0, ε0)
             rhs1 = compute_strain_energy_term(G, m, n, h)
-            # A = assemble(H)
+            A, L, M = assemble(H)
         else 
             rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
         end
