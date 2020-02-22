@@ -26,4 +26,8 @@ research/visco_inverse_fixed_pressure/*.png
 research/visco_inverse_fixed_pressure/*.gif
 research/visco_inverse_fixed_pressure/*.jpeg
 research/visco_inverse_fixed_pressure/*.tex
+research/plasticity/*.gif
+research/plasticity/*.jpeg
+research/plasticity/*.png
+research/plasticity/*.mat
 *.jld2

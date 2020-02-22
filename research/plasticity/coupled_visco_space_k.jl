@@ -8,10 +8,7 @@ using JLD2
 using PyPlot
 np = pyimport("numpy")
 
-function nnlaw(σ, ε)
-    return ε
-end
-mode = "data"
+mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -49,8 +46,12 @@ H = S * tensor([
 ])
 
 if mode=="training"
-    H_ = Variable(diagm(0=>ones(3))); 
-    global H = H_'*H_;
+    H_ = zeros(4*m*n, 3, 3)
+    for i = 1:4*m*n 
+        H_[i,:,:] = diagm(0=>ones(3))
+    end
+    H_ = Variable(H_)
+    global H = map(x->x'*x, H_)
 end
 
 
@@ -90,7 +91,7 @@ function get_disp(ipval)
         σ0 = read(ta_σ, i)
         ε0 = read(ta_ε, i)
         if occursin("training", mode)
-            g = -ε0*H
+            g = -batch_matmul(H, ε0)
             rhs1 = compute_strain_energy_term(g, m, n, h)
         else 
             rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
@@ -107,7 +108,7 @@ function get_disp(ipval)
 
         ε = eval_strain_on_gauss_pts(o, m, n, h)
         if occursin("training", mode)
-            σ = ε*H
+            σ = batch_matmul(H, ε)
         else
             σ = σ0*S + (ε - ε0)*H
         end
@@ -147,10 +148,9 @@ for i = 1:5
 end
 _, test_disp, test_sigma = get_disp(0.5)
 
+D = matread("plasticity.mat")
 if occursin("training", mode)
-    @load "invdata.jld2" Udata_
-    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:5])
-    # global opt = AdamOptimizer().minimize(loss)
+    global loss = sum([sum((disps[i] - Array(D["U$i"][1:m+1,:]'))^2) for i = 1:5])
 end
 sess = Session(); init(sess)
 

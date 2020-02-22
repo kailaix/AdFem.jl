@@ -8,10 +8,7 @@ using JLD2
 using PyPlot
 np = pyimport("numpy")
 
-function nnlaw(σ, ε)
-    return ε
-end
-mode = "data"
+mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -147,41 +144,18 @@ for i = 1:5
 end
 _, test_disp, test_sigma = get_disp(0.5)
 
+D = matread("plasticity.mat")
 if occursin("training", mode)
-    @load "invdata.jld2" Udata_
-    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:5])
-    # global opt = AdamOptimizer().minimize(loss)
+    global loss = sum([sum((disps[i] - Array(D["U$i"][1:m+1,:]'))^2) for i = 1:5])
 end
 sess = Session(); init(sess)
 
-if mode=="data"
-    Udata_ = run(sess, disps)
-    @save "invdata.jld2" Udata_
-    @show run(sess, [H,S])
+for iter = 1:50
+    BFGS!(sess, loss, 1000)
     TDISP, Sigma = run(sess, [test_disp, test_sigma])
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_ref", 
+    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test$iter", 
                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_ref")
-else
-    for iter = 1:50
-        BFGS!(sess, loss, 1000)
-        TDISP, Sigma = run(sess, [test_disp, test_sigma])
-        visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test$iter", 
-                    xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-        visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test$iter")
-    end
+    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test$iter")
 end
 
-# ADCME.load(sess, "nn.mat")
-
-# julia> run(sess, H)
-# 3×3 Array{Float64,2}:
-#   2.24497    1.68432   -0.0577557
-#  -0.82159    0.512678   0.484218 
-#  -0.918737  -0.688694   0.361021 
-
-# julia> run(sess, S)
-# 3×3 Array{Float64,2}:
-#   0.419232  -0.116582   -0.103483 
-#  -0.116582   0.356347   -0.0379917
-#  -0.103483  -0.0379917   0.599339 
+# modified

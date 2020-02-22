@@ -8,10 +8,14 @@ using JLD2
 using PyPlot
 np = pyimport("numpy")
 
+reset_default_graph()
 function nnlaw(σ, ε)
-    return ε
+    x = [σ ε]
+    ae(x, [20,20,20,20,3], "law")
 end
-mode = "data"
+
+# end
+mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -34,8 +38,6 @@ invη = 1.0
 μ = constant(0.5)
 invη = constant(invη)
 
-
-
 iS = tensor(
         [1+2/3*μ*Δt*invη -1/3*μ*Δt*invη 0.0
         -1/3*μ*Δt*invη 1+2/3*μ*Δt*invη 0.0 
@@ -48,11 +50,13 @@ H = S * tensor([
     0.0 0.0 μ
 ])
 
-if mode=="training"
-    H_ = Variable(diagm(0=>ones(3))); 
-    global H = H_'*H_;
+if occursin("training", mode)
+    H_ = Variable(diagm(0=>ones(3)))
+    H = H_'*H_
+    global H = H .* [1.0 1.0 0.0
+                     1.0 1.0 0.0
+                    0.0 0.0 1.0]
 end
-
 
 bd = bcedge("upper", m, n, h)
 Q, Prhs = compute_fvm_tpfa_matrix(ones(4*m*n), bd, zeros(size(bd,1)),m, n, h)
@@ -63,7 +67,8 @@ M = SparseTensor(compute_fvm_mass_matrix(m, n, h))
 A = [K -b*L'
 b*L/Δt 1/Δt*M-Q]
 A, Abd = fem_impose_coupled_Dirichlet_boundary_condition(A, bdnode, m, n, h)
-# error()
+   
+
 U = zeros(m*n+2(m+1)*(n+1), NT+1)
 x = Float64[]; y = Float64[]
 for j = 1:n+1
@@ -72,13 +77,11 @@ for j = 1:n+1
         push!(y, (j-1)*h)
     end
 end
-    
 injection = (div(n,2)-1)*m + 3
 production = (div(n,2)-1)*m + m-3
 
 
 function get_disp(ipval)
-    
 
     function condition(i, tas...)
         i<=NT
@@ -90,8 +93,8 @@ function get_disp(ipval)
         σ0 = read(ta_σ, i)
         ε0 = read(ta_ε, i)
         if occursin("training", mode)
-            g = -ε0*H
-            rhs1 = compute_strain_energy_term(g, m, n, h)
+            G = nnlaw(σ0, ε0)
+            rhs1 = compute_strain_energy_term(G, m, n, h)
         else 
             rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
         end
@@ -103,11 +106,11 @@ function get_disp(ipval)
                 M * u[2(m+1)*(n+1)+1:end]/Δt + Prhs
         
         rhs = [rhs1;rhs2]
-        o = A\rhs 
+        o = A\rhs
 
         ε = eval_strain_on_gauss_pts(o, m, n, h)
         if occursin("training", mode)
-            σ = ε*H
+            σ = G + ε*H
         else
             σ = σ0*S + (ε - ε0)*H
         end
@@ -147,10 +150,9 @@ for i = 1:5
 end
 _, test_disp, test_sigma = get_disp(0.5)
 
+D = matread("plasticity.mat")
 if occursin("training", mode)
-    @load "invdata.jld2" Udata_
-    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:5])
-    # global opt = AdamOptimizer().minimize(loss)
+    global loss = sum([sum((disps[i] - Array(D["U$i"][1:m+1,:]'))^2) for i = 1:5])
 end
 sess = Session(); init(sess)
 
@@ -165,6 +167,7 @@ if mode=="data"
 else
     for iter = 1:50
         BFGS!(sess, loss, 1000)
+        ADCME.save(sess, "nn$iter.mat")
         TDISP, Sigma = run(sess, [test_disp, test_sigma])
         visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test$iter", 
                     xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
