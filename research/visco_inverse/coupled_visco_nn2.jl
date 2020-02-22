@@ -8,18 +8,14 @@ using JLD2
 using PyPlot
 np = pyimport("numpy")
 
-
+reset_default_graph()
 function nnlaw(σ, ε)
     x = [σ ε]
     ae(x, [20,20,20,20,3], "law")
 end
 
-function predict_H(σ, ε)
-    x = [σ ε]
-    reshape(ae(x, [20,20,20,20,9], "stiffmat"), (-1, 3, 3))
-end
 # end
-mode = "data"
+mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT
@@ -54,6 +50,14 @@ H = S * tensor([
     0.0 0.0 μ
 ])
 
+if occursin("training", mode)
+    H_ = Variable(diagm(0=>ones(3)))
+    H = H_'*H_
+    global H = H .* [1.0 1.0 0.0
+                     1.0 1.0 0.0
+                    0.0 0.0 1.0]
+end
+
 
 function assemble(H)
     K = compute_fem_stiffness_matrix(H, m, n, h)
@@ -80,7 +84,6 @@ production = (div(n,2)-1)*m + m-3
 
 
 function get_disp(ipval)
-    global H, L, M, A
 
     function condition(i, tas...)
         i<=NT
@@ -93,9 +96,7 @@ function get_disp(ipval)
         ε0 = read(ta_ε, i)
         if occursin("training", mode)
             G = nnlaw(σ0, ε0)
-            H = predict_H(σ0, ε0)
             rhs1 = compute_strain_energy_term(G, m, n, h)
-            A, L, M = assemble(H)
         else 
             rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
         end
@@ -111,7 +112,7 @@ function get_disp(ipval)
 
         ε = eval_strain_on_gauss_pts(o, m, n, h)
         if occursin("training", mode)
-            σ = G
+            σ = G + ε*H
         else
             σ = σ0*S + (ε - ε0)*H
         end

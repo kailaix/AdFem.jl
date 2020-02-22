@@ -92,7 +92,6 @@ function get_disp(ipval)
         ε0 = read(ta_ε, i)
         if occursin("training", mode)
             G = nnlaw(σ0, ε0)
-            H = predict_H(σ0, ε0)
             rhs1 = compute_strain_energy_term(G, m, n, h)
             # A = assemble(H)
         else 

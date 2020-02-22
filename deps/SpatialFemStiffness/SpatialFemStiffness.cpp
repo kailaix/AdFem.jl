@@ -101,6 +101,8 @@ public:
 
     // TODO:
     DCHECK_EQ(hmat_shape.dim_size(0),4**m_tensor**n_tensor);
+    DCHECK_EQ(hmat_shape.dim_size(1),3);
+    DCHECK_EQ(hmat_shape.dim_size(2),3);
     Forward fwd(hmat_tensor, *m_tensor, *n_tensor, *h_tensor);
     fwd.fill(context);
 
