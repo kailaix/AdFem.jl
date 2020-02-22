@@ -104,7 +104,7 @@ function bcnode(desc::String, m::Int64, n::Int64, h::Float64)
 end
 
 function bcnode_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
-    nodes = []
+    nodes = Int64[]
     if desc=="upper"
         for i = 1:m+1
             push!(nodes, i)

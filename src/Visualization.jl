@@ -192,7 +192,7 @@ function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int
             
     for (i,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
         close("all")
-        scatter(x+U[1:(m+1)*(n+1), i], y+U[(m+1)*(n+1)+1:2(m+1)*(n+1), i])
+        scatter(x+U[1:(m+1)*(n+1), k], y+U[(m+1)*(n+1)+1:2(m+1)*(n+1), k])
         xlabel("x")
         ylabel("y")
         k = string(i)
