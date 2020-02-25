@@ -11,7 +11,7 @@ np = pyimport("numpy")
 function nnlaw(σ, ε)
     return ε
 end
-mode = "data"
+mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT

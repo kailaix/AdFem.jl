@@ -3,7 +3,4 @@ do
     mkdir $file
     cp invdata.jld2 $file 
     cp coupled_visco_$file.jl $file 
-    cd $file 
-    srun julia coupled_visco_$file.jl & 
-    cd ..
 done

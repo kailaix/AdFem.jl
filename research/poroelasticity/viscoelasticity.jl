@@ -14,9 +14,8 @@ mode = "training"
 β = 1/4; γ = 1/2
 a = b = 0.1
 
-
-m = 20
 n = 10
+m = 2n 
 h = 0.01
 NT = 500
 it0 = NT÷2
@@ -117,10 +116,10 @@ Forces = zeros(NT, 2(m+1)*(n+1))
 for i = 1:NT
   T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
 
-  if i>=NT÷2
-    T *= 0.0
-  end
-  T = [-T zeros(length(T))]
+  # if i>=NT÷2
+  #   T *= 0.0
+  # end
+  T = [-T T]
 #   T = [T T]
   rhs = compute_fem_traction_term(T, bdedge, m, n, h)
 

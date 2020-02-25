@@ -1,4 +1,3 @@
-__precompile__(false)
 module PoreFlow 
 
     using SparseArrays

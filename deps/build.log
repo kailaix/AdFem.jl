@@ -1,0 +1,144 @@
+WARNING: Method definition size(PyCall.PyObject) in module PyCall at /home/kailaix/.julia/packages/PyCall/ttONZ/src/PyCall.jl:806 overwritten in module ADCME at /home/kailaix/.julia/packages/ADCME/yChcQ/src/variable.jl:131.
+WARNING: Method definition length(PyCall.PyObject) in module PyCall at /home/kailaix/.julia/packages/PyCall/ttONZ/src/PyCall.jl:805 overwritten in module ADCME at /home/kailaix/.julia/packages/ADCME/yChcQ/src/variable.jl:154.
+WARNING: Method definition lastindex(PyCall.PyObject) in module PyCall at deprecated.jl:55 overwritten in module ADCME at /home/kailaix/.julia/packages/ADCME/yChcQ/src/variable.jl:312.
+WARNING: Method definition *(PyCall.PyObject, PyCall.PyObject) in module PyCall at /home/kailaix/.julia/packages/PyCall/ttONZ/src/pyoperators.jl:11 overwritten in module ADCME at /home/kailaix/.julia/packages/ADCME/yChcQ/src/ops.jl:69.
+┌ Warning: special characters "#{}()[]<>|&*?~;" should now be quoted in commands
+│   caller = #shell_parse#351(::String, ::Function, ::String, ::Bool) at shell.jl:100
+└ @ Base ./shell.jl:100
+-- The C compiler identification is GNU 5.2.0
+-- The CXX compiler identification is GNU 5.2.0
+-- Check for working C compiler: /home/kailaix/.julia/conda/3/bin/gcc
+-- Check for working C compiler: /home/kailaix/.julia/conda/3/bin/gcc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /home/kailaix/.julia/conda/3/bin/g++
+-- Check for working CXX compiler: /home/kailaix/.julia/conda/3/bin/g++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+ERROR: UndefVarError: __STR__ not defined
+Stacktrace:
+ [1] getproperty(::Module, ::Symbol) at ./sysimg.jl:13
+ [2] top-level scope at none:0
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:516: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:517: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:518: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:519: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:520: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:525: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:541: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:542: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:543: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:544: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:545: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:550: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+CMake Error at CMakeLists.txt:6 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:7 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:8 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:9 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:10 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:11 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:12 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:13 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:14 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:15 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:16 (list):
+  list GET given empty list
+
+
+CMake Error at CMakeLists.txt:17 (list):
+  list GET given empty list
+
+
+Python path=
+EIGEN_INC=
+TF_INC=
+TF_ABI=
+TF_LIB_FILE=
+-- Configuring incomplete, errors occurred!
+See also "/home/kailaix/project/PoreFlow.jl/deps/DirichletBD/build/CMakeFiles/CMakeOutput.log".
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:516: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:517: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:518: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:519: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:520: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:525: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:541: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:542: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:543: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:544: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:545: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/kailaix/.julia/conda/3/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:550: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+ERROR: LoadError: failed process: Process(`/home/kailaix/.julia/conda/3/bin/cmake -DCMAKE_C_COMPILER=/home/kailaix/.julia/conda/3/bin/gcc -DCMAKE_CXX_COMPILER=/home/kailaix/.julia/conda/3/bin/g++ ..`, ProcessExited(1)) [1]
+Stacktrace:
+ [1] error(::String, ::Base.Process, ::String, ::Int64, ::String) at ./error.jl:42
+ [2] pipeline_error at ./process.jl:785 [inlined]
+ [3] #run#515(::Bool, ::Function, ::Cmd) at ./process.jl:726
+ [4] run at ./process.jl:724 [inlined]
+ [5] cmake(::String) at /home/kailaix/.julia/packages/ADCME/yChcQ/src/extra.jl:41
+ [6] cmake at /home/kailaix/.julia/packages/ADCME/yChcQ/src/extra.jl:40 [inlined]
+ [7] compile(::String) at /home/kailaix/project/PoreFlow.jl/deps/build.jl:8
+ [8] top-level scope at none:0
+ [9] include at ./boot.jl:326 [inlined]
+ [10] include_relative(::Module, ::String) at ./loading.jl:1038
+ [11] include(::Module, ::String) at ./sysimg.jl:29
+ [12] include(::String) at ./client.jl:403
+ [13] top-level scope at none:0
+in expression starting at /home/kailaix/project/PoreFlow.jl/deps/build.jl:14

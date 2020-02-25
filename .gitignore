@@ -31,3 +31,7 @@ research/plasticity/*.jpeg
 research/plasticity/*.png
 research/plasticity/*.mat
 *.jld2
+research/*.png
+*.mat
+*build.log
+*Exp*
