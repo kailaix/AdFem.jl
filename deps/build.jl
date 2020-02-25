@@ -3,7 +3,11 @@ function compile(DIR)
     PWD = pwd()
     cd(DIR)
     rm("build", force=true, recursive=true)
-    mkdir("build")
+    try
+	mkdir("build")
+    catch
+	end
+
     cd("build")
     ADCME.cmake()
     ADCME.make()
