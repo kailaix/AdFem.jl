@@ -14,7 +14,7 @@ mode = "training"
 β = 1/4; γ = 1/2
 a = b = 0.1
 
-n = 10
+n = 20
 m = 2n 
 h = 0.01
 NT = 500
@@ -52,10 +52,17 @@ function visualize_inv_eta(X, k)
     xlabel("x")
     ylabel("y")
     # title("Iteration = $k")
-    title("True model")
     axis("scaled")
     gca().invert_yaxis()
-    savefig("iter$k.png")
+    if k == "true"
+      title("True Model")
+      savefig("true.png")
+      return 
+    end
+    k_ = string(k)
+    k_ = reduce(*, " " for i = 1:3-length(k_))*k_
+    title("Iteration = $k_")
+    savefig("iter$k_.png")
 end
 
 λ = constant(2.0)
@@ -64,17 +71,8 @@ if mode=="data"
   global invη = constant(eta_model(1))
   global invη *= 1000.0
 else
-    # global invη_ = Variable(10.0*ones(4*m*n))
-
-    # invη1d_ = Variable(10*ones(2m))
-    # invη_ = repeat(invη1d_, 1, 2)[:]
-    # global invη_ = repeat(invη_, n)
-
     invη_var = Variable((ηmin + ηmax)/2*ones(n))
-    # invη1d_ = repeat(invη1d_, 1, 2)[:]
     invη_ = tf.reshape(repeat(invη_var, 1, 4m), (-1,))
-    # invη_ = repeat(invη_, m)
-    # global invη_ = tf.transpose(invη2d_)[:]
     global invη = 1000*invη_
 end
 
@@ -150,9 +148,6 @@ function body(i, tas...)
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
   tv = v + (1-γ)*Δt*a 
   rhs = rhs - C*tv - K*td
-  
-  # rhs[[bdnode; bdnode.+(m+1)*(n+1)]] .= 0.0
-
   rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
 
 
@@ -163,9 +158,6 @@ function body(i, tas...)
   U_new = d
 
   Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
-
-  # res2 = squeeze(tf.matmul(tf.reshape(Varepsilon_new-Varepsilon, (size(Sigma,1), 1, 3)),
-  #                       tf.matmul(invG, S)))
 
   res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
   Sigma_new = res +  res2
@@ -194,7 +186,6 @@ if mode!="data"
   global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
 end
 
-# opt = AdamOptimizer(0.1).minimize(loss)
 sess = Session(); init(sess)
 
 cb = (v, i, l)->begin
@@ -204,7 +195,7 @@ cb = (v, i, l)->begin
 end
 
 if mode=="data"
-    Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
+  Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
   matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
   visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
@@ -219,37 +210,13 @@ if mode=="data"
 
   cb([run(sess, invη)], "true", 0.0)
 else
-
-
-  
   @info run(sess, loss)
   v_ = []
   i_ = []
   l_ = []
 
   loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
+  run(`convert -delay 10 -loop 0 iter*.png iter.gif`)
+  pngfiles = [x for x in readdir(".") if length(x)>=8 && x[1:4]=="iter" && x[end-3:end]==".png"]
+  rm.(pngfiles)
 end
-# matwrite("R.mat", Dict("V"=>v_, "L"=>l_))
-
-# for i = 1:1000
-#   _, l, invη_ = run(sess, [opt, loss, invη])
-#   @show i, l #, invη_
-#   mod(i,5)==1 && cb([invη_], i, l)
-# end
-
-
-
-# ηs = 11:0.1:13
-# losses = []
-# for η in ηs
-#    push!(losses,run(sess, loss, invη=>η))
-# end
-# plot(ηs, losses)
-
-
-# Uval, Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
-# Uval[idx]
-
-
-
-

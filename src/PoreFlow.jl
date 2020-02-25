@@ -13,9 +13,8 @@ module PoreFlow
     np = PyNULL()
     interpolate = PyNULL()
     function __init__()
-        global np, interpolate
-        np = pyimport("numpy")
-        interpolate = pyimport("scipy.interpolate")
+        copy!(np, pyimport("numpy"))
+        copy!(interpolate,pyimport("scipy.interpolate"))
     end
 
     include("Struct.jl")

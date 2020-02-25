@@ -35,3 +35,11 @@ research/*.png
 *.mat
 *build.log
 *Exp*
+research/plasticity/nn*
+research/plasticity/simple*
+research/plasticity/space_k*
+research/visco_inverse_fixed_pressure/nn/
+research/visco_inverse_fixed_pressure/param/
+research/visco_inverse_fixed_pressure/simple/
+research/visco_inverse_fixed_pressure/space_k/
+research/poroelasticity/viscoelasticity.mat
