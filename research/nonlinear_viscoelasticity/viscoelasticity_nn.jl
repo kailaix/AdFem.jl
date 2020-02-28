@@ -6,15 +6,8 @@ using PyPlot
 using SparseArrays
 using DelimitedFiles
 using MAT
+using ADCMEKit
 np = pyimport("numpy")
-
-
-mode = "data"
-sigmamax = 0.1
-# pl = placeholder([5.0;1000.0])
-
-# pl = Variable([1.0;100.0])
-
 
 n = 10
 m = 2n 
@@ -33,11 +26,14 @@ M = compute_fem_mass_matrix1(m, n, h)
 Zero = spzeros((m+1)*(n+1), (m+1)*(n+1))
 M = SparseTensor([M Zero;Zero M])
 
-## alpha-scheme
-β = 1/4; γ = 1/2
+# pl = placeholder(zeros(4*m*n))
 
+## alpha-scheme
+θ = Variable(ae_init([3,20,20,20,1]))
+β = 1/4; γ = 1/2
 function eta_fun(σ)
-  return squeeze(ae(σ, [20,20,20,1]))
+  # return constant(10*ones(4*m*n)) + 5.0/(1+1000.0*sum(σ^2, dims=2))
+  return ae(σ, [20,20,20,1], θ)
 end
 
 
@@ -66,118 +62,111 @@ function make_matrix(invη)
 end
 
 
-a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|>constant)
-v = TensorArray(NT+1); v = write(v, 1, zeros(2(m+1)*(n+1))|>constant)
-d = TensorArray(NT+1); d = write(d, 1, zeros(2(m+1)*(n+1))|>constant)
-U = TensorArray(NT+1); U = write(U, 1, zeros(2(m+1)*(n+1))|>constant)
-Sigma = TensorArray(NT+1); Sigma = write(Sigma, 1, zeros(4*m*n, 3)|>constant)
-Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1,zeros(4*m*n, 3)|>constant)
+function simulate(force_scale)
+  a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|>constant)
+  v = TensorArray(NT+1); v = write(v, 1, zeros(2(m+1)*(n+1))|>constant)
+  d = TensorArray(NT+1); d = write(d, 1, zeros(2(m+1)*(n+1))|>constant)
+  U = TensorArray(NT+1); U = write(U, 1, zeros(2(m+1)*(n+1))|>constant)
+  Sigma = TensorArray(NT+1); Sigma = write(Sigma, 1, zeros(4*m*n, 3)|>constant)
+  Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1,zeros(4*m*n, 3)|>constant)
 
 
-Forces = zeros(NT, 2(m+1)*(n+1))
-for i = 1:NT
-  T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
+  Forces = zeros(NT, 2(m+1)*(n+1))
+  for i = 1:NT
+    T = eval_f_on_boundary_edge((x,y)->force_scale*0.1, bdedge, m, n, h)
 
-  T = [-T T]
-  rhs = compute_fem_traction_term(T, bdedge, m, n, h)
+    T = [-T T]
+    rhs = compute_fem_traction_term(T, bdedge, m, n, h)
 
-  Forces[i, :] = rhs
+    Forces[i, :] = rhs
+  end
+  Forces = constant(Forces)
+
+  function condition(i, tas...)
+    i <= NT
+  end
+
+  function body(i, tas...)
+    a_, v_, d_, U_, Sigma_, Varepsilon_ = tas
+    a = read(a_, i)
+    v = read(v_, i)
+    d = read(d_, i)
+    U = read(U_, i)
+    Sigma = read(Sigma_, i)
+    Varepsilon = read(Varepsilon_, i)
+
+    invη = eta_fun(Sigma)
+    C, K, L, S, invG = make_matrix(invη)
+
+    res = batch_matmul(invG/Δt, Sigma)
+    F = compute_strain_energy_term(res, m, n, h) - K * U
+    rhs = Forces[i] - Δt^2 * F
+
+    td = d + Δt*v + Δt^2/2*(1-2β)*a 
+    tv = v + (1-γ)*Δt*a 
+    rhs = rhs - C*tv - K*td
+    rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
+
+
+    ## alpha-scheme
+    a = L\rhs # bottleneck  
+    d = td + β*Δt^2*a 
+    v = tv + γ*Δt*a 
+    U_new = d
+
+    Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
+
+    res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
+    Sigma_new = res +  res2
+
+    i+1, write(a_, i+1, a), write(v_, i+1, v), write(d_, i+1, d), write(U_, i+1, U_new),
+          write(Sigma_, i+1, Sigma_new), write(Varepsilon_, i+1, Varepsilon_new)
+  end
+
+
+  i = constant(1, dtype=Int32)
+  _, _, _, _, u, sigma, varepsilon = while_loop(condition, body, 
+                    [i, a, v, d, U, Sigma, Varepsilon])
+
+  U = stack(u)
+  Sigma = stack(sigma)
+  return U, Sigma
 end
-Forces = constant(Forces)
 
-function condition(i, tas...)
-  i <= NT
-end
+U, Sigma = simulate(1.0)
+Sigma = set_shape(Sigma, (NT+1, size(Sigma,2), size(Sigma,3)))
 
-function body(i, tas...)
-  a_, v_, d_, U_, Sigma_, Varepsilon_ = tas
-  a = read(a_, i)
-  v = read(v_, i)
-  d = read(d_, i)
-  U = read(U_, i)
-  Sigma = read(Sigma_, i)
-  Varepsilon = read(Varepsilon_, i)
-
-  invη = eta_fun(Sigma)
-  C, K, L, S, invG = make_matrix(invη)
-
-  res = batch_matmul(invG/Δt, Sigma)
-  F = compute_strain_energy_term(res, m, n, h) - K * U
-  rhs = Forces[i] - Δt^2 * F
-
-  td = d + Δt*v + Δt^2/2*(1-2β)*a 
-  tv = v + (1-γ)*Δt*a 
-  rhs = rhs - C*tv - K*td
-  rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
-
-
-  ## alpha-scheme
-  a = L\rhs # bottleneck  
-  d = td + β*Δt^2*a 
-  v = tv + γ*Δt*a 
-  U_new = d
-
-  Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
-
-  res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
-  Sigma_new = res +  res2
-
-  i+1, write(a_, i+1, a), write(v_, i+1, v), write(d_, i+1, d), write(U_, i+1, U_new),
-        write(Sigma_, i+1, Sigma_new), write(Varepsilon_, i+1, Varepsilon_new)
-end
-
-
-i = constant(1, dtype=Int32)
-_, _, _, _, u, sigma, varepsilon = while_loop(condition, body, 
-                  [i, a, v, d, U, Sigma, Varepsilon])
-
-U = stack(u)
-Sigma = stack(sigma)
-Varepsilon = stack(varepsilon)
-
-# if mode!="data"
-#   data = matread("viscoelasticity.mat")
-#   global Uval,Sigmaval, Varepsilonval = data["U"], data["Sigma"], data["Varepsilon"]
-#   U.set_shape((NT+1, size(U, 2)))
-#   idx0 = 1:4m*n
-#   Sigma = map(x->x[idx0,:], Sigma)
-
-#   idx = collect(1:m+1)
-#   global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
-# end
-U = set_shape(U, (NT+1, size(U,2)))
-Uval2 = matread("viscoelasticity.mat")["U"]
-loss = 1e10*sum((U[end, 1:m+1]-Uval2[end, 1:m+1])^2) 
-
+U = set_shape(U, NT+1, size(U,2))
+U0 = matread("nndat.mat")["U"]
+loss = 1e10*sum((U[end, 1:m+1] - U0[end,1:m+1])^2)
 sess = Session(); init(sess)
-
+U_, Sigma_ = run(sess, [U,Sigma])
+visualize_von_mises_stress(Sigma_, m, n, h, name="_nn0")
+visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0", 
+                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+for i = 1:1000
+  BFGS!(sess, loss,100)
+  U_, Sigma_ = run(sess, [U,Sigma])
+  visualize_von_mises_stress(Sigma_, m, n, h, name="_nn$i")
+  visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0$i", 
+                  xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+end
+# # step 2
 # @show run(sess, loss)
-# g = gradients(loss, pl)
-# localmin = [266.8724450474673 
-# 126.39699437649368]
-# gradview(sess, pl, g, loss, localmin)
-# savefig("line.png")
 
-loss_ = BFGS!(sess, loss)
-writedlm("loss.txt", loss_)
+# # step 3
+# lineview(sess, pl, loss, zeros(length(pl)), rand(length(pl)), n=5)
 
-ADCME.save(sess, "nn.mat")
+# # step 4
+# gradview(sess, pl, loss, rand(4*m*n))
 
-# Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
-# matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
+
+# Uval, Sigmaval = run(sess, [U,Sigma])
+# matwrite("nndat.mat", Dict("U"=>Uval, "S"=>Sigmaval))
 # visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
 # visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
 #                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
 
-# close("all")
-# plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="viscoelasticity")
-# xlabel("Time")
-# ylabel("Displacement")
-# savefig("disp.png")
 
-# Uval = matread("linear.mat")["U"]
-# plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="linear elasticity")
-# legend()
-# savefig("disp.png")
 

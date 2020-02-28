@@ -43,3 +43,6 @@ research/visco_inverse_fixed_pressure/param/
 research/visco_inverse_fixed_pressure/simple/
 research/visco_inverse_fixed_pressure/space_k/
 research/poroelasticity/viscoelasticity.mat
+research/nonlinear_viscoelasticity/*.png
+research/nonlinear_viscoelasticity/*.gif
+research/nonlinear_viscoelasticity/*.mat

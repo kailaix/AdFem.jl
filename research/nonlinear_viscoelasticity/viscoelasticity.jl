@@ -8,12 +8,7 @@ using MAT
 np = pyimport("numpy")
 
 
-mode = "data"
-sigmamax = 0.1
-# pl = placeholder([5.0;1000.0])
-
 pl = Variable([1.0;100.0])
-
 
 n = 10
 m = 2n 
