@@ -6,6 +6,7 @@ using PyPlot
 using SparseArrays
 using DelimitedFiles
 using MAT
+using Statistics
 using ADCMEKit
 np = pyimport("numpy")
 
@@ -138,18 +139,44 @@ Sigma = set_shape(Sigma, (NT+1, size(Sigma,2), size(Sigma,3)))
 
 U = set_shape(U, NT+1, size(U,2))
 U0 = matread("nndat.mat")["U"]
+Sigma0 = matread("nndat.mat")["S"]
 loss = 1e10*sum((U[end, 1:m+1] - U0[end,1:m+1])^2)
 sess = Session(); init(sess)
 U_, Sigma_ = run(sess, [U,Sigma])
-visualize_von_mises_stress(Sigma_, m, n, h, name="_nn0")
-visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0", 
-                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-for i = 1:1000
-  BFGS!(sess, loss,100)
-  U_, Sigma_ = run(sess, [U,Sigma])
+
+function visualize(i)
   visualize_von_mises_stress(Sigma_, m, n, h, name="_nn$i")
   visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0$i", 
-                  xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+                  xlim_=[-3h, m*h+2h], ylim_=[-2h, n*h+2h])
+  close("all")
+  figure(figsize=(13,4))
+  subplot(121)
+  plot(LinRange(0, 20, NT+1), U0[:,1], "--")
+  plot(LinRange(0, 20, NT+1), U_[:,1])
+  xlabel("Time")
+  ylabel("Displacement")
+  subplot(122)
+  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,1], dims=2)[:],"r--", label="\$\\sigma_{xx}\$")
+  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,2], dims=2)[:],"b--", label="\$\\sigma_{yy}\$")
+  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,3], dims=2)[:],"g--", label="\$\\sigma_{xy}\$")
+  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,1], dims=2)[:],"r-")
+  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,2], dims=2)[:],"b-")
+  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,3], dims=2)[:],"g-")
+  legend()
+  legend()
+  xlabel("Time")
+  ylabel("Stress")
+  savefig("disp$i.png")
+  savefig("disp$i.pdf")
+  matwrite("nn$i.mat", Dict("U"=>U_, "S"=>Sigma_))
+end
+
+
+visualize(0)
+for i = 1:1000
+  BFGS!(sess, loss,50)
+  global U_, Sigma_ = run(sess, [U,Sigma])
+  visualize(i)    
 end
 # # step 2
 # @show run(sess, loss)

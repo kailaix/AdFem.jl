@@ -2,8 +2,11 @@ using ADCME
 function compile(DIR)
     PWD = pwd()
     cd(DIR)
-    rm("build", force=true, recursive=true)
     try
+    rm("build", force=true, recursive=true)
+    catch
+	end
+try
 	mkdir("build")
     catch
 	end

@@ -199,8 +199,11 @@ sess = Session(); init(sess)
 
 cb = (v, i, l)->begin
   println("[$i] loss = $l")
-  inv_eta = v[1]
-  visualize_inv_eta(inv_eta, i)
+  if mod(i,20)==0
+    inv_eta = v[1]
+    visualize_inv_eta(inv_eta, i)
+    matwrite("eta$i.mat", Dict("eta"=>inv_eta))
+  end
 end
 
 if mode=="data"

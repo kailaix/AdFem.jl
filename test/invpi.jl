@@ -96,7 +96,7 @@ if is_training
     Ue = matread("U.mat")["U"]
     loss = sum((u_out[:, upper_idx] - Ue)^2)
     sess = Session(); init(sess)
-    loss_ = BFGS!(sess, loss, 100)
+    loss_ = BFGS!(sess, loss, 500)
 
     close("all")
     semilogy(loss_)
