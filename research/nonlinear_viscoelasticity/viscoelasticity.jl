@@ -10,7 +10,9 @@ np = pyimport("numpy")
 
 mode = "data"
 sigmamax = 0.1
+# pl = placeholder([5.0;1000.0])
 
+pl = Variable([1.0;100.0])
 
 
 n = 10
@@ -33,6 +35,11 @@ M = SparseTensor([M Zero;Zero M])
 ## alpha-scheme
 β = 1/4; γ = 1/2
 
+function eta_fun(σ)
+  return constant(10*ones(4*m*n)) + pl[1]/(1+pl[2]*sum(σ^2, dims=2))
+end
+
+
 # invη is a 4*m*n array 
 function make_matrix(invη)
   a = b = 0.1
@@ -51,7 +58,8 @@ function make_matrix(invη)
   K = compute_fem_stiffness_matrix(H, m, n, h)
   C = a*M + b*K # damping matrix 
   L = M + γ*Δt*C + β*Δt^2*K
-  L, Lbd = fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
+  # L = pl[1]*L
+  L, Lbd = fem_impose_Dirichlet_boundary_condition_experimental(L, bdnode, m, n, h)
 
   return C, K, L, S, invG
 end
@@ -89,7 +97,7 @@ function body(i, tas...)
   Sigma = read(Sigma_, i)
   Varepsilon = read(Varepsilon_, i)
 
-  invη = constant(10.0*ones(4*m*n))
+  invη = eta_fun(Sigma)
   C, K, L, S, invG = make_matrix(invη)
 
   res = batch_matmul(invG/Δt, Sigma)
@@ -136,24 +144,36 @@ Varepsilon = stack(varepsilon)
 #   idx = collect(1:m+1)
 #   global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
 # end
+U = set_shape(U, (NT+1, size(U,2)))
+Uval2 = matread("viscoelasticity.mat")["U"]
+loss = 1e10*sum((U[end, 1:m+1]-Uval2[end, 1:m+1])^2) 
 
 sess = Session(); init(sess)
 
-Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
-matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
+# @show run(sess, loss)
+# g = gradients(loss, pl)
+# localmin = [266.8724450474673 
+# 126.39699437649368]
+# gradview(sess, pl, g, loss, localmin)
+# savefig("line.png")
 
-visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
-visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
-                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+BFGS!(sess, loss)
 
-close("all")
-plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="viscoelasticity")
-xlabel("Time")
-ylabel("Displacement")
-savefig("disp.png")
+# Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
+# matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-Uval = matread("linear.mat")["U"]
-plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="linear elasticity")
-legend()
-savefig("disp.png")
+# visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
+# visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
+#                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+
+# close("all")
+# plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="viscoelasticity")
+# xlabel("Time")
+# ylabel("Displacement")
+# savefig("disp.png")
+
+# Uval = matread("linear.mat")["U"]
+# plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="linear elasticity")
+# legend()
+# savefig("disp.png")
 
