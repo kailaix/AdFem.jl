@@ -25,7 +25,7 @@ We can consider the elasticity strain associated with a spring while the viscoel
 The most general constitutive equation has the following form 
 
 ```math
-p_0\sigma + p_1\dot\sigma + p_2\ddot \sigma + p_3 \dddot \sigma + \cdots = q_0\varepsilon + q_1\dot\varepsilon + q_2\ddot \varepsilon + q_3 \dddot \varepsilon + \cdots
+p_0\sigma + p_1\sigma' + p_2 \sigma'' + p_3  \sigma''' + \cdots = q_0\varepsilon + q_1\varepsilon' + q_2 \varepsilon'' + q_3  \varepsilon''' + \cdots
 ```
 
 For high dimensional case, assume that the bulk modulus is $K$, then we have [^linearvisco2]
@@ -50,7 +50,7 @@ $$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}
 
 along with the balance of linear momentum equation
 
-$$\sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
+$$\mathrm{div}\ \sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
 
 
 We use the implicit discretization for Eq. (1) 
@@ -72,11 +72,15 @@ We use the implicit discretization for Eq. (1)
 	2\mu+\lambda & \lambda & 0\\
 	\lambda & 2\mu+\lambda & 0\\
 	0 & 0 & \mu 
-\end{bmatrix}\begin{bmatrix}
+\end{bmatrix}\left(\begin{bmatrix}
+	\varepsilon_{xx}^{n+1}\\
+	\varepsilon_{yy}^{n+1}\\
+	\varepsilon_{xy}^{n+1}
+\end{bmatrix}-\begin{bmatrix}
 	\varepsilon_{xx}^{n}\\
 	\varepsilon_{yy}^{n}\\
 	\varepsilon_{xy}^{n}
-\end{bmatrix}
+\end{bmatrix}\right)
 ```
 or in a simpler form
 
