@@ -5,10 +5,11 @@ using LinearAlgebra
 using PyPlot
 using SparseArrays
 using MAT
+using Statistics
 np = pyimport("numpy")
 
 
-pl = Variable([1.0;100.0])
+pl = placeholder([5.0;1000.0])
 
 n = 10
 m = 2n 
@@ -152,20 +153,29 @@ sess = Session(); init(sess)
 # gradview(sess, pl, g, loss, localmin)
 # savefig("line.png")
 
-BFGS!(sess, loss)
+# BFGS!(sess, loss)
 
-# Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
-# matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
+Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
+matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-# visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
-# visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
-#                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
+visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
+                xlim_=[-3h, m*h+2h], ylim_=[-2h, n*h+2h])
 
-# close("all")
-# plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="viscoelasticity")
-# xlabel("Time")
-# ylabel("Displacement")
-# savefig("disp.png")
+close("all")
+figure(figsize=(10,4))
+subplot(121)
+plot(LinRange(0, 20, NT+1), Uval[:,1])
+xlabel("Time")
+ylabel("Displacement")
+subplot(122)
+plot(LinRange(0, 20, NT+1), mean(Sigmaval[:,1:4,1], dims=2)[:], label="\$\\sigma_{xx}\$")
+plot(LinRange(0, 20, NT+1), mean(Sigmaval[:,1:4,2], dims=2)[:], label="\$\\sigma_{yy}\$")
+plot(LinRange(0, 20, NT+1), mean(Sigmaval[:,1:4,3], dims=2)[:], label="\$\\sigma_{xy}\$")
+legend()
+xlabel("Time")
+ylabel("Stress")
+savefig("disp.png")
 
 # Uval = matread("linear.mat")["U"]
 # plot(LinRange(0, 20, NT+1), Uval[:,m+1], label="linear elasticity")

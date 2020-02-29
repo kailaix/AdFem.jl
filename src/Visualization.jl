@@ -26,6 +26,8 @@ function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
         savefig("__p$k_.png")
     end
     run(`convert -delay 10 -loop 0 __p*.png disp_p$name.gif`)
+    rfiles = [x for x in readdir(".") if occursin("__p", x)]
+    rm.(rfiles)
 end
 
 """ 
@@ -54,6 +56,8 @@ function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64,
         savefig("__u$k_.png")
     end
     run(`convert -delay 10 -loop 0 __u*.png disp_u$name.gif`)
+    rfiles = [x for x in readdir(".") if occursin("__u", x)]
+    rm.(rfiles)
 
 
     vmin = minimum(U[(m+1)*(n+1)+1:2*(m+1)*(n+1),:])
@@ -74,6 +78,8 @@ function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64,
     run(`convert -delay 10 -loop 0 __v*.png disp_v$name.gif`)
 
     close("all")
+    rfiles = [x for x in readdir(".") if occursin("__v", x)]
+    rm.(rfiles)
 end
 
 @doc raw""" 
@@ -116,6 +122,8 @@ function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, 
         savefig("__s$k_.png")
     end
     run(`convert -delay 10 -loop 0 __s*.png disp_s$name.gif`)
+    rfiles = [x for x in readdir(".") if occursin("__s", x)]
+    rm.(rfiles)
 end
 
 
@@ -162,6 +170,8 @@ function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
         savefig("__s$k_.png")
     end
     run(`convert -delay 10 -loop 0 __s*.png disp_s$name.gif`)
+    rfiles = [x for x in readdir(".") if occursin("__s", x)]
+    rm.(rfiles)
 end
 
 """
@@ -215,4 +225,6 @@ function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int
         savefig("__Scattered$k_.png")
     end
     run(`convert -delay 20 -loop 0 __Scattered*.png disp_scattered_u$name.gif`)
+    rfiles = [x for x in readdir(".") if occursin("__Scattered", x)]
+    rm.(rfiles)
 end

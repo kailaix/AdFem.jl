@@ -8,50 +8,22 @@ using JLD2
 using PyPlot
 np = pyimport("numpy")
 
-function nnlaw(σ, ε)
-    return ε
-end
-mode = "training"
 # Domain information 
 NT = 20
 Δt = 1/NT
 n = 10
 m = 2*n 
 h = 1.0/n 
-bdnode = Int64[]
-for i = 1:m+1
-    for j = 1:n+1
-        if j==n+1
-            push!(bdnode, (j-1)*(m+1)+i)
-        end
-    end
-end
+bdnode = bcnode("lower", m, n, h)
 
 
 b = 1.0
-invη = 1.0
-λ = constant(2.0)
-μ = constant(0.5)
-invη = constant(invη)
 
-
-
-iS = tensor(
-        [1+2/3*μ*Δt*invη -1/3*μ*Δt*invη 0.0
-        -1/3*μ*Δt*invη 1+2/3*μ*Δt*invη 0.0 
-        0.0 0.0 1+μ*Δt*invη]
-    )
-S = inv(iS)
-H = S * tensor([
-    2μ+λ λ 0.0
-    λ 2μ+λ 0.0
-    0.0 0.0 μ
-])
-
-if mode=="training"
-    H_ = Variable(diagm(0=>ones(3))); 
-    global H = H_'*H_;
-end
+H_ = Variable(diagm(0=>ones(3))[:]); 
+H1 = reshape(H_, 3,3)
+H = (H1'*H1) .* [1.0 1.0 0.0
+                1.0 1.0 0.0
+                0.0 0.0 1.0];
 
 
 bd = bcedge("upper", m, n, h)
@@ -89,12 +61,10 @@ function get_disp(ipval)
         u = read(ta_u, i)
         σ0 = read(ta_σ, i)
         ε0 = read(ta_ε, i)
-        if occursin("training", mode)
-            g = -ε0*H
-            rhs1 = compute_strain_energy_term(g, m, n, h)
-        else 
-            rhs1 = compute_fem_viscoelasticity_strain_energy_term(ε0, σ0, S, H, m, n, h)
-        end
+
+        g = -ε0*H
+        rhs1 = compute_strain_energy_term(g, m, n, h)
+
         rhs1 = scatter_update(rhs1, [bdnode; bdnode .+ (m+1)*(n+1)], zeros(2length(bdnode)))
         rhs2 = zeros(m*n)
         rhs2[injection] += 1.0 
@@ -106,11 +76,8 @@ function get_disp(ipval)
         o = A\rhs 
 
         ε = eval_strain_on_gauss_pts(o, m, n, h)
-        if occursin("training", mode)
-            σ = ε*H
-        else
-            σ = σ0*S + (ε - ε0)*H
-        end
+        σ = ε*H
+
         ta_u = write(ta_u, i+1, o)
         ta_ε = write(ta_ε, i+1, ε)
         ta_σ = write(ta_σ, i+1, σ)
@@ -136,52 +103,65 @@ function get_disp(ipval)
         push!(upper_idx, (div(n,3)-1)*m+i+2(m+1)*(n+1))
     end
 
-    idx = 1:m+1
-    ux_disp = u_out[:, idx]
-    ux_disp, u_out, σ_out
+    u_out, σ_out
 end
 
-disps = []
+Us = Array{PyObject}(undef, 6)
+Ss = Array{PyObject}(undef, 6)
+
 for i = 1:5
-    push!(disps, get_disp(0.2*i)[1])
+    Us[i], Ss[i] = get_disp(0.2*i)
 end
-_, test_disp, test_sigma = get_disp(0.5)
+Us[6], Ss[6] = get_disp(0.5)
 
-if occursin("training", mode)
-    @load "invdata.jld2" Udata_
-    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:5])
-    # global opt = AdamOptimizer().minimize(loss)
+if isfile("invdata.mat")
+    d = matread("invdata.mat")
+    Us_ = d["U"]
+    Ss_ = d["S"]
+    global Sigma0 = Ss_[6]
+    global U0 = Us_[6]
+    global loss = sum([sum((Us[i][:,1:m+1] - Us_[i][:,1:m+1])^2) for i = 1:5])
 end
 sess = Session(); init(sess)
 
-if mode=="data"
-    Udata_ = run(sess, disps)
-    @save "invdata.jld2" Udata_
-    @show run(sess, [H,S])
-    TDISP, Sigma = run(sess, [test_disp, test_sigma])
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_ref", 
-                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_ref")
-else
-    for iter = 1:50
-        BFGS!(sess, loss, 1000)
-        TDISP, Sigma = run(sess, [test_disp, test_sigma])
-        visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test$iter", 
-                    xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-        visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test$iter")
-    end
+function visualize(i)
+    visualize_von_mises_stress(Sigma_, m, n, h, name="_nn$i")
+    visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0$i", 
+                    xlim_=[-3h, m*h+2h], ylim_=[-2h, n*h+2h])
+    close("all")
+    figure(figsize=(13,4))
+    subplot(121)
+    plot(LinRange(0, 20, NT+1), U0[:,1], "r--")
+    plot(LinRange(0, 20, NT+1), U_[:,1], "r")
+    plot(LinRange(0, 20, NT+1), U0[:,1+(n+1)*(m+1)], "g--")
+    plot(LinRange(0, 20, NT+1), U_[:,1+(n+1)*(m+1)], "g")
+    xlabel("Time")
+    ylabel("Displacement")
+    subplot(122)
+    plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,1], dims=2)[:],"r--", label="\$\\sigma_{xx}\$")
+    plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,2], dims=2)[:],"b--", label="\$\\sigma_{yy}\$")
+    plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,3], dims=2)[:],"g--", label="\$\\sigma_{xy}\$")
+    plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,1], dims=2)[:],"r-")
+    plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,2], dims=2)[:],"b-")
+    plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,3], dims=2)[:],"g-")
+    legend()
+    legend()
+    xlabel("Time")
+    ylabel("Stress")
+    savefig("disp$i.png")
+    savefig("disp$i.pdf")
+    matwrite("nn$i.mat", Dict("U"=>U_, "S"=>Sigma_))
 end
 
-# ADCME.load(sess, "nn.mat")
+# run(sess, loss)
+# gradview(sess, H_, loss, diagm(0=>ones(3))[:])
+# savefig("line.png")
 
-# julia> run(sess, H)
-# 3×3 Array{Float64,2}:
-#   2.24497    1.68432   -0.0577557
-#  -0.82159    0.512678   0.484218 
-#  -0.918737  -0.688694   0.361021 
-
-# julia> run(sess, S)
-# 3×3 Array{Float64,2}:
-#   0.419232  -0.116582   -0.103483 
-#  -0.116582   0.356347   -0.0379917
-#  -0.103483  -0.0379917   0.599339 
+loss = loss*1e10
+U_, Sigma_ = run(sess, [Us[6], Ss[6]])
+visualize(0)
+for iter = 1:5000
+    BFGS!(sess, loss, 500)
+    global U_, Sigma_ = run(sess, [Us[6], Ss[6]])
+    visualize(iter)
+end

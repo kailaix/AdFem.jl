@@ -18,28 +18,14 @@ NT = 20
 n = 10
 m = 2*n 
 h = 1.0/n 
-bdnode = Int64[]
-for i = 1:m+1
-    for j = 1:n+1
-        if j==n+1
-            push!(bdnode, (j-1)*(m+1)+i)
-        end
-    end
-end
+bdnode = bcnode("lower", m, n, h)
 
 
 b = 1.0
-invη = 1.0
-λ = constant(2.0)
-μ = constant(0.5)
-invη = constant(invη)
+# pl = placeholder([2.0;0.5;1.0])
+pl = Variable(0.8*ones(3))
+λ, μ, invη = pl[1], pl[2], pl[3]
 
-
-if mode=="training"
-    global λ = Variable(1.5)
-    global μ = Variable(1.5)
-    global invη = Variable(1.5)
-end
 iS = tensor(
         [1+2/3*μ*Δt*invη -1/3*μ*Δt*invη 0.0
         -1/3*μ*Δt*invη 1+2/3*μ*Δt*invη 0.0 
@@ -97,7 +83,6 @@ function get_disp(ipval)
         
         rhs = [rhs1;rhs2]
         o = A\rhs 
-
         ε = eval_strain_on_gauss_pts(o, m, n, h)
         σ = σ0*S + (ε - ε0)*H
         ta_u = write(ta_u, i+1, o)
@@ -125,59 +110,78 @@ function get_disp(ipval)
         push!(upper_idx, (div(n,3)-1)*m+i+2(m+1)*(n+1))
     end
 
-    idx = 1:m+1
-    ux_disp = u_out[:, idx]
-    ux_disp, u_out, σ_out
+    u_out, σ_out
 end
 
-disps = []
+Us = Array{PyObject}(undef, 6)
+Ss = Array{PyObject}(undef, 6)
+
 for i = 1:5
-    push!(disps, get_disp(0.2*i)[1])
+    Us[i], Ss[i] = get_disp(0.2*i)
 end
-_, test_disp, test_sigma = get_disp(0.5)
+Us[6], Ss[6] = get_disp(0.5)
 
-if occursin("training", mode)
-    @load "invdata.jld2" Udata_
-    global loss = sum([sum((disps[i] - Udata_[i])^2) for i = 1:5])
-    # global opt = AdamOptimizer().minimize(loss)
+if isfile("invdata.mat")
+    d = matread("invdata.mat")
+    Us_ = d["U"]
+    Ss_ = d["S"]
+    global Sigma0 = Ss_[6]
+    global U0 = Us_[6]
+    global loss = sum([sum((Us[i][:,1:m+1] - Us_[i][:,1:m+1])^2) for i = 1:5])
 end
 sess = Session(); init(sess)
 
-if mode=="data"
-    Udata_ = run(sess, disps)
-    @save "invdata.jld2" Udata_
-    @show run(sess, [H,S])
-    TDISP, Sigma = run(sess, [test_disp, test_sigma])
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_ref", 
-                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_ref")
-else
-    global loss_ = BFGS!(sess, loss, 1000)
-    TDISP, Sigma = run(sess, [test_disp, test_sigma])
-    visualize_scattered_displacement(TDISP'|>Array, m, n, h, name="_inv_visco_test", 
-                xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-    visualize_von_mises_stress(Sigma, m, n, h, name="_inv_visco_test")
+function visualize(i)
+    visualize_von_mises_stress(Sigma_, m, n, h, name="_nn$i")
+    visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0$i", 
+                    xlim_=[-3h, m*h+2h], ylim_=[-2h, n*h+2h])
+    close("all")
+    figure(figsize=(13,4))
+    subplot(121)
+    plot(LinRange(0, 20, NT+1), U0[:,1], "r--")
+    plot(LinRange(0, 20, NT+1), U_[:,1], "r")
+    plot(LinRange(0, 20, NT+1), U0[:,1+(n+1)*(m+1)], "g--")
+    plot(LinRange(0, 20, NT+1), U_[:,1+(n+1)*(m+1)], "g")
+    xlabel("Time")
+    ylabel("Displacement")
+    subplot(122)
+    plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,1], dims=2)[:],"r--", label="\$\\sigma_{xx}\$")
+    plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,2], dims=2)[:],"b--", label="\$\\sigma_{yy}\$")
+    plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,3], dims=2)[:],"g--", label="\$\\sigma_{xy}\$")
+    plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,1], dims=2)[:],"r-")
+    plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,2], dims=2)[:],"b-")
+    plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,3], dims=2)[:],"g-")
+    legend()
+    legend()
+    xlabel("Time")
+    ylabel("Stress")
+    savefig("disp$i.png")
+    savefig("disp$i.pdf")
+    matwrite("nn$i.mat", Dict("U"=>U_, "S"=>Sigma_))
 end
 
-close("all")
-semilogy(loss_)
-xlabel("Iteration")
-ylabel("Loss")
-grid("on")
-savefig("loss.png")
-mpl.save("loss.tex")
+if mode=="data"
+    U = run(sess, Us)
+    S = run(sess, Ss)
+    matwrite("invdata.mat", Dict("U"=>U, "S"=>S))
+    global Sigma_ = S[6]
+    global U_ = U[6]
+    global Sigma0 = Sigma_
+    global U0 = U_
+    visualize("true")
+    error("Stop!") 
+end
 
-res = run(sess, [λ, μ, invη])
-writedlm("result.txt", res)
-# plot()
-# julia> run(sess, H)
-# 3×3 Array{Float64,2}:
-#   2.24497    1.68432   -0.0577557
-#  -0.82159    0.512678   0.484218 
-#  -0.918737  -0.688694   0.361021 
+# @show run(sess, loss)
+# lineview(sess, pl, loss, [2.0;0.5;1.0], [5.0;5.0;5.0])
+# savefig("line.png")
 
-# julia> run(sess, S)
-# 3×3 Array{Float64,2}:
-#   0.419232  -0.116582   -0.103483 
-#  -0.116582   0.356347   -0.0379917
-#  -0.103483  -0.0379917   0.599339 
+# gradview(sess, pl, loss, [5.0;5.0;5.0])
+# savefig("line.png")
+
+# meshview(sess, pl, loss, [2.0;0.5;1.0], 0.1, 0.1)
+# savefig("line.png")
+
+loss_ = BFGS!(sess, loss)
+p = run(sess, pl)
+matwrite("param.mat", Dict("loss"=>loss_, "p"=>p))
