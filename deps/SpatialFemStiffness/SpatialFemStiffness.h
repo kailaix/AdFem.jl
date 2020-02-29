@@ -16,11 +16,10 @@ class Forward{
       Eigen::Matrix<double,3,8> Bs[4];
 
       int k =0;
-      for(int p=0;p<2;p++)
-        for(int q=0;q<2;q++){
-          int k = 2*q + p; 
-          double xi = pts[p], eta = pts[q];
-          Bs[k] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta, 0.0, 0.0, 0.0, 0.0,
+      for(int i=0;i<2;i++)
+        for(int j=0;j<2;j++){
+          double xi = pts[i], eta = pts[j];
+          Bs[k++] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0, -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi,
             -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi, -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta;
           
@@ -92,11 +91,11 @@ void backward(
       Eigen::Vector<int,8> idx;
       Eigen::Matrix<double,3,8> Bs[4];
 
-      for(int p=0;p<2;p++)
-        for(int q=0;q<2;q++){
-          int k = 2*q + p; 
-          double xi = pts[p], eta = pts[q];
-          Bs[k] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta, 0.0, 0.0, 0.0, 0.0,
+      int k =0;
+      for(int i=0;i<2;i++)
+        for(int j=0;j<2;j++){
+          double xi = pts[i], eta = pts[j];
+          Bs[k++] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0, -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi,
             -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi, -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta;
           
