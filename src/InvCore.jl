@@ -105,19 +105,19 @@ export rate_state_friction
 @doc raw"""
     rate_state_friction(a::Union{PyObject, Array{Float64, 1}},uold::Union{PyObject, Array{Float64, 1}},
     v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
-    sigmazx::Union{PyObject, Array{Float64, 1}},
-    sigmazy::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64},deltat::Union{PyObject, Float64})
+    sigman::Union{PyObject, Array{Float64, 1}},
+    sigmazx::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64},deltat::Union{PyObject, Float64})
 
 Computes $x = u_3(x_1, x_2)$ from rate and state friction. The governing equation is 
 ```math 
-a \sinh^{-1}\left( \frac{x - u}{\Delta t} \frac{1}{2V_0} e^{\frac{\Psi}{a}} \right) \sigma_{zx} - \sigma_{zy} + \eta \frac{x-u}{\Delta t} = 0
+a \sinh^{-1}\left( \frac{x - u}{\Delta t} \frac{1}{2V_0} e^{\frac{\Psi}{a}} \right) \sigma_{n} - \sigma_{zx} + \eta \frac{x-u}{\Delta t} = 0
 ```
 """
 function rate_state_friction(a::Union{PyObject, Array{Float64, 1}},uold::Union{PyObject, Array{Float64, 1}},
     v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
-    sigmazx::Union{PyObject, Array{Float64, 1}},
-    sigmazy::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64},deltat::Union{PyObject, Float64})
+    sigman::Union{PyObject, Array{Float64, 1}},
+    sigmazx::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64},deltat::Union{PyObject, Float64})
     rate_state_friction_ = load_op_and_grad("$(@__DIR__)/../deps/RateStateFriction/build/libRateStateFriction","rate_state_friction")
-    a,uold,v0,psi,sigmazx,sigmazy,eta,deltat = convert_to_tensor([a,uold,v0,psi,sigmazx,sigmazy,eta,deltat], [Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64])
-    rate_state_friction_(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
+    a,uold,v0,psi,sigman,sigmazy,eta,deltat = convert_to_tensor([a,uold,v0,psi,sigman,sigmazx,eta,deltat], [Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64])
+    rate_state_friction_(a,uold,v0,psi,sigman,sigmazx,eta,deltat)
 end

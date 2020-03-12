@@ -14,7 +14,7 @@ void forward(double *strain, const double *u, int m, int n, double h){
         for(int j=0;j<2;j++){
           double xi = pts[i], eta = pts[j];
           int idx = 2*j + i;
-          Bs[idx] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta
+          Bs[idx] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
                 -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
           
         }
@@ -28,6 +28,7 @@ void forward(double *strain, const double *u, int m, int n, double h){
             for(int q=0;q<2;q++){
               int idx = 2*q + p;
               auto x = Bs[idx] * uA;
+              // std::cout << "***\n" <<  Bs[idx] << std::endl  << std::endl;
               strain[2*(4*elem + idx)] = x[0];
               strain[2*(4*elem + idx)+1] = x[1];
             }
@@ -51,7 +52,7 @@ void backward(
         for(int j=0;j<2;j++){
           double xi = pts[i], eta = pts[j];
           int idx = 2*j + i;
-          Bs[idx]  << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta
+          Bs[idx]  << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
                 -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
           
         }
