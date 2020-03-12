@@ -1,0 +1,6 @@
+StrainOpUnivariate
+double u(?)
+int32 m()
+int32 n()
+double h()
+double strain(?,2) -> output

@@ -84,3 +84,40 @@ function eval_strain_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
     out 
 end
 
+
+
+export eval_strain_on_gauss_pts1
+"""
+    eval_strain_on_gauss_pts1(u::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel.
+"""
+function eval_strain_on_gauss_pts1(u::PyObject, m::Int64, n::Int64, h::Float64)
+    strain_op_univariate_ = load_op_and_grad("$(@__DIR__)/../deps/Strain1/build/libStrainOpUnivariate","strain_op_univariate")
+    u,m_,n_,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
+    out = strain_op_univariate_(u,m_,n_,h)
+    out.set_shape((4*m*n, 2))
+    out 
+end
+
+
+export rate_state_friction
+@doc raw"""
+    rate_state_friction(a::Union{PyObject, Array{Float64, 1}},uold::Union{PyObject, Array{Float64, 1}},
+    v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
+    sigmazx::Union{PyObject, Array{Float64, 1}},
+    sigmazy::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64},deltat::Union{PyObject, Float64})
+
+Computes $x = u_3(x_1, x_2)$ from rate and state friction. The governing equation is 
+```math 
+a \sinh^{-1}\left( \frac{x - u}{\Delta t} \frac{1}{2V_0} e^{\frac{\Psi}{a}} \right) \sigma_{zx} - \sigma_{zy} + \eta \frac{x-u}{\Delta t} = 0
+```
+"""
+function rate_state_friction(a::Union{PyObject, Array{Float64, 1}},uold::Union{PyObject, Array{Float64, 1}},
+    v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
+    sigmazx::Union{PyObject, Array{Float64, 1}},
+    sigmazy::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64},deltat::Union{PyObject, Float64})
+    rate_state_friction_ = load_op_and_grad("$(@__DIR__)/../deps/RateStateFriction/build/libRateStateFriction","rate_state_friction")
+    a,uold,v0,psi,sigmazx,sigmazy,eta,deltat = convert_to_tensor([a,uold,v0,psi,sigmazx,sigmazy,eta,deltat], [Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64])
+    rate_state_friction_(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
+end

@@ -944,6 +944,9 @@ function eval_strain_on_gauss_pts(u::Array{Float64}, m::Int64, n::Int64, h::Floa
     strain
 end    
 
+
+
+
 @doc raw"""
     eval_stress_on_gauss_pts(u::Array{Float64}, K::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
 

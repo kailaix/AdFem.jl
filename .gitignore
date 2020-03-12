@@ -47,3 +47,6 @@ research/nonlinear_viscoelasticity/*.gif
 research/nonlinear_viscoelasticity/*.mat
 research/nonlinear_viscoelasticity/nonlinear
 research/nonlinear_viscoelasticity/*.pdf
+test/U_surface/*.png
+test/U_total/*.png
+test/U_total/*.png

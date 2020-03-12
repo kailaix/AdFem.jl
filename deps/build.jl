@@ -23,3 +23,5 @@ compile("$(@__DIR__)/FemStiffness")
 compile("$(@__DIR__)/Strain")
 compile("$(@__DIR__)/StrainEnergy")
 compile("$(@__DIR__)/SpatialFemStiffness")
+compile("$(@__DIR__)/RateStateFriction")
+
