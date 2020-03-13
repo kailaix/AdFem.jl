@@ -7,33 +7,37 @@ Random.seed!(233)
 
 function univariate_fem_stiffness(hmat,m,n,h)
     univariate_fem_stiffness_ = load_op_and_grad("./build/libUnivariateFemStiffness","univariate_fem_stiffness", multiple=true)
-hmat,m,n,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
+    hmat,m,n,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
     univariate_fem_stiffness_(hmat,m,n,h)
 end
 
-# TODO: specify your input parameters
-hmat = diagm(0=>ones(2))
 m = 10
 n = 5
-h = 0.1
+h = 1.0
+hmat = zeros(4*m*n, 2, 2)
+for i = 1:4*m*n 
+    hmat[i,:,:] = diagm(0=>ones(2))
+end
+
+# TODO: specify your input parameters
 u = univariate_fem_stiffness(hmat,m,n,h)
 sess = Session(); init(sess)
 @show run(sess, u)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(univariate_fem_stiffness(hmat,m,n,h)^2)
+function scalar_function(hmat)
+    return sum(univariate_fem_stiffness(hmat,m,n,h)[3]^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(4*m*n, 2, 2))
+v_ = rand(4*m*n, 2, 2)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -63,3 +67,5 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+
+savefig("test.png")

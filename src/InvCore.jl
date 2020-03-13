@@ -24,6 +24,18 @@ function fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
     L, Lbd
 end
 
+@doc raw"""
+    compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
+"""
+function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
+    if length(size(hmat))!=3
+        error("Only 4mn x 2 x 2 matrix `hmat` is supported.")
+    end
+    univariate_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/FemStiffness1/build/libUnivariateFemStiffness","univariate_fem_stiffness", multiple=true)
+    hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
+    ii, jj, vv = univariate_fem_stiffness_(hmat,m_,n_,h)
+    SparseTensor(ii, jj, vv, (m+1)*(n+1), (m+1)*(n+1))
+end
 
 @doc raw"""
     compute_fem_stiffness_matrix(hmat::PyObject,m::Int64, n::Int64, h::Float64)

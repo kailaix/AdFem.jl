@@ -34,3 +34,31 @@
 
 
 end
+
+
+@testset "compute_fem_stiffness_matrix1" begin
+using Revise
+using PoreFlow
+using ADCME
+    m = 10
+    n = 5
+    h = 0.1
+    U = zeros((m+1)*(n+1))
+    for i = 1:m+1
+        for j = 1:n+1
+            x = (i-1)*h 
+            y = (j-1)*h 
+            U[i+(j-1)*(m+1)] = x^2 + y^2
+        end
+    end
+    
+    hmat = zeros(4m*n, 2, 2)
+    for i = 1:4*m*n
+        hmat[i,:,:] = [2. 1.;3. 4.]
+    end
+    A = compute_fem_stiffness_matrix1(constant(hmat), m, n, h)
+    A2 = compute_fem_stiffness_matrix1([2. 1.;3. 4.], m, n, h)
+    sess = Session()
+    run(sess, A) - A2
+    
+end

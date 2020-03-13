@@ -1,5 +1,5 @@
 UnivariateFemStiffness
-double hmat(2,2)
+double hmat(?,2,2)
 int32 m()
 int32 n()
 double h()

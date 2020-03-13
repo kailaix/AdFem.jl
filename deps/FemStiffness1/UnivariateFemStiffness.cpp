@@ -29,7 +29,7 @@ REGISTER_OP("UnivariateFemStiffness")
 .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
     
         shape_inference::ShapeHandle hmat_shape;
-        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 2, &hmat_shape));
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 3, &hmat_shape));
         shape_inference::ShapeHandle m_shape;
         TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 0, &m_shape));
         shape_inference::ShapeHandle n_shape;
@@ -83,39 +83,25 @@ public:
     const TensorShape& h_shape = h.shape();
     
     
-    DCHECK_EQ(hmat_shape.dims(), 2);
+    DCHECK_EQ(hmat_shape.dims(), 3);
     DCHECK_EQ(m_shape.dims(), 0);
     DCHECK_EQ(n_shape.dims(), 0);
     DCHECK_EQ(h_shape.dims(), 0);
 
     // extra check
         
-    // create output shape
-    
-    // TensorShape ii_shape({-1});
-    // TensorShape jj_shape({-1});
-    // TensorShape vv_shape({-1});
-            
-    // // create output tensor
-    
-    // Tensor* ii = NULL;
-    // OP_REQUIRES_OK(context, context->allocate_output(0, ii_shape, &ii));
-    // Tensor* jj = NULL;
-    // OP_REQUIRES_OK(context, context->allocate_output(1, jj_shape, &jj));
-    // Tensor* vv = NULL;
-    // OP_REQUIRES_OK(context, context->allocate_output(2, vv_shape, &vv));
-    
+  
     // get the corresponding Eigen tensors for data access
     
     auto hmat_tensor = hmat.flat<double>().data();
     auto m_tensor = m.flat<int32>().data();
     auto n_tensor = n.flat<int32>().data();
     auto h_tensor = h.flat<double>().data();
-    // auto ii_tensor = ii->flat<int64>().data();
-    // auto jj_tensor = jj->flat<int64>().data();
-    // auto vv_tensor = vv->flat<double>().data();   
-
+    
     // implement your forward function here 
+    DCHECK_EQ(hmat_shape.dim_size(0), 4**m_tensor**n_tensor);
+    DCHECK_EQ(hmat_shape.dim_size(1), 2);
+    DCHECK_EQ(hmat_shape.dim_size(2), 2);
 
     Forward fwd(hmat_tensor, *m_tensor, *n_tensor, *h_tensor);
     fwd.fill(context);
@@ -161,7 +147,7 @@ public:
     DCHECK_EQ(ii_shape.dims(), 1);
     DCHECK_EQ(jj_shape.dims(), 1);
     DCHECK_EQ(vv_shape.dims(), 1);
-    DCHECK_EQ(hmat_shape.dims(), 2);
+    DCHECK_EQ(hmat_shape.dims(), 3);
     DCHECK_EQ(m_shape.dims(), 0);
     DCHECK_EQ(n_shape.dims(), 0);
     DCHECK_EQ(h_shape.dims(), 0);
@@ -244,7 +230,7 @@ public:
     const TensorShape& h_shape = h.shape();
     
     
-    DCHECK_EQ(hmat_shape.dims(), 2);
+    DCHECK_EQ(hmat_shape.dims(), 3);
     DCHECK_EQ(m_shape.dims(), 0);
     DCHECK_EQ(n_shape.dims(), 0);
     DCHECK_EQ(h_shape.dims(), 0);
@@ -319,7 +305,7 @@ public:
     DCHECK_EQ(ii_shape.dims(), 1);
     DCHECK_EQ(jj_shape.dims(), 1);
     DCHECK_EQ(vv_shape.dims(), 1);
-    DCHECK_EQ(hmat_shape.dims(), 2);
+    DCHECK_EQ(hmat_shape.dims(), 3);
     DCHECK_EQ(m_shape.dims(), 0);
     DCHECK_EQ(n_shape.dims(), 0);
     DCHECK_EQ(h_shape.dims(), 0);
