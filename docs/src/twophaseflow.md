@@ -18,15 +18,21 @@ $$\frac{\partial}{\partial t} (1-\phi) + \nabla\cdot(1-\phi)\mathbf{v}_s = 0 \Le
 
 The solid velocity $\mathbf{v}_s$ is given by  
 
-$$\mathbf{v}_s = \frac{d\mathbf{u}}{dt} $$ 
+
+$$\mathbf{v}_s = \frac{d\mathbf{u}}{dt}$$ 
+
 
 and therefore we have 
 
+
 $$\nabla \cdot \mathbf{v}_s =\frac{d}{dt} \nabla  \cdot \mathbf{u} = \frac{\partial \varepsilon_{vol}}{\partial t}$$
+
 
 where the volumetric strain 
 
+
 $$\varepsilon_{vol} = \nabla \cdot \mathbf{u} $$
+
 
 It can be shown that Equation 1 leads to the *variation of porosity*:
 
