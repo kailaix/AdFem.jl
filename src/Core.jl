@@ -381,6 +381,16 @@ function compute_fvm_mechanics_term(u::Array{Float64}, m::Int64, n::Int64, h::Fl
     out
 end
 
+"""
+    compute_fvm_mechanics_term(u::PyObject, m::Int64, n::Int64, h::Float64)
+"""
+function compute_fvm_mechanics_term(u::PyObject, m::Int64, n::Int64, h::Float64)
+    volumetric_strain_ = load_op_and_grad("$(@__DIR__)/../deps/VolumetricStrain/build/libVolumetricStrain","volumetric_strain")
+    u,m_,n_,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
+    strain = volumetric_strain_(u,m_,n_,h)
+    set_shape(strain, (m*n,))
+end
+
 @doc raw"""
     compute_fvm_tpfa_matrix(m::Int64, n::Int64, h::Float64)
 

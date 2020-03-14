@@ -31,7 +31,7 @@ $$\nabla \cdot \mathbf{v}_s =\frac{d}{dt} \nabla  \cdot \mathbf{u} = \frac{\part
 where the volumetric strain 
 
 
-$$\varepsilon_{vol} = \nabla \cdot \mathbf{u} $$
+$$\varepsilon_{vol} = \nabla \cdot \mathbf{u}$$
 
 
 It can be shown that Equation 1 leads to the *variation of porosity*:
@@ -84,13 +84,13 @@ and the capillary potential
 
 $$\Psi_c = \Psi_1 - \Psi_2 = P_1 -P_2 - (\rho_1-\rho_2)gZ \approx - (\rho_1-\rho_2)gZ$$
 
-Define mobilities 
+Here the capillary pressure $P_c = P_1-P_2$ is assumed to be small. We define mobilities 
 
 $$m_i(S_i) = \frac{k_{ri}(S_i)}{\tilde\mu_i}, i=1,2\quad m_t = m_1 + m_2$$
 
 We have the following formula from Equations 3-4:
 
-$$-\nabla (m_tK\nabla \Psi_2) = \nabla \cdot(m_1 K\nabla \Psi_c) - \frac{\partial \phi}{\partial t} + q_1 + q_2 \tag{7}$$
+$$-\nabla\cdot (m_tK\nabla \Psi_2) = \nabla \cdot(m_1 K\nabla \Psi_c) - \frac{\partial \phi}{\partial t} + q_1 + q_2 \tag{7}$$
 
 We can solve for $\Psi_2$ using a Poisson solver. 
 
@@ -98,7 +98,7 @@ Next, we have from Equations 3-4
 
 $$\phi\frac{\partial S_2}{\partial t} + S_2 \frac{\partial\phi}{\partial t} + \nabla \cdot (-K m_2 \nabla \Psi_2) = q_2 + q_1 \frac{m_2}{m_1} \tag{8}$$
 
-Note we have an extra term $q_1 \frac{m_2}{m_1}$ to account for the ignored capillary pressure $P_1-P_2$. 
+Note we have an extra term $q_1 \frac{m_2}{m_1}$ to account for the assumption of zero capillary pressure. 
 
 Equation 8 is a nonlinear equation in $S_2$ ($m_2$ is defined in terms of $S_2=1-S_1$) and requires a Newton-Raphson solver. 
 
@@ -106,7 +106,7 @@ Equation 8 is a nonlinear equation in $S_2$ ($m_2$ is defined in terms of $S_2=1
 
 Upon solving the fluid equation, we obtain $S_1, S_2, \Psi_2$. We can use $\Psi_2$ to estimate the fluid pressure $P_1$ and $P_2$. Use Equations 5 and 6, we solve for $\mathbf{u}$ using
 
-$$\int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (S_1P_1+S_2P_2)\delta \varepsilon_v \mathrm{d}x = 0$$
+$$\int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (S_1P_1+S_2P_2)\delta \varepsilon_v \mathrm{d}x = 0 \Leftrightarrow \int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (\Psi_2 + \rho_2 gZ)\delta \varepsilon_v \mathrm{d}x = 0$$
 
 Here $\varepsilon_v = \varepsilon_{xx} + \varepsilon_{yy} = u_x + u_y$. 
 

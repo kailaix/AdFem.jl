@@ -25,4 +25,4 @@ compile("$(@__DIR__)/Strain1")
 compile("$(@__DIR__)/StrainEnergy")
 compile("$(@__DIR__)/SpatialFemStiffness")
 compile("$(@__DIR__)/RateStateFriction")
-
+compile("$(@__DIR__)/VolumetricStrain")
