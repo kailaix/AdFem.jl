@@ -48,13 +48,17 @@ The *linear momentum balance equation* is given by
 
 $${\mathbf{v}_{is}} =  - \frac{{K{k_{ri}(S_i)}}}{{{\tilde{\mu}_i}}}(\nabla {P_i} - g{\rho _i}\nabla Z), \quad i=1,2 \tag{4}$$
 
-Here, $K$ is the permeability tensor, but in our case we assume it is a space varying scalar value. $k_{ri}(S_i)$ is a function of $S_i$, and typically the higher the saturation, the easier the corresponding phase is to flow. $\tilde \mu_i$ is the viscosity. $Z$ is the depth cordinate, $\rho_i$ is the density, $\phi$ is the porosity, $q_i$ is the source, $P_i$ is the fluid pressure and $g$ is the velocity constant. 
+Here, $K$ is the permeability tensor, but in our case we assume it is a space varying scalar value. $k_{ri}(S_i)$ is a function of $S_i$, and typically the higher the saturation, the easier the corresponding phase is to flow. $\tilde \mu_i$ is the viscosity. $Z$ is the depth cordinate, $\rho_i$ is the density, $\phi$ is the porosity, $q_i$ is the source, $P_i$ is the fluid pressure and $g$ is the velocity constant. We assume the movement of the solid is slow in this study, therefore Darcy’s law is still valid without acceleration terms.
 
-$\mathbf{v}_{is}$ is the relative velocity of the phase $i$ with respect to $\mathbf{v}_s$. 
+$\mathbf{v}_{is}$ is the relative velocity of the phase $i$ with respect to $\mathbf{v}_s$ (also called *interstitial velocity*). 
 
 **Fluid and Mechanics Coupling**
 
 $$\nabla \cdot {\sigma}' - \nabla \left( S_1P_1 + S_2P_2 \right) + \mathbf{f} = 0\tag{5}$$
+
+Here $\sigma'$ should be understood as the *effective stress*, which allows us to treat a multiphase porous medium as a mechanically equivalent single‐phase continuum. We use the concept of equivalent pressure in (5)
+
+$$P_E = S_1P_1 + S_2P_2 - \int_\Omega (S_1P_1 + S_2P_2) \mathrm{d} x$$
 
 **Constitutive Relation**
 
@@ -106,7 +110,7 @@ Equation 8 is a nonlinear equation in $S_2$ ($m_2$ is defined in terms of $S_2=1
 
 Upon solving the fluid equation, we obtain $S_1, S_2, \Psi_2$. We can use $\Psi_2$ to estimate the fluid pressure $P_1$ and $P_2$. Use Equations 5 and 6, we solve for $\mathbf{u}$ using
 
-$$\int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (S_1P_1+S_2P_2)\delta \varepsilon_v \mathrm{d}x = 0 \Leftrightarrow \int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (\Psi_2 + \rho_2 gZ)\delta \varepsilon_v \mathrm{d}x = 0$$
+$$\int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (S_1P_1+S_2P_2)\delta \varepsilon_v \mathrm{d}x = 0 \Leftrightarrow \int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x - \int_\Omega (\Psi_2 + \rho_2 gZ)\delta \varepsilon_v \mathrm{d}x = 0$$
 
 Here $\varepsilon_v = \varepsilon_{xx} + \varepsilon_{yy} = u_x + u_y$. 
 

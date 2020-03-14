@@ -88,13 +88,11 @@ end
 Visualizes displacement. `U` is the solution vector, `K` is the elasticity matrix ($3\times 3$).
 """
 function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+    close("all")
     NT = size(U,2)
-
     x1 = LinRange(0.5h,m*h,m)|>collect
     y1 = LinRange(0.5h,n*h,n)|>collect
-
     S = zeros(20, n, m)
-
     for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
         s = compute_von_mises_stress_term(K, U[:,k], m, n, h)
         for i = 1:m 
@@ -107,23 +105,29 @@ function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, 
     vmin = μ - 2σ
     vmax = μ + 2σ
 
-    for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
+
+    Z = S[1,:,:]
+    pcolormesh(x1,y1,Z, vmin=vmin,vmax=vmax)
+    colorbar()
+    title("snapshot = 1")
+    contour(x1, y1, Z, 10, cmap="jet")
+    axis("scaled")
+    gca().invert_yaxis()
+    
+    function update(ix)
+        gca().clear()
         Z = S[ix,:,:]
-        close("all")
-        # @info size(X1), size(Y1), size(Z)
         pcolormesh(x1,y1,Z, vmin=vmin,vmax=vmax)
-        colorbar()
-        k_ = string(k)
+        k_ = string(ix)
         k_ = repeat("0", 3-length(k_))*k_
         title("snapshot = $k_")
         contour(x1, y1, Z, 10, cmap="jet")
-        axis("equal")
+        axis("scaled")
         gca().invert_yaxis()
-        savefig("__s$k_.png")
     end
-    run(`convert -delay 10 -loop 0 __s*.png disp_s$name.gif`)
-    rfiles = [x for x in readdir(".") if occursin("__s", x)]
-    rm.(rfiles)
+
+    p = animate(update, 1:20)
+    saveanim(p, "disp_s$name.gif")
 end
 
 
