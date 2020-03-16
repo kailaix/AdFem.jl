@@ -61,7 +61,7 @@ function porosity(u)
 end
 
 ################### solid equations 
-invη = constant(zeros(4*m*n))
+invη = constant(1e-11*ones(4*m*n))
 E = 6.e9
 ν = 0.35
 
@@ -251,3 +251,5 @@ BFGS!(sess, loss)
 # # visualize_displacement(10*o1)
 # # visualize_saturation(o2)
 # # visualize_potential(o3)
+
+plot(o1[:,1:(m+1)])
