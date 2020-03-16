@@ -1,6 +1,6 @@
 include("utils.jl")
 
-mode = "training"
+mode = "data"
 
 # Global parameters
 K_CONST =  9.869232667160130e-16 * 86400 * 1e3
@@ -33,12 +33,17 @@ K[8:10,:] .= 120.0
 # E = 6e9
 E = 6.e9
 ν = 0.35
-D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 1-2ν] 
+D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 (1-2ν)/2] 
 
-# pl = placeholder([1.0;1.0])
-pl = Variable([5.0;1.5])
-E_,ν = pl[1]*6.e9, pl[2]*0.35
-D = E_/(1+ν)/(1-2ν)*tensor([1-ν ν 0;ν 1-ν 0;0 0 1-2ν])
+# # pl = placeholder([1.0;1.0])
+# pl = Variable([5.0;1.5])
+# E_,ν = pl[1]*6.e9, pl[2]*0.35
+# D = E_/(1+ν)/(1-2ν)*tensor([1-ν ν 0;ν 1-ν 0;0 0 1-2ν])
+
+if mode!="data"
+    A = Variable(diagm(0=>ones(3)))
+    global D = 6.e9 * spd(A)
+end
 
 
 Z = zeros(n, m)

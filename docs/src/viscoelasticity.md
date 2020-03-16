@@ -54,8 +54,10 @@ $$\mathrm{div}\ \sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
 
 
 We use the implicit discretization for Eq. (1) 
-```math
-\begin{bmatrix}
+
+
+
+$$\begin{bmatrix}
 1 + \frac{2}{3}\frac{\mu\Delta t}{\eta} & -\frac{1}{3}\frac{\mu\Delta t}{\eta} & 0\\
 -\frac{1}{3}\frac{\mu\Delta t}{\eta} & 1 + \frac{2}{3}\frac{\mu\Delta t}{\eta} & 0 \\
 0 & 0 & 1 + \frac{\mu\Delta t}{\eta}
@@ -80,8 +82,10 @@ We use the implicit discretization for Eq. (1)
 	\varepsilon_{xx}^{n}\\
 	\varepsilon_{yy}^{n}\\
 	\varepsilon_{xy}^{n}
-\end{bmatrix}\right)
-```
+\end{bmatrix}\right)$$
+
+
+
 or in a simpler form
 
 $$\sigma^{n+1} = H \varepsilon^{n+1} + S \sigma^n  - H\varepsilon^n$$
@@ -94,7 +98,7 @@ $$S = \begin{bmatrix}
 0 & 0 & 1 + \frac{\mu\Delta t}{\eta}
 \end{bmatrix}^{-1}$$
 
-$$S^{-1}\begin{bmatrix}
+$$H = S\begin{bmatrix}
 	2\mu+\lambda & \lambda & 0\\
 	\lambda & 2\mu+\lambda & 0\\
 	0 & 0 & \mu 
