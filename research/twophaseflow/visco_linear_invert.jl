@@ -35,16 +35,6 @@ E = 6.e9
 ν = 0.35
 D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 (1-2ν)/2] 
 
-# # pl = placeholder([1.0;1.0])
-# pl = Variable([5.0;1.5])
-# E_,ν = pl[1]*6.e9, pl[2]*0.35
-# D = E_/(1+ν)/(1-2ν)*tensor([1-ν ν 0;ν 1-ν 0;0 0 1-2ν])
-
-if mode!="data"
-    A = Variable(diagm(0=>ones(3)))
-    global D = 6.e9 * spd(A)
-end
-
 
 Z = zeros(n, m)
 for j = 1:n 
@@ -55,13 +45,16 @@ end
 
 bdnode = bcnode("left | right", m, n, h)
 
+if mode!="data"
+    A = Variable(diagm(0=>ones(3)))
+    global D = 6.e9 * spd(A)
+end
+
 InteractionM = constant(compute_interaction_matrix(m, n, h)')
 StiffM = compute_fem_stiffness_matrix(D, m, n, h)/E
 StiffM, _ = fem_impose_Dirichlet_boundary_condition_experimental(StiffM, bdnode, m, n, h)
 StiffM = StiffM*E
 
-# pl = placeholder([1.0])
-# StiffM = StiffM*pl[1]
 
 qo, qw = constant(qo), constant(qw)
 function porosity(u)
@@ -70,21 +63,77 @@ function porosity(u)
     out = 1 - constant(1 .- φ0) .* exp(-ε)
 end
 
-################### solid equations 
-function solid(Ψ2)
+# ################### solid equations 
+invη = constant(1e-12*ones(4*m*n))
+
+# invη = constant(zeros(4*m*n))
+
+E = 6.e9
+ν = 0.35
+
+μ = E/(2(1+ν))
+λ = E*ν/(1+ν)/(1-2ν)
+
+fn_G = invη->begin 
+  G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
+    -μ/3*invη 1/Δt+2/3*μ*invη 0.0
+    0.0 0.0 1/Δt+μ*invη])
+  invG = inv(G)
+end
+S = map(fn_G, invη)/Δt
+Temp = tensor([2μ+λ λ 0.0
+    λ 2μ+λ 0.0
+    0.0 0.0 μ])
+H = S*Temp
+Hmat = compute_fem_stiffness_matrix(H, m, n, h)
+
+Hmat_adj, _ = fem_impose_Dirichlet_boundary_condition_experimental(Hmat/E, bdnode, m, n, h)
+Hmat_adj = Hmat_adj*E
+
+function solid1(Ψ2, σ, uold)
+    
     p = Ψ2 #+ ρw*g*Z 
     # p = p - ave_normal(p)
+    rhs = InteractionM*reshape(p, (-1,))
+
+    Sσ = batch_matmul(S, σ)
+    rhs = rhs + Hmat * uold - compute_strain_energy_term(Sσ, m, n, h)
+
+    mask = ones(2*(m+1)*(n+1))
+    mask[[bdnode;bdnode .+ (m+1)*(n+1)]] .= 0.0
+    rhs = rhs .* mask 
+
+    u = Hmat_adj\rhs
+
+    εold = eval_strain_on_gauss_pts(uold, m, n, h)
+    ε = eval_strain_on_gauss_pts(u, m, n, h)
+    σ = Sσ + batch_matmul(H, ε - εold)
+    # σ2 = batch_matmul(H, ε)
+    # op = tf.print(norm(σ-σ2))
+    # u = bind(u, op)
+
+    return u, σ
+end
+
+function solid2(Ψ2, σ, uold)
+    p = Ψ2 
     rhs = InteractionM*reshape(p, (-1,))
     mask = ones(2*(m+1)*(n+1))
     mask[[bdnode;bdnode .+ (m+1)*(n+1)]] .= 0.0
     rhs = rhs .* mask 
     u = StiffM\rhs
 
-    # pl[1]*u
-    # TODO:DEBUG 
-    # constant(zeros(2(m+1)*(n+1)))
+    # ε = eval_strain_on_gauss_pts(u, m, n, h)
+    # σ = batch_matmul(H, ε)
 
-    # 0.001*sum(D)*ones(2(m+1)*(n+1))
+    return u, σ
+end
+
+
+if mode=="data"
+    global solid = solid1
+else
+    global solid = solid2
 end
 ###################
 
@@ -159,7 +208,8 @@ end
 ###################
 
 function simulate()
-    ta_u, ta_sw, ta_p, ta_φ = TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1)
+    ta_u, ta_sw, ta_p, ta_φ, ta_σ = 
+        TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1)
     ta_u = write(ta_u, 1, constant(zeros(2*(m+1)*(n+1))))
     ta_u = write(ta_u, 2, constant(zeros(2*(m+1)*(n+1))))
     ta_sw = write(ta_sw, 1, constant(sw0))
@@ -168,30 +218,36 @@ function simulate()
     ta_p = write(ta_p, 2, constant(zeros(n, m)))
     ta_φ = write(ta_φ, 1, constant(φ0))
     ta_φ = write(ta_φ, 2, constant(φ0))
+    ta_σ = write(ta_σ, 1, constant(zeros(4*m*n, 3)))
+    ta_σ = write(ta_σ, 2, constant(zeros(4*m*n, 3)))
     i = constant(2, dtype=Int32)
     function condition(i, tas...)
         i <= NT
     end
     function body(i, tas...)
-        ta_u, ta_sw, ta_p, ta_φ = tas
+        ta_u, ta_sw, ta_p, ta_φ, ta_σ = tas
         u = read(ta_u, i)
         uold = read(ta_u, i-1)
+        σ = read(ta_σ, i)
         sw, p = read(ta_sw, i), read(ta_p, i)
         sw, p, φ = fluid(i, u, uold, sw, p)
-        unew = solid(p)
+        unew, σnew = solid(p, σ, u)
         ta_sw = write(ta_sw, i+1, sw)
         ta_p = write(ta_p, i+1, p)
         ta_u = write(ta_u, i+1, unew)
         ta_φ = write(ta_φ, i+1, φ)
-        i+1, ta_u, ta_sw, ta_p, ta_φ
+        ta_σ = write(ta_σ, i+1, σnew)
+        i+1, ta_u, ta_sw, ta_p, ta_φ, ta_σ
     end
-    _, ta_u, ta_sw, ta_p, ta_φ = while_loop(condition, body, [i, ta_u, ta_sw, ta_p, ta_φ])
-    out_u, out_sw, out_p, out_φ = stack(ta_u), stack(ta_sw), stack(ta_p), stack(ta_φ)
-    set_shape(out_u, NT+1, 2*(m+1)*(n+1)), set_shape(out_sw, NT+1, n, m), set_shape(out_p, NT+1, n, m), set_shape(out_φ, NT+1, n, m)
+    _, ta_u, ta_sw, ta_p, ta_φ,  ta_σ = while_loop(condition, body, [i, ta_u, ta_sw, ta_p, ta_φ, ta_σ])
+    out_u, out_sw, out_p, out_φ, out_σ = stack(ta_u), stack(ta_sw), stack(ta_p), stack(ta_φ), stack(ta_σ)
+    return set_shape(out_u, NT+1, 2*(m+1)*(n+1)), set_shape(out_sw, NT+1, n, m), 
+            set_shape(out_p, NT+1, n, m), set_shape(out_φ, NT+1, n, m),
+            set_shape(out_σ, NT+1, 4*m*n, 3)
 end
 
 
-u, S2, Ψ2, φ = simulate()
+u, S2, Ψ2, φ, σ = simulate()
 uobs = u[:, 1:m+1]
 
 if mode!="data"
@@ -202,11 +258,11 @@ end
 sess = Session(); init(sess)
 if mode=="data"
     writedlm("obs.txt", run(sess, uobs))
+    global o1, o2, o3, o4, o5 = run(sess, [u, S2, Ψ2, φ, σ])
     error("Stop")
 end
-
 @info run(sess, loss)
-# BFGS!(sess, loss)
+BFGS!(sess, loss)
 
 # # step 1
 # @show run(sess, loss)
@@ -216,8 +272,10 @@ end
 # lineview(sess, pl, loss, [1.0;1.0], [5.0;1.5])
 # gradview(sess, pl, loss, [5.0;1.5])
 
-# # o1, o2, o3, o4 = run(sess, [u, S2, Ψ2, φ])
+# # 
 # # visualize_potential(o4)
-# # visualize_displacement(10*o1)
+
 # # visualize_saturation(o2)
 # # visualize_potential(o3)
+# visualize_displacement(10*o1)
+# plot(o1[:,1:(m+1)])
