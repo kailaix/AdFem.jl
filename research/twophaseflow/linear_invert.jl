@@ -8,7 +8,7 @@ SRC_CONST = 86400.0 #
 n = 15
 m = 30
 h = 30.0 # meter
-NT  = 50
+NT  = 3
 Δt = 1000/NT
 # Δt = 20.0 # day
 
@@ -29,10 +29,14 @@ K = 20.0 .* ones(n,m) # millidarcy
 K[8:10,:] .= 120.0 
 
 # E = 6e9
-E = 6.e9
+E = 1.e9
 ν = 0.35
-D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 1-2ν]
-D = constant(D)
+D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 1-2ν] 
+
+pl = placeholder([1.0;1.0])
+E_,ν = pl[1]*1.e9, pl[2]*0.35
+D = E_/(1+ν)/(1-2ν)*tensor([1-ν ν 0;ν 1-ν 0;0 0 1-2ν])
+
 
 Z = zeros(n, m)
 for j = 1:n 
@@ -48,25 +52,31 @@ StiffM = compute_fem_stiffness_matrix(D, m, n, h)/E
 StiffM, _ = fem_impose_Dirichlet_boundary_condition_experimental(StiffM, bdnode, m, n, h)
 StiffM = StiffM*E
 
+# pl = placeholder([1.0])
+# StiffM = StiffM*pl[1]
 
 qo, qw = constant(qo), constant(qw)
 function porosity(u)
     ε = compute_fvm_mechanics_term(u, m, n, h)/h^2
-    ε = reshape(ε,(n, m))
-    1 - constant(1 .- φ0) .* exp(-ε)
+    ε = reshape(ε, (n, m))
+    out = 1 - constant(1 .- φ0) .* exp(-ε)
 end
 
 ################### solid equations 
 function solid(Ψ2)
     p = Ψ2 #+ ρw*g*Z 
     # p = p - ave_normal(p)
-    rhs = InteractionM*reshape(p, (-1,)) 
+    rhs = InteractionM*reshape(p, (-1,))
     mask = ones(2*(m+1)*(n+1))
     mask[[bdnode;bdnode .+ (m+1)*(n+1)]] .= 0.0
     rhs = rhs .* mask 
-    StiffM\rhs
+    u = StiffM\rhs
+
+    # pl[1]*u
     # TODO:DEBUG 
     # constant(zeros(2(m+1)*(n+1)))
+
+    # 0.001*sum(D)*ones(2(m+1)*(n+1))
 end
 ###################
 
@@ -90,6 +100,13 @@ function fluid(i, u, uold, sw, p)
     φold = porosity(uold)
     dotφ = (φ-φold)/Δt
 
+    # φ = constant(φ0) 
+    # φold = constant(φ0) 
+    # φ = φ * pl[1]
+    # φold = φold * pl[1]
+    # dotφ = tf.zeros_like(dotφ)
+    # dotφ = constant(zeros(n, m))
+
     # step 1: update p
     # λw = Krw(sw)/μw
     # λo = Kro(1-sw)/μo
@@ -106,52 +123,90 @@ function fluid(i, u, uold, sw, p)
     load_normal = (Θ+q/ALPHA+dotφ) - ave_normal(Θ+q/ALPHA+dotφ)
 
     # p = poisson_op(λ.*K* K_CONST, load_normal, h, constant(0.0), constant(1))
-    p = upwps_op(K * K_CONST, λ, load_normal, p, h, constant(0.0), constant(0)) # potential p = pw - ρw*g*h 
+    p = upwps_op(K * K_CONST, λ, load_normal, tf.zeros_like(p), h, constant(0.0), constant(0)) 
+    # potential p = pw - ρw*g*h 
 
     # step 3: implicit transport
-    sw = sat_op2(sw, dotφ, p, K * K_CONST, φ , qw[i], qo[i], μw, μo, sw, Δt, h)
-    return sw, p
+    # sw = sat_op2(sw, dotφ, p, K * K_CONST, φ , qw[i], qo[i], μw, μo, sw, Δt, h)
+
+    # ε = compute_fvm_mechanics_term(u, m, n, h)/h^2
+    # ε = reshape(ε,(m, n))'
+    # φ1 = 1 - constant(1 .- φ0) .* exp(-ε)
+
+    sw1 = sat_op2(sw, dotφ, p, K * K_CONST , φ, qw[i], qo[i], μw, μo, sw, Δt, h) 
+    # sw2 = sat_op(sw, p, K * K_CONST , φ, qw[i], qo[i], μw, μo, sw, Δt, h) 
+
+    # op = tf.print(i, norm(gradients(sum(sw1),sw)-gradients(sum(sw2), sw)))
+    # p = bind(p, op)
+
+    # op = tf.print(i, "*", norm(sw1-sw2))#-gradients(sum(sw1), sw)))
+    # p = bind(p, op)
+
+    
+
+    # op = tf.print(sum(sw2))
+    # p = bind(p, op)
+    return sw1, p, φ
 end
 ###################
 
 function simulate()
-    ta_u, ta_sw, ta_p = TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1)
+    ta_u, ta_sw, ta_p, ta_φ = TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1), TensorArray(NT+1)
     ta_u = write(ta_u, 1, constant(zeros(2*(m+1)*(n+1))))
     ta_u = write(ta_u, 2, constant(zeros(2*(m+1)*(n+1))))
     ta_sw = write(ta_sw, 1, constant(sw0))
     ta_sw = write(ta_sw, 2, constant(sw0))
     ta_p = write(ta_p, 1, constant(zeros(n, m)))
     ta_p = write(ta_p, 2, constant(zeros(n, m)))
+    ta_φ = write(ta_φ, 1, constant(φ0))
+    ta_φ = write(ta_φ, 2, constant(φ0))
     i = constant(2, dtype=Int32)
     function condition(i, tas...)
         i <= NT
     end
     function body(i, tas...)
-        ta_u, ta_sw, ta_p = tas
+        ta_u, ta_sw, ta_p, ta_φ = tas
         u = read(ta_u, i)
         uold = read(ta_u, i-1)
         sw, p = read(ta_sw, i), read(ta_p, i)
-        sw, p = fluid(i, u, uold, sw, p)
+        sw, p, φ = fluid(i, u, uold, sw, p)
         unew = solid(p)
         ta_sw = write(ta_sw, i+1, sw)
         ta_p = write(ta_p, i+1, p)
         ta_u = write(ta_u, i+1, unew)
-        i+1, ta_u, ta_sw, ta_p
+        ta_φ = write(ta_φ, i+1, φ)
+        i+1, ta_u, ta_sw, ta_p, ta_φ
     end
-    _, ta_u, ta_sw, ta_p = while_loop(condition, body, [i, ta_u, ta_sw, ta_p])
-    out_u, out_sw, out_p = stack(ta_u), stack(ta_sw), stack(ta_p)
-    set_shape(out_u, NT+1, 2*(m+1)*(n+1)), set_shape(out_sw, NT+1, n, m), set_shape(out_p, NT+1, n, m)
+    _, ta_u, ta_sw, ta_p, ta_φ = while_loop(condition, body, [i, ta_u, ta_sw, ta_p, ta_φ])
+    out_u, out_sw, out_p, out_φ = stack(ta_u), stack(ta_sw), stack(ta_p), stack(ta_φ)
+    set_shape(out_u, NT+1, 2*(m+1)*(n+1)), set_shape(out_sw, NT+1, n, m), set_shape(out_p, NT+1, n, m), set_shape(out_φ, NT+1, n, m)
 end
 
 
-u, S2, Ψ2 = simulate()
+u, S2, Ψ2, φ = simulate()
 uobs = u[:, 1:m+1]
-sess = Session(); init(sess)
-# U, s2, ψ2 = run(sess, [u, S2, Ψ2])
-# visualize_saturation(s2)
-# visualize_potential(ψ2)
-# visualize_displacement(U*100)
-# plot(U[:,5])
-# visualize_stress(run(sess, D), U'|>Array, m, n, h)
+uobs_ = readdlm("obs.txt")
 
-writedlm("obs.txt", run(sess, uobs))
+# loss = mean((uobs)^2)+
+loss = sum(S2^2)
+sess = Session(); init(sess)
+
+
+# step 1
+@show run(sess, loss)
+# gd = gradients(loss, pl)
+# @show run(sess, gd)
+# step 2
+# lineview(sess, pl, loss, D_, diagm(0=>ones(3))[:])
+# meshview(sess, pl, loss, diagm(0=>ones(3))[:])
+# gradview(sess, pl, loss, [1.0])
+gradview(sess, pl, loss, [1.0;1.0])
+
+
+# gd = gradients(loss, pl)
+
+# o1, o2, o3, o4 = run(sess, [u, S2, Ψ2, φ])
+# visualize_potential(o4)
+# visualize_displacement(10*o1)
+# visualize_saturation(o2)
+# visualize_potential(o3)

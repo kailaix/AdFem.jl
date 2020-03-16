@@ -165,12 +165,12 @@ public:
     
     Tensor* grad_u = NULL;
     OP_REQUIRES_OK(context, context->allocate_output(0, grad_u_shape, &grad_u));
-    // Tensor* grad_m = NULL;
-    // OP_REQUIRES_OK(context, context->allocate_output(1, grad_m_shape, &grad_m));
-    // Tensor* grad_n = NULL;
-    // OP_REQUIRES_OK(context, context->allocate_output(2, grad_n_shape, &grad_n));
-    // Tensor* grad_h = NULL;
-    // OP_REQUIRES_OK(context, context->allocate_output(3, grad_h_shape, &grad_h));
+    Tensor* grad_m = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(1, grad_m_shape, &grad_m));
+    Tensor* grad_n = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(2, grad_n_shape, &grad_n));
+    Tensor* grad_h = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(3, grad_h_shape, &grad_h));
     
     // get the corresponding Eigen tensors for data access
     

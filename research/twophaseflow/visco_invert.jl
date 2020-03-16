@@ -52,7 +52,7 @@ StiffM = StiffM*E
 qo, qw = constant(qo), constant(qw)
 function porosity(u)
     ε = compute_fvm_mechanics_term(u, m, n, h)/h^2
-    ε = reshape(ε,(n, m))
+    ε = reshape(ε,(m, n))'
     1 - constant(1 .- φ0) .* exp(-ε)
 end
 
@@ -140,18 +140,14 @@ function simulate()
     end
     _, ta_u, ta_sw, ta_p = while_loop(condition, body, [i, ta_u, ta_sw, ta_p])
     out_u, out_sw, out_p = stack(ta_u), stack(ta_sw), stack(ta_p)
-    set_shape(out_u, NT+1, 2*(m+1)*(n+1)), set_shape(out_sw, NT+1, n, m), set_shape(out_p, NT+1, n, m)
 end
 
 
 u, S2, Ψ2 = simulate()
-uobs = u[:, 1:m+1]
 sess = Session(); init(sess)
-# U, s2, ψ2 = run(sess, [u, S2, Ψ2])
+U, s2, ψ2 = run(sess, [u, S2, Ψ2])
 # visualize_saturation(s2)
 # visualize_potential(ψ2)
 # visualize_displacement(U*100)
 # plot(U[:,5])
 # visualize_stress(run(sess, D), U'|>Array, m, n, h)
-
-writedlm("obs.txt", run(sess, uobs))

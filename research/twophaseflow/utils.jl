@@ -5,6 +5,7 @@ using ADCME
 using PyPlot
 using PyCall
 using Statistics 
+using DelimitedFiles
 using ADCMEKit
 
 function visualize_saturation(s2)
@@ -28,7 +29,7 @@ function visualize_potential(φ)
     vmin, vmax = m - 2s, m + 2s
     ln = pcolormesh(φ[1,:,:], vmin= vmin, vmax=vmax)
     colorbar()
-    c = contour(φ[1,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
+    # c = contour(φ[1,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
     t = title("t = 0")
     axis("scaled")
     function update(i)
@@ -37,7 +38,7 @@ function visualize_potential(φ)
         # ln.set_array(φ[frame,:,:]'[:])
         # c.set_array(φ[frame,:,:]'[:])
         ln = gca().pcolormesh(φ[i,:,:], vmin= vmin, vmax=vmax)
-        c = gca().contour(φ[i,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
+        # c = gca().contour(φ[i,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
         t = gca().set_title("t = $i")
     end
     anim = animate(update, 1:size(φ,1))
