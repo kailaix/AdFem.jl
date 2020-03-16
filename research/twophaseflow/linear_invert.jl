@@ -1,5 +1,7 @@
 include("utils.jl")
 
+mode = "training"
+
 # Global parameters
 K_CONST =  9.869232667160130e-16 * 86400 * 1e3
 ALPHA = 1.0
@@ -8,7 +10,7 @@ SRC_CONST = 86400.0 #
 n = 15
 m = 30
 h = 30.0 # meter
-NT  = 3
+NT  = 50
 Δt = 1000/NT
 # Δt = 20.0 # day
 
@@ -29,12 +31,13 @@ K = 20.0 .* ones(n,m) # millidarcy
 K[8:10,:] .= 120.0 
 
 # E = 6e9
-E = 1.e9
+E = 6.e9
 ν = 0.35
 D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 1-2ν] 
 
-pl = placeholder([1.0;1.0])
-E_,ν = pl[1]*1.e9, pl[2]*0.35
+# pl = placeholder([1.0;1.0])
+pl = Variable([5.0;1.5])
+E_,ν = pl[1]*6.e9, pl[2]*0.35
 D = E_/(1+ν)/(1-2ν)*tensor([1-ν ν 0;ν 1-ν 0;0 0 1-2ν])
 
 
@@ -185,28 +188,30 @@ end
 
 u, S2, Ψ2, φ = simulate()
 uobs = u[:, 1:m+1]
-uobs_ = readdlm("obs.txt")
 
-# loss = mean((uobs)^2)+
-loss = sum(S2^2)
+if mode!="data"
+    uobs_ = readdlm("obs.txt")
+    global loss = mean((uobs-uobs_)^2)
+end 
+
 sess = Session(); init(sess)
+if mode=="data"
+    writedlm("obs.txt", run(sess, uobs))
+    error("Stop")
+end
 
+BFGS!(sess, loss)
 
-# step 1
-@show run(sess, loss)
-# gd = gradients(loss, pl)
-# @show run(sess, gd)
-# step 2
-# lineview(sess, pl, loss, D_, diagm(0=>ones(3))[:])
-# meshview(sess, pl, loss, diagm(0=>ones(3))[:])
-# gradview(sess, pl, loss, [1.0])
-gradview(sess, pl, loss, [1.0;1.0])
+# # step 1
+# @show run(sess, loss)
+# # gd = gradients(loss, pl)
+# # @show run(sess, gd)
+# # step 2
+# lineview(sess, pl, loss, [1.0;1.0], [5.0;1.5])
+# gradview(sess, pl, loss, [5.0;1.5])
 
-
-# gd = gradients(loss, pl)
-
-# o1, o2, o3, o4 = run(sess, [u, S2, Ψ2, φ])
-# visualize_potential(o4)
-# visualize_displacement(10*o1)
-# visualize_saturation(o2)
-# visualize_potential(o3)
+# # o1, o2, o3, o4 = run(sess, [u, S2, Ψ2, φ])
+# # visualize_potential(o4)
+# # visualize_displacement(10*o1)
+# # visualize_saturation(o2)
+# # visualize_potential(o3)
