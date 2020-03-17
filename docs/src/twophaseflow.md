@@ -70,7 +70,9 @@ Here, the strain is the Cauchy strain
 
 $$\varepsilon = \frac{1}{2}(\nabla \mathbf{u} + (\nabla \mathbf{u})^T)$$
 
+Instead of assuming a linear elasticity model for the geomechanics, we can also model the subsurface solid material by a viscoelasticity model (see [here](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/) for details). For example, the constitutive relation for the two dimensiona Maxwell material is as follows:
 
+$$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}$$
 
 ## Numerical Scheme
 
@@ -113,6 +115,27 @@ Upon solving the fluid equation, we obtain $S_1, S_2, \Psi_2$. We can use $\Psi_
 $$\int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x + \int_\Omega (S_1P_1+S_2P_2)\delta \varepsilon_v \mathrm{d}x = 0 \Leftrightarrow \int_\Omega \sigma' :\delta \varepsilon \mathrm{d} x - \int_\Omega (\Psi_2 + \rho_2 gZ)\delta \varepsilon_v \mathrm{d}x = 0$$
 
 Here $\varepsilon_v = \varepsilon_{xx} + \varepsilon_{yy} = u_x + u_y$. 
+
+## Example
+
+We simulate  the coupled geomechanics  (both the linear elastic and the viscoelastic material) and two phase flow model. The two models share the same Lamé constants $\lambda$ and $\mu$ (or equivalently, $E$ and $\nu$), except that the viscoelasticity model has one more viscosity parameter $\eta$. We show an animation of the von Mises stress, displacement (magnified by 50x), the fluid potential for the wet phase ($\Psi_2$), and the saturation. Particularly, we plot the $x$-direction displacements on the surface. The displacement data will be used as observation in the inverse problem. 
+
+The setting is as follows: we consider a layer model for the relative permeability $K$ (the values of the space varying $K$ are known). The blue triangle denotes the injection well, and the orange triangle denotes the production well. The blue triangles denote receivers, where we can collect horizontal displacement---for example, we can obtain these data from satellite images. 
+
+![linear_disp](./assets/twophaseflow/setting.png)
+
+The two flow phases are the oil and the water (the wet phase), and we use number 1 and 2 to denote them respectively. The computational domain is has 450 depth and 900 width, and it is discretized into $15\times 30$ uniform squares for both the finite element method (for the mechanics equation) and the finite volume method (for the fluid equation). The simulation has time horizon $[0,1000]$ and is temporally discretized into 50 intervals. The other parameters for simulations are: $\rho_1=1053$, $\rho_2=501.9$, $\tilde\mu_1=1$, $\tilde\mu_2=0.1$, $g =9.8$. In the linear elasticity case, we use $E=6\times 10^9$ and $\nu=0.35$. In the viscoelasticity case, in addition to the Lamé constants, the viscosity parameter $\eta=6.7\times 10^{11}$. 
+
+| Model                                   | Linear Elasticity                                            | Viscoelasticity                                              |
+| --------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Displacement $u$                        | ![linear_disp](./assets/twophaseflow/linear_disp.gif) | ![visco_disp](./assets/twophaseflow/visco_disp.gif) |
+| Saturation $S_2$                        | ![linear_sat](./assets/twophaseflow/linear_sat.gif) | ![visco_sat](./assets/twophaseflow/visco_sat.gif) |
+| Potential $\Psi_2$                      | ![linear_potential](./assets/twophaseflow/linear_potential.gif) | ![visco_potential](./assets/twophaseflow/visco_potential.gif) |
+| Pressure $p$                            | ![linear_pressure](./assets/twophaseflow/linear_pressure.gif) | ![visco_pressure](./assets/twophaseflow/visco_pressure.gif) |
+| Von Mises Stress $\sigma_{\mathrm{vm}}$ | ![linear_vm](./assets/twophaseflow/linear_vm.gif) | ![visco_vm](./assets/twophaseflow/visco_vm.gif) |
+| Observation $u_{\mathrm{obs}}$          | ![linear_obs](./assets/twophaseflow/linear_obs.png) | ![visco_obs](./assets/twophaseflow/visco_obs.png) |
+
+
 
 
 
