@@ -8,7 +8,8 @@ pages = Any[
     "index.md",
     "Examples"=>Any["coupled.md", "staticelasticity.md", "plasticity.md", 
         "viscoelasticity.md", "heatequation.md","elastodynamics.md", "twophaseflow.md"],
-    "Inverse Modeling"=>Any["inverse.md", "inv_viscoelasticity.md", "coupled_viscoelasticity.md"],
+    "Inverse Modeling"=>Any["inverse.md", "inv_viscoelasticity.md", "coupled_viscoelasticity.md",
+            "inv_twophaseflow.md"],
     "api.md"
 ],
 authors = "Kailai Xu")
