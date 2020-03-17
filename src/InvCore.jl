@@ -7,7 +7,9 @@ function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Ar
 end
 
 export fem_impose_Dirichlet_boundary_condition_experimental
-function fem_impose_Dirichlet_boundary_condition_experimental(A::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+function fem_impose_Dirichlet_boundary_condition_experimental(A::Union{SparseMatrixCSC,SparseTensor}, 
+        bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    isa(A, SparseMatrixCSC) && (A = constant(A))
     op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBD/build/libDirichletBd", "dirichlet_bd", multiple=true)
     ii, jj, vv = find(A)
     ii,jj,vv,bd,m_,n_,h = convert_to_tensor([ii,jj,vv,bdnode,m,n,h], [Int64,Int64,Float64,Int32,Int32,Int32,Float64])

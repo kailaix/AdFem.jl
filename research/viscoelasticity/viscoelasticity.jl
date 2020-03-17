@@ -97,7 +97,6 @@ invG = map(fn_G, invη)
 S = tensor([2μ/Δt+λ/Δt λ/Δt 0.0
     λ/Δt 2μ/Δt+λ/Δt 0.0
     0.0 0.0 μ/Δt])
-
 H = invG*S
 
 
