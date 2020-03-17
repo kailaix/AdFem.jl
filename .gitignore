@@ -50,7 +50,5 @@ research/nonlinear_viscoelasticity/*.pdf
 test/U_surface/*.png
 test/U_total/*.png
 test/U_total/*.png
-*.png
-*.gif 
 *.pdf
 *.txt
