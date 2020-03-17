@@ -1,6 +1,11 @@
 include("utils.jl")
-
 mode = "data"
+
+noise = 0.0
+if length(ARGS)==1
+    global noise = parse(Float64, ARGS[1])
+end
+@info noise
 
 # Global parameters
 K_CONST =  9.869232667160130e-16 * 86400 * 1e3
@@ -151,19 +156,21 @@ u, S2, Ψ2, φ, σ = simulate()
 uobs = u[:, 1:m+1]
 
 if mode!="data"
-    uobs_ = readdlm("obs.txt")
+    uobs_ = readdlm("linear_obs.txt")
+    uobs_ = uobs_ .* (1. .+ randn(size(uobs_)...)*noise)
     global loss = mean((uobs-uobs_)^2)
 end 
 
 sess = Session(); init(sess)
 if mode=="data"
-    writedlm("obs.txt", run(sess, uobs))
+    writedlm("linear_obs.txt", run(sess, uobs))
     o1, o2, o3, o4, o5 = run(sess, [u, S2, Ψ2, φ, σ])
     error("Stop")
 end
 
 @info run(sess, loss)
-# BFGS!(sess, loss)
+BFGS!(sess, loss)
+writedlm("linear$noise.txt", run(sess, D))
 
 # anim = visualize_displacement(50*o1, m, n, h)
 # saveanim(anim, "data/linear_disp.gif")
