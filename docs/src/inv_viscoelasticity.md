@@ -1,4 +1,4 @@
-#  Viscoelasticity Inversion
+#  Inverse Modeling for Space Varying Viscoelasticity 
 
 
 ## Problem Description
@@ -33,19 +33,17 @@ $$\begin{aligned}
 
 We assume that the Lamé constants $\lambda$ and $\mu$ are given. The viscosity $\eta$ is spatial varying. We want to **estimate $\eta$ based on the measurement of surface horizontal displacements**. The true model consists of two layers of different vicosity. 
 
-![](./assets/visco/viscoelasticity_true.png)
 
 
-
-
+| True Viscosity Distribution  | Von Mises Stress at Terminal Time   | Displacement at Terminal Time     |
+| ---------------------------- | ----------------------------------- | --------------------------------- |
+| ![](./assets/visco/true.png) | ![](./assets/visco/viscostress.png) | ![](./assets/visco/viscodisp.png) |
 
 
 
 ## Forward simulation
 
-We implement the forward simulation using finite element analysis discretization and $\alpha$-scheme, an implicit time stepping scheme that offers good stability and accuracy. We show the displacement in $x$ direction, the stress $\sigma_{xx}$ and the strain $\varepsilon_{xx}$ of the right middle point (red dot in the first graph in this section).  
-
-![](./assets/visco/visco_time.png)
+We implement the forward simulation using finite element analysis discretization and $\alpha$-scheme, an implicit time stepping scheme that offers good stability and accuracy. 
 
 
 ## Inversion Method
@@ -68,20 +66,20 @@ with respect to $\bm{\sigma}^n$, $\eta$ and $\mathbf{u}^{n}$.
 Surprisingly, the seemingly complex formula (1) admits a simple implementation using automatic differentiation (of course a special technique called **physics constrained learning** is needed). Once the gradients $\frac{\partial\mathcal{J}}{\partial \eta}$ is computed, the inversion problem can be solved using gradient-based optimization techniques (e.g., LBFGS).
 
 
-![](./assets/gd.jpeg)
+![](./assets/gd.png)
 
 ## Numerical Example
 
 We present the numerical example here. The true model and inverted model are shown as follows. We assume that the viscosity values are the same horizontally. 
 
-| True model                                     | Inverted result                                   | 
-| -----------------------------------------------| --------------------------------------------------| 
-| ![](./assets/visco/viscoelasticity_true.png)   | ![](./assets/visco/viscoelasticity_result.png)    |
+| True model                                   | Inverted result                  |
+| -------------------------------------------- | -------------------------------- |
+| ![](./assets/visco/viscoelasticity_true.png) | ![](./assets/visco/iter0200.png) |
 
 
 We also show the inversion results in each iteration:
 
-![](./assets/visco/inv_viscoelasticity.gif)
+![](./assets/visco/iter.gif)
 
 
 ## Codes
@@ -105,39 +103,38 @@ using SparseArrays
 using MAT
 np = pyimport("numpy")
 
-# mode = "data" generate data 
-# mode != "data" inversion
-mode = "data"
 
-# alpha-scheme parameters
+mode = "training"
+
+## alpha-scheme
 β = 1/4; γ = 1/2
 a = b = 0.1
 
-# geometry 
-m = 20
 n = 10
+m = 2n 
 h = 0.01
 NT = 500
-it0 = NT÷2
-Δt = 20/NT
+it0 = 1
+Δt = 2.0/NT
 ηmax = 1
 ηmin = 0.5
-bdedge = []
-for j = 1:n 
-  push!(bdedge, [(j-1)*(m+1)+m+1 j*(m+1)+m+1])
-end
-bdedge = vcat(bdedge...)
 
-bdnode = Int64[]
-for j = 1:n+1
-  push!(bdnode, (j-1)*(m+1)+1)
-end
+bdedge = bcedge("right", m, n, h)
+bdnode = bcnode("lower", m, n, h)
 
-# helper functions
+# λ = Variable(1.0)
+# μ = Variable(1.0)
+# invη = Variable(1.0)
+
 function eta_model(idx)
   if idx == 1
+    out = ηmin * ones(n)
+    out[1:div(n,3)] .= ηmax
+    out
+  elseif idx==2
     out = ηmin * ones(4, m, n)
     out[:, :, 1:div(n,3)] .= ηmax
+    out[:, :, 2div(n,3):end] .= ηmax
     out[:]
   end
 end
@@ -153,25 +150,35 @@ function visualize_inv_eta(X, k)
         end
     end
     close("all")
-    pcolormesh(x, y, V', vmin=ηmin-(ηmax-ηmin)/4, vmax=ηmax+(ηmax-ηmin)/4)
+    pcolormesh(x, y, V'/50.0, vmin=ηmin-(ηmax-ηmin)/4, vmax=ηmax+(ηmax-ηmin)/4)
     colorbar(shrink=0.5)
     xlabel("x")
     ylabel("y")
     # title("Iteration = $k")
-    title("True model")
     axis("scaled")
     gca().invert_yaxis()
-    savefig("iter$k.png")
+    if k == "true"
+      title("True Model")
+      savefig("true.png")
+      return 
+    end
+    k_ = string(k)
+    k_ = reduce(*, "0" for i = 1:4-length(k_))*k_
+    title("Iteration = $k_")
+    savefig("iter$k_.png")
 end
 
 λ = constant(2.0)
-μ = constant(0.5)
+μ = constant(0.2)
 if mode=="data"
-  global invη = constant(eta_model(1))
+  global invη_var = constant(eta_model(1))
+  invη = reshape(repeat(invη_var, 1, 4m), (-1,))
+  global invη *= 50.0
 else
-    invη_ = Variable((ηmin + ηmax)/2*ones(n))
-    invη_ = tf.reshape(repeat(invη_, 1, 4m), (-1,))
-    global invη = invη_ 
+    global invη_var = Variable((ηmin + ηmax)/2*ones(n))
+    invη_ = reshape(repeat(invη_var, 1, 4m), (-1,))
+    # invη_ = constant(eta_model(1))
+    global invη = 50.0*invη_
 end
 
 
@@ -195,9 +202,9 @@ M = SparseTensor([M Zero;Zero M])
 
 K = compute_fem_stiffness_matrix(H, m, n, h)
 C = a*M + b*K # damping matrix 
-
 L = M + γ*Δt*C + β*Δt^2*K
-L, Lbd = fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
+L, Lbd = fem_impose_Dirichlet_boundary_condition_experimental(L, bdnode, m, n, h)
+
 
 a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|>constant)
 v = TensorArray(NT+1); v = write(v, 1, zeros(2(m+1)*(n+1))|>constant)
@@ -207,17 +214,24 @@ Sigma = TensorArray(NT+1); Sigma = write(Sigma, 1, zeros(4*m*n, 3)|>constant)
 Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1,zeros(4*m*n, 3)|>constant)
 
 
-# external forces on the right hand side
 Forces = zeros(NT, 2(m+1)*(n+1))
 for i = 1:NT
   T = eval_f_on_boundary_edge((x,y)->0.1, bdedge, m, n, h)
-  T = [-T zeros(length(T))]
+
+  # if i>=NT÷2
+  #   T *= 0.0
+  # end
+  T = [-T T]
+#   T = [T T]
   rhs = compute_fem_traction_term(T, bdedge, m, n, h)
+
+#   if i*Δt>0.5
+#     rhs = zero(rhs)
+#   end
   Forces[i, :] = rhs
 end
 Forces = constant(Forces)
 
-################# main simulation #################
 function condition(i, tas...)
   i <= NT
 end
@@ -231,26 +245,25 @@ function body(i, tas...)
   Sigma = read(Sigma_, i)
   Varepsilon = read(Varepsilon_, i)
 
-  res = squeeze(tf.matmul(tf.reshape(Sigma, (size(Sigma,1), 1, 3)),(invG/Δt)))
+  res = batch_matmul(invG/Δt, Sigma)
   F = compute_strain_energy_term(res, m, n, h) - K * U
   rhs = Forces[i] - Δt^2 * F
 
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
   tv = v + (1-γ)*Δt*a 
   rhs = rhs - C*tv - K*td
-  
   rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
 
 
   ## alpha-scheme
-  a = L\rhs # invoking the sparse solver  
+  a = L\rhs # bottleneck  
   d = td + β*Δt^2*a 
   v = tv + γ*Δt*a 
   U_new = d
+
   Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
 
-  res2 = squeeze(tf.matmul(tf.reshape(Varepsilon_new-Varepsilon, (size(Sigma,1), 1, 3)),
-                        tf.matmul(invG, S)))
+  res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
   Sigma_new = res +  res2
 
   i+1, write(a_, i+1, a), write(v_, i+1, v), write(d_, i+1, d), write(U_, i+1, U_new),
@@ -266,74 +279,50 @@ U = stack(u)
 Sigma = stack(sigma)
 Varepsilon = stack(varepsilon)
 
-###################################################
-
 if mode!="data"
-    data = matread("U.mat")
-    global Uval,Sigmaval, Varepsilonval = data["U"], data["Sigma"], data["Varepsilon"]
-    U.set_shape((NT+1, size(U, 2)))
-    idx0 = 1:4m*n
-    Sigma = map(x->x[idx0,:], Sigma)
+  data = matread("viscoelasticity.mat")
+  global Uval,Sigmaval, Varepsilonval = data["U"], data["Sigma"], data["Varepsilon"]
+  U.set_shape((NT+1, size(U, 2)))
+  idx0 = 1:4m*n
+  Sigma = map(x->x[idx0,:], Sigma)
 
-    idx = 1:m+1 # use only surface data
-    global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
+  idx = collect(1:m+1)
+  global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
 end
 
 sess = Session(); init(sess)
+
 cb = (v, i, l)->begin
   println("[$i] loss = $l")
-  inv_eta = v[1]
-  visualize_inv_eta(inv_eta, i)
+  if mod(i,20)==0
+    inv_eta = v[1]
+    visualize_inv_eta(inv_eta, i)
+    matwrite("eta$i.mat", Dict("eta"=>inv_eta))
+  end
 end
+
 if mode=="data"
-    Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
-    matwrite("U.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
-    close("all")
+  Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
+  matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-    figure(figsize=(15,5))
-    subplot(1,3,1)
-    idx = div(n,2)*(m+1) + m+1
+  visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
+  visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
+                  xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
 
-    plot((0:NT)*Δt, Uval[:, idx])
-    xlabel("time")
-    ylabel("\$u_x\$")
-    plt.gca().ticklabel_format(style="sci", scilimits=(0,0), axis="y")
+  close("all")
+  plot(LinRange(0, 20, NT+1), Uval[:,m+1])
+  xlabel("Time")
+  ylabel("Displacement")
+  savefig("disp.png")
 
-    ax = plt.gca().inset_axes([0.3, 0.2, 0.6, 0.7])
-    ax.plot((it0-1:NT)*Δt, Uval[it0:end, idx])
-    ax.ticklabel_format(style="sci", scilimits=(0,0), axis="y")
-
-    subplot(1,3,2)
-    idx = 4*(div(n,2)*m + m)
-    
-    plot((0:NT)*Δt, Sigmaval[:,idx,1])
-    xlabel("time")
-    ylabel("\$\\sigma_{xx}\$")
-    plt.gca().ticklabel_format(style="sci", scilimits=(0,0), axis="y")
-
-    ax = plt.gca().inset_axes([0.4, 0.1, 0.5, 0.5])
-    ax.plot((it0-1:NT)*Δt, Sigmaval[it0:end,idx,1])
-    ax.ticklabel_format(style="sci", scilimits=(0,0), axis="y")
-
-    subplot(1,3,3)
-    idx = 4*(div(n,2)*m + m)
-    plot((0:NT)*Δt, Varepsilonval[:,idx,1])
-    xlabel("time")
-    ylabel("\$\\varepsilon_{xx}\$")
-    plt.gca().ticklabel_format(style="sci", scilimits=(0,0), axis="y")
-
-    ax = plt.gca().inset_axes([0.3, 0.2, 0.6, 0.7])
-    ax.plot((it0-1:NT)*Δt, Varepsilonval[it0:end,idx,1])
-    ax.ticklabel_format(style="sci", scilimits=(0,0), axis="y")
-
-    savefig("visco_eta.png")
-
-    cb([run(sess, invη)], "true", 0)
-    error("Generate Data")
+  cb([run(sess, invη)], "true", 0.0)
+  error("Stop!")
 end
 
+v_ = []
+i_ = []
+l_ = []
 
-@info run(sess, loss)
-v_ = [];i_ = [];l_ = []
-loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_=>(5.0,15.0)))
+loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
+
 ```
