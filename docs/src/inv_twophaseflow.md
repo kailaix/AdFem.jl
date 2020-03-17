@@ -4,7 +4,9 @@ This section is dedicated to the inverse problem of [Coupled Geomechanics and Mu
 
 To this end, we generate the observation data---$x$-direction displacement on the surface with the following parameters
 
-$$\begin{align}\mbox{Linear Elasticity:} &\; E=6\times 10^9\quad \nu=0.35\\\mbox{Viscoelasticity:} &\;E=6\times 10^9\quad \nu=0.35\quad \eta = 6.667\times 10^{11} \end{align}$$
+Linear Elasticity: $E=6\times 10^9\quad \nu=0.35$
+
+Viscoelasticity: $E=6\times 10^9\quad \nu=0.35\quad \eta = 6.667\times 10^{11}$
 
 ![linear_disp](./assets/twophaseflow/setting.png)
 
@@ -42,12 +44,14 @@ We report the relative error for each parameter $\mu$, $\lambda$, and $\eta^{-1}
 
 $$\mu^* = 2.22 \times 10^9\quad \lambda^* =  5.19\times 10^9\quad (\eta^*)^{-1} = 1.5\times 10^{-12}$$
 
-| Noise Level                                                 | $\sigma=0$                     | $\sigma=0.01$                  | $\sigma=0.05$                  | $\sigma=0.1$                   |
-| ----------------------------------------------------------- | ------------------------------ | ------------------------------ | ------------------------------ | ------------------------------ |
-| Estimated ($\times 10^9$, $\times 10^9$, $\times 10^{-12}$) | (2.2222, 5.1852, 1.5)          | (2.2339, 5.1729,1.4936)        | (2.1949, 5.222, 1.5154)        | (2.1711, 5.2602, 1.5242)       |
-| Error                                                       | (2.01e-06, 1.32e-07, 8.02e-07) | (5.25e-03, 2.38e-03, 4.28e-03) | (1.23e-02, 7.10e-03, 1.02e-02) | (2.30e-02, 1.45e-02, 1.61e-02) |
-| Iterations                                                  | 29                             | 29                             | 29                             | 30                             |
-
-
+| Noise Level                     | $\sigma=0$           | $\sigma=0.01$        | $\sigma=0.05$        | $\sigma=0.1$         |
+| ------------------------------- | -------------------- | -------------------- | -------------------- | -------------------- |
+| $\mu$ ($\times 10^9 $)          | 2.2222               | 2.2339               | 2.1949               | 2.1711               |
+| Error                           | $2.01\times 10^{-6}$ | $5.25\times 10^{-3}$ | 1.23e-02             | $2.30\times 10^{-2}$ |
+| $\lambda$ ($\times 10^9$)       | 5.1852               | 5.1729               | 5.222                | 5.2602               |
+| Error                           | $1.32\times 10^{-7}$ | $2.38\times 10^{-3}$ | $7.10\times 10^{-3}$ | $1.45\times 10^{-2}$ |
+| $\eta^{-1}$ ($\times 10^{-12}$) | 1.5                  | 1.4936               | 1.5154               | 1.5242               |
+| Error                           | $8.02\times 10^{-7}$ | $4.28\times 10^{-3}$ | $1.02\times 10^{-2}$ | $1.61\times 10^{-2}$ |
+| Iterations                      | 29                   | 29                   | 29                   | 30                   |
 
 We can see our inversion method is quite accurate and robust. 
