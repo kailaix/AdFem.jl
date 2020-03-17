@@ -1,3 +1,14 @@
+config = [20,20,20]
+activation = "tanh"
+if length(ARGS)==3
+  nlayer = parse(Int64, ARGS[1])
+  nwidth = parse(Int64, ARGS[2])
+  config = [nwidth for i = 1:nlayer]
+  activation = ARGS[3]
+end
+
+@info config
+
 using Revise
 using PoreFlow
 using PyCall
@@ -30,11 +41,11 @@ M = SparseTensor([M Zero;Zero M])
 # pl = placeholder(zeros(4*m*n))
 
 ## alpha-scheme
-θ = Variable(ae_init([3,20,20,20,1]))
+θ = Variable(ae_init([3,config...,1]))
 β = 1/4; γ = 1/2
 function eta_fun(σ)
   # return constant(10*ones(4*m*n)) + 5.0/(1+1000.0*sum(σ^2, dims=2))
-  return ae(σ, [20,20,20,1], θ)
+  return ae(σ, [config...,1], θ; activation=activation)
 end
 
 
@@ -172,11 +183,10 @@ function visualize(i)
 end
 
 
-visualize(0)
-for i = 1:1000
-  BFGS!(sess, loss,50)
-  global U_, Sigma_ = run(sess, [U,Sigma])
-  visualize(i)    
+for i = 1:100
+  visualize(i-1)
+  BFGS!(sess, loss, 50)
+  global U_, Sigma_ = run(sess, [U,Sigma])      
 end
 # # step 2
 # @show run(sess, loss)
