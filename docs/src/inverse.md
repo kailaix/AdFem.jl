@@ -1,4 +1,4 @@
-# Inverse Modeling for Coupled Geomechanics and Single Phase Flow
+# Inverse Modeling for Poroelasticity Models
 
 We have coupled geomechanics and single phase flow in [`Coupled Geomechanics and Single Phase Flow`](https://kailaix.github.io/PoreFlow.jl/dev/coupled/) (poroelasticity). The governing equation for poroelasticity model is 
 
