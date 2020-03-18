@@ -23,7 +23,7 @@ double Bisection(double xR, double xL, double psi,
         double a, double uold, double deltat, double eta, double v0, double tau, double sigma){
     double fL = f(xL, psi, a, uold, deltat, eta, v0, tau, sigma);
     double fR = f(xR, psi, a, uold, deltat, eta, v0, tau, sigma);
-    int maxIter = 200;
+    int maxIter = 500;
     double xTol = 1e-10;
     double fTol = 1e-10;
     if (fL*fR>0){
@@ -59,7 +59,26 @@ double Bisection(double xR, double xL, double psi,
         numIter += 1;
     }
     if (numIter>maxIter){
-        printf("WARNING: Bisection Does Find Optimal Solution!!!\n");
+        printf("WARNING: Bisection Does Find Optimal Solution, use Newton's method for refinement\n");
+        int iter;
+        for (iter=0; iter<100; iter++) {
+            double inv_o = exp(-psi/a);
+            double log_o = psi/a;
+            double s = (xM-uold) / deltat / 2.0 / v0;
+
+            double F = a * asinh_exp(s, inv_o, log_o) * sigma - tau + eta * (xM-uold) / deltat;
+
+            double dFdx = a  / deltat / 2.0 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigma + eta/deltat;
+            
+            // std::cout << "dF " << dFdx-dFdx_ << std::endl;
+            double dx = F / dFdx;
+
+            if (abs(dx)/abs(xM) < 1e-20){
+                break;
+            }
+            xM -= dx;
+        }
+        printf("Newton's iteration: %d\n", iter);
     }
     // printf("Number of iterations = %d\n", numIter);
     return xM; 
