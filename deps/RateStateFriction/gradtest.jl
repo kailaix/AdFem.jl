@@ -17,11 +17,14 @@ a = 2.0
 x = 10.0
 u = 2.0
 Δt = 2.0
-v0 = 1e-9
-Ψ = 200.0
+v0 = 0.001
+Ψ = 2000.0
 σ = 3.0
 η = 2.0
-τ = a * asinh((x-u)/Δt/2v0*exp(Ψ/a))*σ + η*(x-u)/Δt 
+s = (x-u)/Δt/2v0
+inv_o = exp(-Ψ/a)
+τ = a * (Ψ/a + log(s + sqrt(s*s+inv_o*inv_o)))*σ + η*(x-u)/Δt 
+# τ = a * asinh(*exp(Ψ/a))*σ + η*(x-u)/Δt 
 
 # u = 4.0
 # TODO: specify your input parameters
@@ -30,7 +33,7 @@ sess = Session(); init(sess)
 @show run(sess, x_est)
 
 # uncomment it for testing gradients
-# error() 
+error() 
 
 n = 100
 

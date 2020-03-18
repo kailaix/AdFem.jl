@@ -14,6 +14,7 @@ double f(double u, double psi, double a, double uold,
   double inv_o = exp(-psi/a);
   double log_o = psi/a;
   double s = (u-uold) / deltat / 2.0 / v0;
+//   printf("%e %e\n", s, asinh_exp(s, inv_o, log_o));
   double F = a * asinh_exp(s, inv_o, log_o) * sigma - tau + eta * (u-uold) / deltat;
   return F; 
 }
@@ -22,10 +23,11 @@ double Bisection(double xR, double xL, double psi,
         double a, double uold, double deltat, double eta, double v0, double tau, double sigma){
     double fL = f(xL, psi, a, uold, deltat, eta, v0, tau, sigma);
     double fR = f(xR, psi, a, uold, deltat, eta, v0, tau, sigma);
-    int maxIter = 1000;
+    int maxIter = 200;
     double xTol = 1e-10;
     double fTol = 1e-10;
     if (fL*fR>0){
+        printf("Initial guess not valid\n");
         exit(1);
         return -1; 
     }
@@ -38,24 +40,28 @@ double Bisection(double xR, double xL, double psi,
 
     // printf("iter = 1, fL=%e, fM=%e, fR=%e\n", fL, fM, fR);
     while (true){
+        // printf("iter = %d, x = (%e, %e), f = (%e, %e)\n", numIter, xL, xR, fL, fR);
         if (numIter>maxIter || (xErr<xTol && fErr <= fTol) )
             break;
-        if (fL*fM<=0) 
+        if (fL*fM<=0){
             xR = xM;
+            fR = fM;
+        }      
         else {
             xL = xM; 
             fL = fM;
         }
+        
         xM = (xL+xR)/2;
         fM = f(xM, psi, a, uold, deltat, eta, v0, tau, sigma);
         xErr = abs(xM-xL);
         fErr = abs(fM);
         numIter += 1;
-        // printf("iter = %d, fL=%e, fM=%e, fR=%f\n", numIter, fL, fM, fR);
     }
     if (numIter>maxIter){
         printf("WARNING: Bisection Does Find Optimal Solution!!!\n");
     }
+    // printf("Number of iterations = %d\n", numIter);
     return xM; 
 }
 
@@ -81,15 +87,6 @@ void backward(
       double log_o = psi[i]/a[i];
       double s = (u[i]-uold[i]) / deltat / 2.0 / v0;
        
-      //  double y = (u[i]-uold[i])/deltat / 2 / v0 * exp(psi[i]/a[i]) ; 
-      //  double dFdx = a[i]/sqrt(1+y*y) / deltat / 2 / v0 * exp(psi[i]/a[i]) * sigman[i] + eta/deltat;
-      //  double dFdu = - a[i]/sqrt(1+y*y) / deltat / 2 / v0 * exp(psi[i]/a[i]) * sigman[i] - eta/deltat;
-      //  double dFda = asinh(y) * sigman[i] + 
-      //         a[i]/sqrt(1+y*y) * (u[i]-uold[i])/deltat / 2 / v0 * (-psi[i]/a[i]/a[i])* exp(psi[i]/a[i]) * sigman[i];
-      //  double dFdpsi = a[i]/sqrt(1+y*y)*(u[i]-uold[i])/deltat / 2 / v0 / a[i]* exp(psi[i]/a[i]) * sigman[i];
-      //  double dFdtau = -1.0;
-      //  double dFdsigma = a[i] * asinh(y);
-
        double dFdx = a[i] / deltat / 2 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i] + eta/deltat;
        double dFdu = - a[i] / deltat / 2 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i] - eta/deltat;
        double dFda = asinh_exp(s, inv_o, log_o) * sigman[i] + 
