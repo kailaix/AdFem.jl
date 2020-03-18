@@ -5,7 +5,7 @@ using PyPlot
 using Random
 Random.seed!(233)
 
-function rate_state_friction(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
+function rate_state_friction__(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
     rate_state_friction_ = load_op_and_grad("./build/libRateStateFriction","rate_state_friction")
     a,uold,v0,psi,sigmazx,sigmazy,eta,deltat = convert_to_tensor([a,uold,v0,psi,sigmazx,sigmazy,eta,deltat], [Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64])
     rate_state_friction_(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
@@ -18,18 +18,19 @@ x = 10.0
 u = 2.0
 Δt = 2.0
 v0 = 1.0
-Ψ = 2.0
+Ψ = 1000.0
 σ = 3.0
 η = 2.0
 τ = a * asinh((x-u)/Δt/2v0*exp(Ψ/a))*σ + η*(x-u)/Δt 
 
+# u = 4.0
 # TODO: specify your input parameters
-x = rate_state_friction([a],[u],v0,[Ψ],[σ], [τ], η, Δt)
+x_est = rate_state_friction__([a],[u],v0,[Ψ],[σ], [τ], η, Δt)
 sess = Session(); init(sess)
-@show run(sess, x)
+@show run(sess, x_est)
 
 # uncomment it for testing gradients
-# error() 
+error() 
 
 n = 100
 
@@ -49,7 +50,7 @@ deltat = 1.0
 # gradient check -- v
 function scalar_function(m)
     # return sum(rate_state_friction(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
-    return sum(rate_state_friction(m,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
+    return sum(rate_state_friction__(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
