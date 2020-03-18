@@ -1,46 +1,92 @@
 include("utils.jl")
+using MAT
+using PyPlot
 
-m = 100
-n = 50
-h = 1.0
+## debug
+meta = matopen("data.mat")
+data = read(meta, "d")
+time = data["time"]
+v = data["slipVel"]
+psi = data["psi"]
+bd_right = data["momBal"]["bcR"]
+bd_left = data["momBal"]["bcL"]
+nt = 401
+nx = 51
+ny = 51
+eq_ind = collect(1:nt)[v[1,:] .> 1e-1]
 
-# right = bcnode("right", m, n, h)
-# left = bcnode("left", m, n, h)
-# ind = [right;left]
-# ρ = 2.7 
-# μ = 32.4
-# η = 1e-13
-# a = ones(n+1) * 0.01
-# b = ones(n+1) * 0.02
-# # b[1:n÷2] .= 0.03
-# # b[n÷2:end] .= 0.1
-# Dc = 0.01
-# v0 = 1e-9
-# f0 = 0.6
-# Ψ0 = ones(n+1) * 1.01 * f0
-# # Δt = 1e-4
-# Δt = 10.
-# NT = 50
-# σn = ones(n+1) * 0.0001 
-# σzy = σn 
+figure()
+subplot(411)
+plot(time, v[1,:], label="slip velocity")
+legend()
+subplot(412)
+plot(time, psi[1,:], label=L"$\psi$")
+legend()
+subplot(413)
+plot(time, bd_left[1,:], label="slip left boundary")
+legend()
+subplot(414)
+plot(time, bd_right[1,:], label="slip right boundary")
+legend()
+tight_layout()
+savefig("data_all.png")
+
+figure()
+subplot(411)
+plot(time[eq_ind], v[1,eq_ind], label="slip velocity")
+legend()
+subplot(412)
+plot(time[eq_ind], psi[1,eq_ind], label=L"$\psi$")
+legend()
+subplot(413)
+plot(time[eq_ind], bd_left[1,eq_ind], label="slip left boundary")
+legend()
+subplot(414)
+plot(time[eq_ind], bd_right[1,eq_ind], label="slip right boundary")
+legend()
+tight_layout()
+savefig("data_Eq.png")
+
+
+m = 51
+n = 51
+h = 100
 
 right = bcnode("right", m, n, h)
 left = bcnode("left", m, n, h)
 ind = [right;left]
-ρ = 1. 
-μ = 1.
-η = 1.
-a = constant(ones(n+1) )
-b = constant(2*ones(n+1) )
+ρ = 3
+μ = 30
+η = 1e-13
+a = ones(n+1) * 0.01
+b = ones(n+1) * 0.02
 # b[1:n÷2] .= 0.03
 # b[n÷2:end] .= 0.1
-Dc = 1.
-v0 = 1.e-3
-f0 = 1.
-Ψ0 = ones(n+1) * 1. * f0
-Δt = 10.
-NT = 100
-σn = 10. *ones(n+1) 
+Dc = 0.01
+v0 = 1e-9
+f0 = 0.6
+Ψ0 = ones(n+1) * 1.01 * f0
+Δt = 1e-2
+NT = 50
+σn = ones(n+1) * 50 
+
+# right = bcnode("right", m, n, h)
+# left = bcnode("left", m, n, h)
+# ind = [right;left]
+# ρ = 1. 
+# μ = 1.
+# η = 1.
+# a = constant(ones(n+1) )
+# b = constant(2*ones(n+1) )
+# # b[1:n÷2] .= 0.03
+# # b[n÷2:end] .= 0.1
+# Dc = 1.
+# v0 = 1.e-3
+# f0 = 1.
+# Ψ0 = ones(n+1) * 1. * f0
+# Δt = 10.
+# NT = 100
+# σn = 10. *ones(n+1) 
 
 
 K_ = compute_fem_stiffness_matrix1(diagm(0=>ones(2)), m, n, h)
