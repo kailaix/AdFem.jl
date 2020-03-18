@@ -14,7 +14,7 @@ namespace tensorflow{
 }
 #endif
 using namespace tensorflow;
-#include "RateStateFriction.h"
+#include "RateStateFrictionBS.h"
 
 
 REGISTER_OP("RateStateFriction")
@@ -145,7 +145,6 @@ public:
   }
 };
 REGISTER_KERNEL_BUILDER(Name("RateStateFriction").Device(DEVICE_CPU), RateStateFrictionOp);
-
 
 
 class RateStateFrictionGradOp : public OpKernel {

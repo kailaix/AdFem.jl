@@ -17,8 +17,8 @@ a = 2.0
 x = 10.0
 u = 2.0
 Δt = 2.0
-v0 = 1.0
-Ψ = 1000.0
+v0 = 1e-9
+Ψ = 200.0
 σ = 3.0
 η = 2.0
 τ = a * asinh((x-u)/Δt/2v0*exp(Ψ/a))*σ + η*(x-u)/Δt 
@@ -30,7 +30,7 @@ sess = Session(); init(sess)
 @show run(sess, x_est)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 n = 100
 
@@ -50,7 +50,7 @@ deltat = 1.0
 # gradient check -- v
 function scalar_function(m)
     # return sum(rate_state_friction(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
-    return sum(rate_state_friction__(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
+    return sum(rate_state_friction__(a,uold,v0,psi,sigmazx,m,eta,deltat)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
@@ -62,7 +62,7 @@ ms_ = Array{Any}(undef, 5)
 ys_ = Array{Any}(undef, 5)
 s_ = Array{Any}(undef, 5)
 w_ = Array{Any}(undef, 5)
-gs_ =  @. 0.001 / 10^(1:5)
+gs_ =  @. 1. / 10^(1:5)
 
 for i = 1:5
     g_ = gs_[i]

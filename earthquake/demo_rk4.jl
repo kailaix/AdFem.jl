@@ -13,7 +13,7 @@ bd_left = data["momBal"]["bcL"]
 nt = 601
 nx = 51
 ny = 51
-eq_ind = collect(1:nt)[(v[1,:] .> 1e-1)[:]]
+eq_ind = collect(1:nt)[(v[1,:] .< 1e-1)[:]]
 
 m = 50
 n = 50
@@ -24,13 +24,14 @@ left = bcnode("left", m, n, h)
 ind = [right;left]
 ρ = 3
 μ = 30
-η = 1e-13
+# η = 0.0095
+η = 4.7434
 a = constant(ones(n+1) * 0.01)
 b = constant(ones(n+1) * 0.02)
 # b[1:n÷2] .= 0.03s
 # b[n÷2:end] .= 0.1
-Dc = 0.01
-v0 = 1e-9
+Dc = 0.03
+v0 = 1e-6
 f0 = 0.6
 Ψ0 = ones(n+1) * 1.01 * f0
 
@@ -44,7 +45,7 @@ f0 = 0.6
 Δt = constant(Δt)
 NT = length(Δt)
 
-NT = 2
+# NT = 50
 
 K_ = compute_fem_stiffness_matrix1(diagm(0=>ones(2)), m, n, h)
 K_[ind, :] .= 0.0
@@ -74,17 +75,6 @@ for i = 1:n
 end
 push!(σzx_id, σzx_id[end]+2)
 
-# U0 = zeros((m+1)*(n+1))
-# # U1 = v0 * Δt * ones((m+1)*(n+1))
-
-# U1 = zeros(m+1, n+1)
-# for i = 1:n+1
-#     U1[end,i] =  v0 * Δt + bd_right[i, eq_ind[1]]
-#     U1[1,i] = bd_left[i, eq_ind[1]]
-# end
-# U1 = U1[:]
-# U1 = K_\U1
-
 
 # initial data 
 
@@ -105,9 +95,12 @@ U1 = K_\run(sess, u1)
 # du is defined on the left side
 function StateRate(Ψ, v)
     v = abs(v)
-    f = a * tf.asinh(v/(2v0)*exp(Ψ/a))
-    Δψ = -v/Dc*(f-f0+(b-a)*log(v/v0))
-    # return constant(Ψ0)
+    # s = v/(2v0)
+    # o = exp(-Ψ/a)
+    # f = a * (Ψ/a + log(s+sqrt(s^2+o^2)))
+    f = a* tf.asinh(v/(2v0)*exp(Ψ/a))
+    Δψ = -v/Dc*((f-f0)+(b-a)*log(v/v0))  
+
 end
 
 # https://acadpubl.eu/jsi/2015-101-5-6-7-8/2015-101-8/21/21.pdf

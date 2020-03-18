@@ -6,49 +6,68 @@
 // log (so+sqrt(1+s^2*o^2)) = log o + log( s + sqrt(s^2 + o^{-2}))
 double asinh_exp(double s, double inv_o, double log_o){ 
   // std::cout << log(s + sqrt(s*s + inv_o*inv_o)) << std::endl;
-  double ss = s > 0 ? 1.0 : -1.0;
-  return log_o + log(abs(s)) + log(ss + sqrt(1 + (inv_o/s)*(inv_o/s)));
+  return log_o + log(s+ sqrt(s*s + inv_o*inv_o));
 }
 
+double f(double u, double psi, double a, double uold, 
+    double deltat, double eta, double v0, double tau, double sigma){
+  double inv_o = exp(-psi/a);
+  double log_o = psi/a;
+  double s = (u-uold) / deltat / 2.0 / v0;
+  double F = a * asinh_exp(s, inv_o, log_o) * sigma - tau + eta * (u-uold) / deltat;
+  return F; 
+}
+
+double Bisection(double xR, double xL, double psi, 
+        double a, double uold, double deltat, double eta, double v0, double tau, double sigma){
+    double fL = f(xL, psi, a, uold, deltat, eta, v0, tau, sigma);
+    double fR = f(xR, psi, a, uold, deltat, eta, v0, tau, sigma);
+    int maxIter = 1000;
+    double xTol = 1e-10;
+    double fTol = 1e-10;
+    if (fL*fR>0){
+        exit(1);
+        return -1; 
+    }
+
+    double xM = (xL+xR)/2;
+    double fM = f(xM, psi, a, uold, deltat, eta, v0, tau, sigma);
+    double xErr = abs(xM - xL);
+    double fErr = abs(fM);
+    int numIter = 1;
+
+    // printf("iter = 1, fL=%e, fM=%e, fR=%e\n", fL, fM, fR);
+    while (true){
+        if (numIter>maxIter || (xErr<xTol && fErr <= fTol) )
+            break;
+        if (fL*fM<=0) 
+            xR = xM;
+        else {
+            xL = xM; 
+            fL = fM;
+        }
+        xM = (xL+xR)/2;
+        fM = f(xM, psi, a, uold, deltat, eta, v0, tau, sigma);
+        xErr = abs(xM-xL);
+        fErr = abs(fM);
+        numIter += 1;
+        // printf("iter = %d, fL=%e, fM=%e, fR=%f\n", numIter, fL, fM, fR);
+    }
+    if (numIter>maxIter){
+        printf("WARNING: Bisection Does Find Optimal Solution!!!\n");
+    }
+    return xM; 
+}
 
 void forward(double *u, const double *a, const double *uold, const double v0, const double *psi, const double *sigma, const double *tau,
        double eta, double deltat, int n){
-// TODO:
-  int max_iter = 1000;
-  double tol = 1e-20;
-  double dx, dFdx, F;
-  for (int i=0; i<n; i++) {
-    u[i] = uold[i] * 2; // avoid u = uold; 
-    // u[i] = uold[i];
-    // u[i] = uold[i] + deltat * tau[i]/eta; // constrained by maximum velocity v ~ tau/eta.
-    int iter;
-    for (iter=0; iter<max_iter; iter++) {
-      double inv_o = exp(-psi[i]/a[i]);
-      double log_o = psi[i]/a[i];
-      double s = (u[i]-uold[i]) / deltat / 2.0 / v0;
-
-      // double y = (u[i]-uold[i]) / deltat / 2.0 / v0 * exp(psi[i]/a[i]);
-      // double F_ = a[i] * asinh(y) * sigma[i] - tau[i] + eta * (u[i]-uold[i]) / deltat;
-      F = a[i] * asinh_exp(s, inv_o, log_o) * sigma[i] - tau[i] + eta * (u[i]-uold[i]) / deltat;
-
-      // double dFdx_ = a[i]  / deltat / 2.0 / v0 * exp(psi[i]/a[i]) / sqrt(1+y*y) * sigma[i] + eta/deltat;
-      dFdx = a[i]  / deltat / 2.0 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigma[i] + eta/deltat;
-      
-      // std::cout << "dF " << dFdx-dFdx_ << std::endl;
-      dx = F / dFdx;
-
-      printf("iter = %d, dx = %e, F = %f, dFdx = %f, %e, %e\n", iter, abs(dx), F, dFdx, a[i]  / deltat / 2.0 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigma[i], eta/deltat);
-      // if (i==0)
-      //   printf("%f, %f\n", dFdx, dx);
-      if (abs(dx)/abs(u[i]) < tol){
-        // printf("Variable %d, iter = %d,  residual = %f, dx = %f\n", i, iter, F, dx);
-        break;
-      }
-      u[i] -= dx;
-    }
-    printf("Variable %d, residual = %e, error = %e, iter = %d, dFdx = %e\n", i, F, dx, iter, dFdx);
+    for (int i=0; i<n; i++) {
+        double xL = uold[i];
+        double xR = uold[i] + deltat * tau[i]/eta;
+        u[i] = Bisection(xR, xL, psi[i], a[i], uold[i], deltat, eta, v0, tau[i], sigma[i]);
   }
 }
+
 
 void backward(
         double * grad_a, double *grad_uold, double *grad_psi, double *grad_sigman, double *grad_sigmazx, const double *grad_u, 
