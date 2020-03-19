@@ -13,8 +13,8 @@ double f(double u, double psi, double a, double uold,
     double deltat, double eta, double v0, double tau, double sigma){
   double inv_o = exp(-psi/a);
   double log_o = psi/a;
-  double s = (u-uold) / deltat / 2.0 / v0;
-  double F = a * asinh_exp(s, inv_o, log_o) * sigma - tau + eta * (u-uold) / deltat;
+  double s = u / 2.0 / v0;
+  double F = a * asinh_exp(s, inv_o, log_o) * sigma - tau + eta * u;
   return F; 
 }
 
@@ -107,8 +107,8 @@ double Bisection(double xR, double xL, double psi,
 void forward(double *u, const double *a, const double *uold, const double v0, const double *psi, const double *sigma, const double *tau,
        double eta, double deltat, int n){
     for (int i=0; i<n; i++) {
-        double xL = uold[i] + 1e-16;
-        double xR = uold[i] + deltat * tau[i]/eta;
+        double xL = 0.0;
+        double xR = tau[i]/eta;
         u[i] = Bisection(xR, xL, psi[i], a[i], uold[i], deltat, eta, v0, tau[i], sigma[i]);
   }
 }
