@@ -3,76 +3,68 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
-# Random.seed!(233)
+Random.seed!(233)
 
-function rate_state_friction__(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
-    rate_state_friction_ = load_op_and_grad("./build/libRateStateFriction","rate_state_friction")
-    a,uold,v0,psi,sigmazx,sigmazy,eta,deltat = convert_to_tensor([a,uold,v0,psi,sigmazx,sigmazy,eta,deltat], [Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64])
-    rate_state_friction_(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
+function compute_vel(a,v0,psi,sigma,tau,eta)
+    compute_vel_ = load_op_and_grad("./build/libComputeVel","compute_vel")
+a,v0,psi,sigma,tau,eta = convert_to_tensor([a,v0,psi,sigma,tau,eta], [Float64,Float64,Float64,Float64,Float64,Float64])
+    compute_vel_(a,v0,psi,sigma,tau,eta)
 end
 
 
 # verify 
-a = 2.0
-x = 10.0
-u = 2.0
-Δt = 2.0
-v0 = 0.001
-Ψ = 2000.0
-σ = 3.0
-η = 2.0
-s = (x-u)/Δt/2v0
+n = 10
+a = 2.0*ones(n)|>constant
+x = 4.0*ones(n)|>constant
+v0 = 0.001|>constant
+Ψ = 2000.0*ones(n)|>constant
+σ = 3.0*ones(n)|>constant
+η = 2.0|>constant
+s = x/2v0
 inv_o = exp(-Ψ/a)
-τ = a * (Ψ/a + log(s + sqrt(s*s+inv_o*inv_o)))*σ + η*(x-u)/Δt 
+τ = a * (Ψ/a + log(s + sqrt(s*s+inv_o*inv_o)))*σ + η*x
 # τ = a * asinh(*exp(Ψ/a))*σ + η*(x-u)/Δt 
 
-# u = 4.0
 # TODO: specify your input parameters
-x_est = rate_state_friction__([a],[u],v0,[Ψ],[σ], [τ], η, Δt)
+u = compute_vel(a,v0,Ψ,σ,τ,η)
 sess = Session(); init(sess)
-@show run(sess, x_est)
-
-# uncomment it for testing gradients
-# error() 
-
-n = 100
-
-a = rand(n)
-uold = rand(n)
-v0 = 1.0
-psi = rand(n)
-sigmazx = rand(n)
-sigmazy = rand(n)
-eta = 1.0
-deltat = 1.0
-
+@show run(sess, u)
+# error()
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(m)
-    # return sum(rate_state_friction(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
-    return sum(rate_state_friction__(m,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
+    # return sum(compute_vel(a,v0,Ψ,σ,τ,η)^2)
+    return sum(compute_vel(a,v0,Ψ,σ,τ,m)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(n))
-v_ = rand(n)
+# m_ = constant(rand(n))
+# v_ = rand(n)
+
+# m_ = τ
+# v_ = rand(n)
+
+m_ = constant(rand())
+v_ = rand()
+
+
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
 ys_ = Array{Any}(undef, 5)
 s_ = Array{Any}(undef, 5)
 w_ = Array{Any}(undef, 5)
-gs_ =  @. 1. / 10^(1:5)
+gs_ =  @. 1 / 10^(1:5)
 
 for i = 1:5
     g_ = gs_[i]
     ms_[i] = m_ + g_*v_
     ys_[i] = scalar_function(ms_[i])
     s_[i] = ys_[i] - y_
-    w_[i] = s_[i] - g_*sum(v_.*dy_)
+    w_[i] = s_[i] - g_*sum(v_*dy_)
 end
 
 sess = Session(); init(sess)

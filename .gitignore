@@ -52,3 +52,5 @@ test/U_total/*.png
 test/U_total/*.png
 *.pdf
 *.txt
+!*custom_op.txt 
+!*CMakeLists.txt 

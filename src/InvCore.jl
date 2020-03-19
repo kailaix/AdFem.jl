@@ -115,9 +115,9 @@ function eval_strain_on_gauss_pts1(u::PyObject, m::Int64, n::Int64, h::Float64)
 end
 
 
-export rate_state_friction
+export compute_vel
 @doc raw"""
-    rate_state_friction(a::Union{PyObject, Array{Float64, 1}},
+    compute_vel(a::Union{PyObject, Array{Float64, 1}},
     v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
     sigma::Union{PyObject, Array{Float64, 1}},
     tau::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64})
@@ -127,13 +127,11 @@ Computes $x = u_3(x_1, x_2)$ from rate and state friction. The governing equatio
 a \sinh^{-1}\left( \frac{x - u}{\Delta t} \frac{1}{2V_0} e^{\frac{\Psi}{a}} \right) \sigma - \tau + \eta \frac{x-u}{\Delta t} = 0
 ```
 """
-function rate_state_friction(a::Union{PyObject, Array{Float64, 1}},
+function compute_vel(a::Union{PyObject, Array{Float64, 1}},
     v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
     sigma::Union{PyObject, Array{Float64, 1}},
     tau::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64})
-    deltat = 0.0
-    uold = zeros(length(a))
-    rate_state_friction_ = load_op_and_grad("$(@__DIR__)/../deps/RateStateFriction/build/libRateStateFriction","rate_state_friction")
-    a,uold,v0,psi,sigma,tau,eta,deltat = convert_to_tensor([a,uold,v0,psi,sigma,tau,eta,deltat], [Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64])
-    rate_state_friction_(a,uold,v0,psi,sigma,tau,eta,deltat)
+    compute_vel_ = load_op_and_grad("$(@__DIR__)/../deps/ComputeVel/build/libComputeVel","compute_vel")
+    a,v0,psi,sigma,tau,eta = convert_to_tensor([a,v0,psi,sigma,tau,eta], [Float64,Float64,Float64,Float64,Float64,Float64])
+    compute_vel_(a,v0,psi,sigma,tau,eta)
 end
