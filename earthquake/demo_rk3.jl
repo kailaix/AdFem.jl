@@ -15,7 +15,8 @@ nt = 601
 nx = 51
 ny = 51
 # eq_ind = collect(1:nt)[(v[1,:] .> 1e-1)[:]]
-eq_ind = collect(200:399)
+eq_ind = collect(220:460)
+# eq_ind = collect(180:460)
 
 m = 50
 n = 50
@@ -45,9 +46,14 @@ f0 = 0.6
 σn = ones(n+1) * 50 
 
 Δt = time[eq_ind[2:end]] - time[eq_ind[1:end-1]]
-NT = length(Δt)
-Δt = constant(Δt)/10
-
+# NT = length(Δt) + 1000
+# NT = 400
+# Δt = constant(Δt)/10
+fix_Δt = minimum(Δt)
+t = collect(0:fix_Δt:time[eq_ind[end]]-time[eq_ind[1]])
+NT = length(t)
+Δt = constant(ones(NT) .* fix_Δt)
+# Δt = constant(Δt)
 
 
 # NT = 3
@@ -60,18 +66,18 @@ K = constant(K_)
 
 u_bd = zeros(NT+1, n+1)
 for i = 1:NT+1
-    # u_bd[i, :] = (i-1)*Δt*v0 .+ bd_right[:, eq_ind[1]]
-    u_bd[i, :] = bd_right[:, eq_ind[i]]
+    u_bd[i, :] = (i-1)*fix_Δt*VPL .+ bd_right[:, eq_ind[1]]
+    # u_bd[i, :] = bd_right[:, eq_ind[i]]
 end
 u_bd = constant(u_bd)
 
-u3_bds = zeros(NT+1, n+1)
-for i = 1:NT+1
-    u3_bds[i, :] = bd_left[:, eq_ind[i]]
-end
-u3_bds = constant(u3_bds)
+# u3_bds = zeros(NT+1, n+1)
+# for i = 1:NT+1
+#     u3_bds[i, :] = bd_left[:, eq_ind[i]]
+# end
+# u3_bds = constant(u3_bds)
 
-v3_true = constant(Array(v[:,eq_ind]'))
+# v3_true = constant(Array(v[:,eq_ind]'))
 
 σzx_id = Int64[]
 for i = 1:n 
@@ -94,7 +100,7 @@ u1 = vector([left; right], [bd_left[:,eq_ind[2]]; bd_right[:,eq_ind[2]]], (m+1)*
 U1 = K_\run(sess, u0)
 
 Ψ0 = psi[:, eq_ind[1]]
-Ψ1 = psi[:, eq_ind[2]]
+Ψ1 = psi[:, eq_ind[1]]
 
 ψ_ref = constant(Array(psi[:,eq_ind]'))
 bd_left_ref = constant(Array(bd_left[:,eq_ind]'))
@@ -243,12 +249,31 @@ init(sess)
 DISP, STATE, VEL = run(sess, [disp,state, v_bd]);
 # DISP
 
+# figure()
+# plot(time[eq_ind], v[1, eq_ind])
+# plot(time[eq_ind], VEL[:,1])
+# figure()
+# plot(time[eq_ind], psi[1, eq_ind])
+# plot(time[eq_ind], STATE[:,1], "o--")
+# figure()
+# plot(time[eq_ind], bd_left[1, eq_ind])
+# plot(time[eq_ind], DISP[:,1], "--")
+
+close("all")
 figure()
-plot(time[eq_ind], v[1, eq_ind])
-plot(time[eq_ind], VEL[:,1])
+subplot(311)
+plot(t, VEL[1:end-1,1])
+subplot(312)
+plot(t, STATE[1:end-1,1], "--")
+subplot(313)
+plot(t, DISP[1:end-1,1], "--")
+suptitle("Ours")
+
 figure()
-plot(time[eq_ind], psi[1, eq_ind])
-plot(time[eq_ind], STATE[:,1], "o--")
-figure()
-plot(time[eq_ind], bd_left[1, eq_ind])
-plot(time[eq_ind], DISP[:,1], "--")
+subplot(311)
+plot(time[eq_ind].-time[eq_ind[1]], v[1, eq_ind])
+subplot(312)
+plot(time[eq_ind].-time[eq_ind[1]], psi[1, eq_ind])
+subplot(313)
+plot(time[eq_ind].-time[eq_ind[1]], bd_left[1, eq_ind])
+suptitle("Referece")
