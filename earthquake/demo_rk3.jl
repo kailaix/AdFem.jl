@@ -15,7 +15,7 @@ nt = 601
 nx = 51
 ny = 51
 # eq_ind = collect(1:nt)[(v[1,:] .> 1e-1)[:]]
-eq_ind = collect(240:399)
+eq_ind = collect(200:399)
 
 m = 50
 n = 50
@@ -45,8 +45,10 @@ f0 = 0.6
 σn = ones(n+1) * 50 
 
 Δt = time[eq_ind[2:end]] - time[eq_ind[1:end-1]]
-Δt = constant(Δt)
 NT = length(Δt)
+Δt = constant(Δt)/10
+
+
 
 # NT = 3
 
@@ -89,7 +91,7 @@ u0 = vector([left; right], [bd_left[:,eq_ind[1]]; bd_right[:,eq_ind[1]]], (m+1)*
 U0 = K_\run(sess, u0)
 
 u1 = vector([left; right], [bd_left[:,eq_ind[2]]; bd_right[:,eq_ind[2]]], (m+1)*(n+1))
-U1 = K_\run(sess, u1)
+U1 = K_\run(sess, u0)
 
 Ψ0 = psi[:, eq_ind[1]]
 Ψ1 = psi[:, eq_ind[2]]
@@ -114,7 +116,7 @@ function rk3(i, psi, v_bd, u, Δt)
     ## --- RK Stage 1 ---
     du_bd_S1 = v_bd/2  # t 
 
-    v_bd = v_ref[i]
+    # v_bd = v_ref[i]
     dpsi_S1 = StateRate(psi, v_bd) # t
     u_left_bd_S1 = u[left] + 0.5*Δt*du_bd_S1 # t+0.5Δt
     psi_S1 = psi + 0.5*Δt * dpsi_S1 # t+0.5Δt
@@ -137,7 +139,7 @@ function rk3(i, psi, v_bd, u, Δt)
     ## --- RK Stage 2 ---
     du_bd_S2 = v_bd_S1/2  # t + 0.5Δt
 
-    v_bd_S1 = v_ref[i]
+    # v_bd_S1 = v_ref[i]
     dpsi_S2 = StateRate(psi_S1, v_bd_S1) # t + 0.5Δt
     u_left_bd_S2 = u[left] + Δt * (-du_bd_S1 + 2*du_bd_S2) # t + Δt
     psi_S2 = psi + Δt * (-dpsi_S1 + 2*dpsi_S2) # t + Δt
@@ -168,7 +170,7 @@ function rk3(i, psi, v_bd, u, Δt)
     ## --- RK Stage 3 ---
     du_bd_S3 = v_bd_S2/2 # t + Δt
 
-    v_bd_S2 = v_ref[i]
+    # v_bd_S2 = v_ref[i]
     dpsi_S3  = StateRate(psi_S2, v_bd_S2) # t + Δt
     
     u_left_bd_S3 = u[left] + Δt/6*(du_bd_S1 + 4*du_bd_S2 + du_bd_S3); ## t + Δt
@@ -196,7 +198,7 @@ function rk3(i, psi, v_bd, u, Δt)
 
     # return psi_S3, v_bd_S3, u_S3
 
-    return psi + Δt * dpsi_S1, v_bd_S3, u_S3
+    return psi_S3, v_bd_S3, u_S3
 end
 
 
@@ -207,7 +209,7 @@ function simulate()
         u = read(ta_u, i)
         Ψ = read(ta_Ψ, i)
         v_bd = read(ta_v_bd, i)
-        Ψ, v_bd, u = rk3(i, Ψ, v_bd, u, Δt[i])
+        Ψ, v_bd, u = rk3(i, Ψ, v_bd, u, Δt[i-1])
         ta_u = write(ta_u, i+1, u)
         ta_Ψ = write(ta_Ψ, i+1, Ψ)
 
@@ -241,18 +243,12 @@ init(sess)
 DISP, STATE, VEL = run(sess, [disp,state, v_bd]);
 # DISP
 
-# figure()
-# plot(time[eq_ind], v[1, eq_ind])
-# plot(time[eq_ind], VEL[:,1])
+figure()
+plot(time[eq_ind], v[1, eq_ind])
+plot(time[eq_ind], VEL[:,1])
 figure()
 plot(time[eq_ind], psi[1, eq_ind])
-plot(time[eq_ind], STATE[:,1], "--")
-# figure()
-# plot(time[eq_ind], bd_left[1, eq_ind])
-# plot(time[eq_ind], DISP[:,1], "--")
-# plot(VEL[:,1])
-# # plot(time[eq_ind], STATE[:,1])
-# plot(time[eq_ind], DISP[:, 1])
-# # close("all")
-# # plot(U3[:,left[length(left)÷2]])
-# # nothing
+plot(time[eq_ind], STATE[:,1], "o--")
+figure()
+plot(time[eq_ind], bd_left[1, eq_ind])
+plot(time[eq_ind], DISP[:,1], "--")
