@@ -27,7 +27,6 @@ double Bisection(double xR, double xL, double psi,
     assert(v0>0);
     assert(tau>0);
     assert(sigma>0);
-    assert(uold>0);
 
     double fL = f(xL, psi, a, uold, deltat, eta, v0, tau, sigma);
     double fR = f(xR, psi, a, uold, deltat, eta, v0, tau, sigma);
@@ -124,13 +123,13 @@ void backward(
 
       double inv_o = exp(-psi[i]/a[i]);
       double log_o = psi[i]/a[i];
-      double s = (u[i]-uold[i]) / deltat / 2.0 / v0;
+      double s = u[i] / 2.0 / v0;
        
-       double dFdx = a[i] / deltat / 2 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i] + eta/deltat;
-       double dFdu = - a[i] / deltat / 2 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i] - eta/deltat;
+       double dFdx = a[i] / 2 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i] + eta/deltat;
+       double dFdu = - a[i] / 2 / v0 * 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i] - eta/deltat;
        double dFda = asinh_exp(s, inv_o, log_o) * sigman[i] + 
-              a[i] * (u[i]-uold[i])/deltat / 2 / v0 * (-psi[i]/a[i]/a[i])* 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i];
-       double dFdpsi = a[i]*(u[i]-uold[i])/deltat / 2 / v0 / a[i]* 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i];
+              a[i] * u[i] / 2 / v0 * (-psi[i]/a[i]/a[i])* 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i];
+       double dFdpsi = a[i]*u[i] / 2 / v0 / a[i]* 1.0/sqrt(s*s + inv_o*inv_o) * sigman[i];
        double dFdtau = -1.0;
        double dFdsigma = a[i] * asinh_exp(s, inv_o, log_o);
        

@@ -140,7 +140,7 @@ function rk3(i, psi, v_bd, u, Δt)
 
     # τ = tau_ref[i]
 
-    v_bd_S1 = rate_state_friction(a, u_left_bd_S1, v0, psi_S1, σn, τ, η, 0.1) # t + 0.5Δt + δΔt, 0.5 can be any positive number
+    v_bd_S1 = rate_state_friction(a, v0, psi_S1, σn, τ, η) # t + 0.5Δt + δΔt, 0.5 can be any positive number
 
     ## --- RK Stage 2 ---
     du_bd_S2 = v_bd_S1/2  # t + 0.5Δt
@@ -171,7 +171,7 @@ function rk3(i, psi, v_bd, u, Δt)
 
     
 
-    v_bd_S2 = rate_state_friction(a, u_left_bd_S2, v0, psi_S2, σn, τ, η, 0.1) # t+ Δt + δΔt
+    v_bd_S2 = rate_state_friction(a, v0, psi_S2, σn, τ, η) # t+ Δt + δΔt
     
     ## --- RK Stage 3 ---
     du_bd_S3 = v_bd_S2/2 # t + Δt
@@ -193,7 +193,7 @@ function rk3(i, psi, v_bd, u, Δt)
     # τ = tau_ref[i+1]
     # psi_S3 = ψ_ref[i+1]
 
-    v_bd_S3 = rate_state_friction(a, u_left_bd_S3, v0, psi_S3, σn, τ, η, 0.1) # t+ Δt + δΔt
+    v_bd_S3 = rate_state_friction(a, v0, psi_S3, σn, τ, η) # t+ Δt + δΔt
     
 
     

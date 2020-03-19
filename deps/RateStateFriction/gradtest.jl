@@ -3,7 +3,7 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
-Random.seed!(233)
+# Random.seed!(233)
 
 function rate_state_friction__(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)
     rate_state_friction_ = load_op_and_grad("./build/libRateStateFriction","rate_state_friction")
@@ -53,7 +53,7 @@ deltat = 1.0
 # gradient check -- v
 function scalar_function(m)
     # return sum(rate_state_friction(a,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
-    return sum(rate_state_friction__(a,uold,v0,psi,m,sigmazy,eta,deltat)^2)
+    return sum(rate_state_friction__(m,uold,v0,psi,sigmazx,sigmazy,eta,deltat)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
