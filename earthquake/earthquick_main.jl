@@ -77,11 +77,21 @@ NT = length(t)
 NT = 5
 
 
+# copy matrix to C++
+ccall((:factorize_matrix, "./accel/build/libSaver"), Cvoid, (Cint, Cint, Cdouble, Ref{Cint}, Cint), 
+            Int32(m), Int32(n), h, Int32.(ind .- 1) , Int32(length(ind)))
+
+function fast_solve(rhs)
+    fast_solve_ = load_op_and_grad("./accel/build/libFastSolve","fast_solve")
+    rhs = convert_to_tensor(rhs, dtype = Float64)
+    fast_solve_(rhs)
+end
+
 K_ = compute_fem_stiffness_matrix1(diagm(0=>ones(2)), m, n, h)
 K_[ind, :] .= 0.0
 K_[ind, ind] = spdiagm(0=>ones(length(ind)))
 K_ = dropzeros(K_)
-K = constant(K_)
+# K = constant(K_)
 
 u_bd = zeros(NT+1, n+1)
 for i = 1:NT+1
@@ -151,7 +161,8 @@ function rk3(i, psi, v_bd, u, Δt)
 
     u_right_bd_S1 = u[right] + 0.5*Δt*VPL # t + 0.5Δt
     u0 = vector([left;right], [u_left_bd_S1; u_right_bd_S1], (m+1)*(n+1))
-    u_S1 = K\u0 # t + 0.5Δt
+    # u_S1 = K\u0 # t + 0.5Δt
+    u_S1 = fast_solve(u0)
 
     ε = eval_strain_on_gauss_pts1(u_S1, m, n, h)
     σ = μ * ε
@@ -174,7 +185,8 @@ function rk3(i, psi, v_bd, u, Δt)
 
     u_right_bd_S2 = u[right] + Δt*VPL # t + Δt
     u0 = vector([left;right], [u_left_bd_S2; u_right_bd_S2], (m+1)*(n+1))# t + Δt
-    u_S2 = K\u0 # t + Δt
+    # u_S2 = K\u0 # t + Δt
+    u_S2 = fast_solve(u0)
     
     ε = eval_strain_on_gauss_pts1(u_S2, m, n, h)
     σ = μ * ε
@@ -203,7 +215,8 @@ function rk3(i, psi, v_bd, u, Δt)
 
     u_right_bd_S3 = u[right] + Δt*VPL # t + Δt
     u0 = vector([left;right], [u_left_bd_S3; u_right_bd_S3], (m+1)*(n+1))# t + Δt
-    u_S3 = K\u0 # t + Δt
+    # u_S3 = K\u0 # t + Δt
+    u_S3 = fast_solve(u0)
 
     ε = eval_strain_on_gauss_pts1(u_S3, m, n, h) 
     σ = μ * ε
