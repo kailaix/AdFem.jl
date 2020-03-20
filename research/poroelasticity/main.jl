@@ -114,4 +114,12 @@ Uval, Sval = run(sess, [U, S])
 # saveanim(p, "p.gif")
 # p = visualize_stress(H, Uval, m, n, h)
 # saveanim(p, "s.gif")
-matwrite("data.mat", Dict("U"=>Uval, "S"=>Sval))
+# matwrite("data.mat", Dict("U"=>Uval, "S"=>Sval))
+
+visualize_displacement(Uval[end,:], m, n, h)
+savefig("poro_u.pdf")
+visualize_pressure(Uval[end,2(m+1)*(n+1)+1:end], m, n, h)
+savefig("poro_p.pdf")
+visualize_stress(H, Uval[end,:], m, n, h)
+savefig("poro_s.pdf")
+

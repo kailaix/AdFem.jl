@@ -18,10 +18,11 @@ n = 10
 m = 2n 
 h = 0.01
 NT = 500
-it0 = 1
 Δt = 2.0/NT
 ηmax = 1
 ηmin = 0.5
+
+obs_idx = collect(1:m+1)
 
 bdedge = bcedge("right", m, n, h)
 bdnode = bcnode("lower", m, n, h)
@@ -189,9 +190,7 @@ if mode!="data"
   U.set_shape((NT+1, size(U, 2)))
   idx0 = 1:4m*n
   Sigma = map(x->x[idx0,:], Sigma)
-
-  idx = collect(1:m+1)
-  global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
+  global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
 end
 
 sess = Session(); init(sess)
