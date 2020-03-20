@@ -8,6 +8,12 @@ using MAT
 np = pyimport("numpy")
 
 
+stepsize = 1
+if length(ARGS)==1
+  global stepsize = parse(Int64, ARGS[1])
+end
+@info stepsize
+
 mode = "training"
 
 ## alpha-scheme
@@ -22,7 +28,7 @@ NT = 500
 ηmax = 1
 ηmin = 0.5
 
-obs_idx = collect(1:m+1)
+obs_idx = collect(1:stepsize:m+1)
 
 bdedge = bcedge("right", m, n, h)
 bdnode = bcnode("lower", m, n, h)
@@ -199,7 +205,7 @@ cb = (v, i, l)->begin
   println("[$i] loss = $l")
   if i=="true" || mod(i,20)==0
     inv_eta = v[1]
-    matwrite("eta$i.mat", Dict("eta"=>inv_eta))
+    matwrite("$stepsize/eta$i.mat", Dict("eta"=>inv_eta))
   end
 end
 
@@ -224,4 +230,6 @@ v_ = []
 i_ = []
 l_ = []
 
+
+if isdir(stepsize);mkdir(stepsize); end
 loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
