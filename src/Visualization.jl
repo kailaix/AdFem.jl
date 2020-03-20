@@ -1,88 +1,43 @@
 export visualize_pressure, visualize_displacement, 
     visualize_stress, visualize_scattered_displacement, 
     visualize_von_mises_stress, visualize_saturation,
-    visualize_potential, visualize_displacement
+    visualize_potential
 
 """ 
-    visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+    visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
 
 Visualizes pressure. `U` is the solution vector. 
 """
-function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
-    
-    vmin = minimum(U[2(m+1)*(n+1)+1:end,:])
-    vmax = maximum(U[2(m+1)*(n+1)+1:end,:])
-    NT = size(U,2)
-    x1 = LinRange(0.0,m*h,m)|>collect
-    y1 = LinRange(0.0,n*h,n)|>collect
-    for k in Int64.(round.(LinRange(1, NT, 20)))
-        close("all")
-        pcolormesh(x1, y1, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', vmin=vmin,vmax=vmax)
-        # scatter( (1:m)*h .-0.5*h, div(n,3) * ones(n) * h .-0.5h, marker="^", color="r")
-        colorbar()
-        k_ = string(k)
-        k_ = repeat("0", 3-length(k_))*k_
-        title("snapshot = $k_")
-        contour(x1, y1, reshape(U[2(m+1)*(n+1)+1:end, k], m, n)', 10, cmap="jet")
-        axis("equal")
-        gca().invert_yaxis()
-        savefig("__p$k_.png")
-    end
-    run(`convert -delay 10 -loop 0 __p*.png disp_p$name.gif`)
-    rfiles = [x for x in readdir(".") if occursin("__p", x)]
-    rm.(rfiles)
-end
-
-""" 
-    visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
-
-Visualizes displacement. `U` is the solution vector. 
-"""
-function visualize_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 
-        h::Float64; name::String = "")
-    vmin = minimum(U[1:(m+1)*(n+1),:])
-    vmax = maximum(U[1:(m+1)*(n+1),:])
-    NT = size(U,2)
-    x1 = LinRange(0.0,m*h,m+1)|>collect
-    y1 = LinRange(0.0,n*h,n+1)|>collect
-    for k in Int64.(round.(LinRange(1, NT, 20)))
-        close("all")
-        pcolormesh(x1, y1, reshape(U[1:(m+1)*(n+1), k], m+1, n+1)', vmin=vmin,vmax=vmax)
-        colorbar()
-        contour(x1, y1, reshape(U[1:(m+1)*(n+1), k], m+1, n+1)', 10, cmap="jet", vmin=vmin,vmax=vmax)
-        # scatter((1:m+1)*h .-h, div(n,3) * ones(n+1) * h, marker="^", color="r")
-        k_ = string(k)
-        k_ = repeat("0", 3-length(k_))*k_
-        title("snapshot = $k_")
-        axis("equal")
-        gca().invert_yaxis()
-        savefig("__u$k_.png")
-    end
-    run(`convert -delay 10 -loop 0 __u*.png disp_u$name.gif`)
-    rfiles = [x for x in readdir(".") if occursin("__u", x)]
-    rm.(rfiles)
-
-
-    vmin = minimum(U[(m+1)*(n+1)+1:2*(m+1)*(n+1),:])
-    vmax = maximum(U[(m+1)*(n+1)+1:2*(m+1)*(n+1),:])
-    for k in Int64.(round.(LinRange(1, NT, 20)))
-        close("all")
-        pcolormesh(x1, y1, reshape(U[(m+1)*(n+1)+1:2*(m+1)*(n+1), k], m+1, n+1)', vmin=vmin,vmax=vmax)
-        colorbar()
-        contour(x1, y1, reshape(U[(m+1)*(n+1)+1:2*(m+1)*(n+1), k], m+1, n+1)', 10, cmap="jet", vmin=vmin,vmax=vmax)
-        # scatter((1:m+1)*h .-h, div(n,3) * ones(n+1) * h, marker="^", color="r")
-        k_ = string(k)
-        k_ = repeat("0", 3-length(k_))*k_
-        title("snapshot = $k_")
-        axis("equal")
-        gca().invert_yaxis()
-        savefig("__v$k_.png")
-    end
-    run(`convert -delay 10 -loop 0 __v*.png disp_v$name.gif`)
-
+function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+    # fig, ax = subplots()
     close("all")
-    rfiles = [x for x in readdir(".") if occursin("__v", x)]
-    rm.(rfiles)
+    x = (1:m)*h
+    y = (1:n)*h
+    vmin = mean(U) - 2std(U)
+    vmax = mean(U) + 2std(U)
+    U = reshape(U, size(U,1), m, n)
+    U = permutedims(U, [1,3,2])
+    ln = pcolormesh(x, y, U[1,:,:], vmin=vmin, vmax=vmax)
+    t = title("snapshot = 000")
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    levels = LinRange(vmin, vmax, 10) |> Array
+    c = contour(x, y, U[1,:,:], levels, cmap="jet", vmin=vmin, vmax=vmax)
+    gca().invert_yaxis()
+    function update(frame)
+        gca().clear()
+        k = string(frame-1)
+        k = repeat("0", 3-length(k))*k 
+        title("snapshot = $k")
+        pcolormesh(x, y, U[frame,:,:], vmin=vmin, vmax=vmax)
+        contour(x, y, U[frame,:,:], levels, cmap="jet", vmin=vmin, vmax=vmax)
+        xlabel("x")
+        ylabel("y")
+        gca().invert_yaxis()
+    end
+    anim = animate(update, 1:size(U,1))
 end
 
 @doc raw""" 
@@ -92,15 +47,15 @@ Visualizes displacement. `U` is the solution vector, `K` is the elasticity matri
 """
 function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
     close("all")
-    NT = size(U,2)
+    NT = size(U,1)
     x1 = LinRange(0.5h,m*h,m)|>collect
     y1 = LinRange(0.5h,n*h,n)|>collect
-    S = zeros(20, n, m)
-    for (ix,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
-        s = compute_von_mises_stress_term(K, U[:,k], m, n, h)
+    S = zeros(NT, n, m)
+    for k = 1:NT
+        s = compute_von_mises_stress_term(K, U[k,:], m, n, h)
         for i = 1:m 
             for j = 1:n 
-                S[ix,j,i] = sum(s[4*(m*(j-1)+i-1)+1:4*(m*(j-1)+i)])/4.0
+                S[k,j,i] = sum(s[4*(m*(j-1)+i-1)+1:4*(m*(j-1)+i)])/4.0
             end
         end
     end
@@ -108,29 +63,30 @@ function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, 
     vmin = μ - 2σ
     vmax = μ + 2σ
 
-
-    Z = S[1,:,:]
-    pcolormesh(x1,y1,Z, vmin=vmin,vmax=vmax)
+    levels = LinRange(vmin, vmax, 10) |> Array
+    pcolormesh(x1,y1,S[1,:,:], vmin=vmin,vmax=vmax)
     colorbar()
-    title("snapshot = 1")
-    contour(x1, y1, Z, 10, cmap="jet")
+    title("snapshot = 000")
+    contour(x1, y1, S[1,:,:], levels, cmap="jet")
     axis("scaled")
+    xlabel("x")
+    ylabel("y")
     gca().invert_yaxis()
     
     function update(ix)
         gca().clear()
-        Z = S[ix,:,:]
-        pcolormesh(x1,y1,Z, vmin=vmin,vmax=vmax)
+        pcolormesh(x1,y1,S[ix,:,:], vmin=vmin,vmax=vmax)
         k_ = string(ix)
         k_ = repeat("0", 3-length(k_))*k_
         title("snapshot = $k_")
-        contour(x1, y1, Z, 10, cmap="jet")
+        contour(x1, y1, S[ix,:,:], levels, cmap="jet")
         axis("scaled")
+        xlabel("x")
+        ylabel("y")
         gca().invert_yaxis()
     end
 
-    p = animate(update, 1:20)
-    saveanim(p, "disp_s$name.gif")
+    p = animate(update, 1:NT)
 end
 
 
@@ -205,48 +161,6 @@ function visualize_von_mises_stress(Se::Array{Float64, 3}, m::Int64, n::Int64, h
     visualize_stress(S'|>Array, m, n, h; name = name, kwargs...)
 end
 
-function visualize_scattered_displacement(U::Array{Float64, 2}, m::Int64, n::Int64, 
-            h::Float64; name::String = "", xlim_=nothing, ylim_=nothing)
-
-    NT = size(U, 2)
-    x = []
-    y = []
-    for j= 1:n+1
-        for i = 1:m+1
-        push!(x, (i-1)*h)
-        push!(y, (j-1)*h)
-        end
-    end
-            
-    for (i,k) in enumerate(Int64.(round.(LinRange(1, NT, 20))))
-        close("all")
-        scatter(x+U[1:(m+1)*(n+1), k], y+U[(m+1)*(n+1)+1:2(m+1)*(n+1), k])
-        xlabel("x")
-        ylabel("y")
-        k = string(i)
-        k = repeat("0", 3-length(k))*k 
-        title("Iteration = $i")
-        # if !isnothing(xlim_)
-             
-        # end
-        axis("equal")
-        if !isnothing(xlim_)
-            xlim(xlim_...)
-        end
-        if !isnothing(ylim_)
-            ylim(ylim_...)
-        end
-        
-        gca().invert_yaxis()
-        k_ = string(i)
-        k_ = repeat("0", 3-length(k_))*k_
-        savefig("__Scattered$k_.png")
-    end
-    run(`convert -delay 20 -loop 0 __Scattered*.png disp_scattered_u$name.gif`)
-    rfiles = [x for x in readdir(".") if occursin("__Scattered", x)]
-    rm.(rfiles)
-end
-
 
 function visualize_saturation(s2, m, n, h)
     # fig, ax = subplots()
@@ -319,7 +233,7 @@ function visualize_displacement(u::Array{Float64, 2}, m::Int64, n::Int64, h::Flo
     end
     function disp(u)
         U1 = reshape(u[1:(m+1)*(n+1)], m+1, n+1)
-        U2 = reshape(u[(m+1)*(n+1)+1:end], m+1, n+1)
+        U2 = reshape(u[(m+1)*(n+1)+1:2(m+1)*(n+1)], m+1, n+1)
         U1 = X + U1 
         U2 = Y + U2
         U1, U2 

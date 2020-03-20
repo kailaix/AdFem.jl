@@ -11,7 +11,7 @@ sess = Session(); init(sess)
 
 @show run(sess, loss)
 
-# BFGS!(sess, loss)
+BFGS!(sess, loss)
 
 
 
