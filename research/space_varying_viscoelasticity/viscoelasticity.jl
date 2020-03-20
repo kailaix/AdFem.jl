@@ -67,7 +67,7 @@ function visualize_inv_eta(X, k)
       return 
     end
     k_ = string(k)
-    k_ = reduce(*, "0" for i = 1:4-length(k_))*k_
+    k_ = reduce(*, "0" for i = 1:3-length(k_))*k_
     title("Iteration = $k_")
     savefig("iter$k_.png")
 end
@@ -88,8 +88,8 @@ end
 
 
 fn_G = invη->begin 
-  G = tensor([1/Δt+μ*invη -μ/3*invη 0.0
-    -μ/3*invη 1/Δt+μ*invη-μ/3*invη 0.0
+  G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
+    -μ/3*invη 1/Δt+2/3*μ*invη 0.0
     0.0 0.0 1/Δt+μ*invη])
   invG = inv(G)
 end
@@ -200,7 +200,6 @@ cb = (v, i, l)->begin
   println("[$i] loss = $l")
   if mod(i,20)==0
     inv_eta = v[1]
-    visualize_inv_eta(inv_eta, i)
     matwrite("eta$i.mat", Dict("eta"=>inv_eta))
   end
 end
@@ -209,9 +208,8 @@ if mode=="data"
   Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
   matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-  visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
-  visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
-                  xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+  visualize_von_mises_stress(Sigmaval[1:50:end,:,:], m, n, h)
+  visualize_displacement(Uval[1:50:end,:], m, n, h)
 
   close("all")
   plot(LinRange(0, 20, NT+1), Uval[:,m+1])
@@ -223,22 +221,6 @@ if mode=="data"
   error("Stop!")
 end
 
-# BFGS!(sess, loss)
-# @info run(sess, loss, invη_var=>eta_model(1))
-
-# dat = linedata(eta_model(1), (ηmin + ηmax)/2*ones(n))
-# V = zeros(length(dat))
-# for i = 1:length(dat)
-#   @info i 
-#   V[i] = run(sess, loss, invη_var=>dat[i])
-# end
-# close("all")
-# lineview(V)
-# savefig("line")
-
-# close("all")
-# gradview(sess, invη_var, gradients(loss, invη_var), loss, (ηmin + ηmax)/2*ones(n))
-# savefig("line")
 v_ = []
 i_ = []
 l_ = []

@@ -17,7 +17,7 @@ function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
     vmax = mean(U) + 2std(U)
     U = reshape(U, size(U,1), m, n)
     U = permutedims(U, [1,3,2])
-    ln = pcolormesh(x, y, U[1,:,:], vmin=vmin, vmax=vmax)
+    ln = pcolormesh(x, y, U[1,:,:], vmin=vmin, vmax=vmax,rasterized=true)
     t = title("snapshot = 000")
     colorbar()
     axis("scaled")
@@ -31,7 +31,7 @@ function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
         k = string(frame-1)
         k = repeat("0", 3-length(k))*k 
         title("snapshot = $k")
-        pcolormesh(x, y, U[frame,:,:], vmin=vmin, vmax=vmax)
+        pcolormesh(x, y, U[frame,:,:], vmin=vmin, vmax=vmax,rasterized=true)
         contour(x, y, U[frame,:,:], levels, cmap="jet", vmin=vmin, vmax=vmax)
         xlabel("x")
         ylabel("y")
@@ -40,19 +40,67 @@ function visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64
     anim = animate(update, 1:size(U,1))
 end
 
+
+function visualize_pressure(U::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+    # fig, ax = subplots()
+    close("all")
+    x = (1:m)*h
+    y = (1:n)*h
+    vmin = mean(U) - 2std(U)
+    vmax = mean(U) + 2std(U)
+    U = reshape(U,  m, n)
+    U = Array(U')
+    ln = pcolormesh(x, y, U, vmin=vmin, vmax=vmax,rasterized=true)
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    levels = LinRange(vmin, vmax, 10) |> Array
+    c = contour(x, y, U[:,:], levels, cmap="jet", vmin=vmin, vmax=vmax)
+    gca().invert_yaxis()
+end
+
+
 @doc raw""" 
     visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
 
 Visualizes displacement. `U` is the solution vector, `K` is the elasticity matrix ($3\times 3$).
 """
-function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64; name::String="")
+function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 1}, m::Int64, n::Int64, h::Float64; name::String="")
+    close("all")
+    NT = size(U,1)
+    x1 = LinRange(0.5h,m*h,m)|>collect
+    y1 = LinRange(0.5h,n*h,n)|>collect
+    S = zeros(n, m)
+    s = compute_von_mises_stress_term(K, U, m, n, h)
+    for i = 1:m 
+        for j = 1:n 
+            S[j,i] = sum(s[4*(m*(j-1)+i-1)+1:4*(m*(j-1)+i)])/4.0
+        end
+    end
+    μ = mean(S); σ = std(S)
+    vmin = μ - 2σ
+    vmax = μ + 2σ
+
+    levels = LinRange(vmin, vmax, 10) |> Array
+    pcolormesh(x1,y1,S[:,:], vmin=vmin,vmax=vmax,rasterized=true)
+    colorbar()
+    contour(x1, y1, S[:,:], levels, cmap="jet")
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    gca().invert_yaxis()
+end
+
+
+function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 1}, m::Int64, n::Int64, h::Float64; name::String="")
     close("all")
     NT = size(U,1)
     x1 = LinRange(0.5h,m*h,m)|>collect
     y1 = LinRange(0.5h,n*h,n)|>collect
     S = zeros(NT, n, m)
     for k = 1:NT
-        s = compute_von_mises_stress_term(K, U[k,:], m, n, h)
+        s = compute_von_mises_stress_term(K, U, m, n, h)
         for i = 1:m 
             for j = 1:n 
                 S[k,j,i] = sum(s[4*(m*(j-1)+i-1)+1:4*(m*(j-1)+i)])/4.0
@@ -64,29 +112,13 @@ function visualize_stress(K::Array{Float64, 2}, U::Array{Float64, 2}, m::Int64, 
     vmax = μ + 2σ
 
     levels = LinRange(vmin, vmax, 10) |> Array
-    pcolormesh(x1,y1,S[1,:,:], vmin=vmin,vmax=vmax)
+    pcolormesh(x1,y1,S[1,:,:], vmin=vmin,vmax=vmax,rasterized=true)
     colorbar()
-    title("snapshot = 000")
     contour(x1, y1, S[1,:,:], levels, cmap="jet")
     axis("scaled")
     xlabel("x")
     ylabel("y")
     gca().invert_yaxis()
-    
-    function update(ix)
-        gca().clear()
-        pcolormesh(x1,y1,S[ix,:,:], vmin=vmin,vmax=vmax)
-        k_ = string(ix)
-        k_ = repeat("0", 3-length(k_))*k_
-        title("snapshot = $k_")
-        contour(x1, y1, S[ix,:,:], levels, cmap="jet")
-        axis("scaled")
-        xlabel("x")
-        ylabel("y")
-        gca().invert_yaxis()
-    end
-
-    p = animate(update, 1:NT)
 end
 
 
@@ -240,14 +272,18 @@ function visualize_displacement(u::Array{Float64, 2}, m::Int64, n::Int64, h::Flo
     end
     close("all")
     U1, U2 = disp(u[1,:])
-    s = scatter(U1[:], U2[:], s=1)
-    xlim(-h, h+(m+1)*h)
-    ylim(-h, h+(n+1)*h)
-    gca().invert_yaxis()
-    t = title("t = 0")
+    s = scatter(U1[:], U2[:], s=5)
+    xmin = minimum(u[:,1:(m+1)*(n+1)])
+    xmax = maximum(u[:,1:(m+1)*(n+1)]) + m*h
+    ymin = minimum(u[:,(m+1)*(n+1)+1:2(m+1)*(n+1)])
+    ymax = maximum(u[:,(m+1)*(n+1)+1:2(m+1)*(n+1)]) + n*h
+    t = title("snapshot = 000")
     xlabel("x")
     ylabel("y")
     axis("equal")
+    xlim(xmin.-h, xmax.+h)
+    ylim(ymin.-h, ymax.+h)
+    gca().invert_yaxis()
     function update(i)
         U1, U2 = disp(u[i,:])
         s.set_offsets([U1[:] U2[:]])
@@ -255,6 +291,41 @@ function visualize_displacement(u::Array{Float64, 2}, m::Int64, n::Int64, h::Flo
         k = string(i-1)
         k = repeat("0", 3-length(k))*k 
         t.set_text("snapshot = $k")
+        xlim(xmin.-h, xmax.+h)
+        ylim(ymin.-h, ymax.+h)
+        gca().invert_yaxis()
     end
     animate(update, 1:size(u,1))
 end
+
+function visualize_displacement(u::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    X = zeros(m+1, n+1)
+    Y = zeros(m+1, n+1)
+    for i = 1:m+1
+        for j = 1:n+1
+            X[i, j] = (i-1)*h 
+            Y[i, j] = (j-1)*h 
+        end
+    end
+    function disp(u)
+        U1 = reshape(u[1:(m+1)*(n+1)], m+1, n+1)
+        U2 = reshape(u[(m+1)*(n+1)+1:2(m+1)*(n+1)], m+1, n+1)
+        U1 = X + U1 
+        U2 = Y + U2
+        U1, U2 
+    end
+    close("all")
+    U1, U2 = disp(u)
+    s = scatter(U1[:], U2[:], s=5)
+    xmin = minimum(u[:,1:(m+1)*(n+1)])
+    xmax = maximum(u[:,1:(m+1)*(n+1)]) + m*h
+    ymin = minimum(u[:,(m+1)*(n+1)+1:2(m+1)*(n+1)])
+    ymax = maximum(u[:,(m+1)*(n+1)+1:2(m+1)*(n+1)]) + n*h
+    xlim(xmin.-h, xmax.+h)
+    ylim(ymin.-h, ymax.+h)
+    gca().invert_yaxis()
+    xlabel("x")
+    ylabel("y")
+    axis("equal")
+end
+
