@@ -14,7 +14,7 @@ if length(ARGS)==1
 end
 @info stepsize
 
-mode = "data"
+mode = "training"
 
 ## alpha-scheme
 β = 1/4; γ = 1/2
