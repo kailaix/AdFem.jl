@@ -14,16 +14,16 @@ if length(ARGS)==1
 end
 @info stepsize
 
-mode = "training"
+mode = "data"
 
 ## alpha-scheme
 β = 1/4; γ = 1/2
 a = b = 0.1
 
-n = 10
+n = 15
 m = 2n 
 h = 0.01
-NT = 500
+NT = 100
 Δt = 2.0/NT
 ηmax = 1
 ηmin = 0.5
@@ -199,6 +199,7 @@ if mode!="data"
   global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
 end
 
+if !isdir(string(stepsize));mkdir(string(stepsize)); end
 sess = Session(); init(sess)
 
 cb = (v, i, l)->begin
@@ -213,16 +214,11 @@ if mode=="data"
   Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
   matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-  visualize_von_mises_stress(Sigmaval[1:50:end,:,:], m, n, h)
-  visualize_displacement(Uval[1:50:end,:], m, n, h)
+  # visualize_von_mises_stress(Sigmaval[1:5:end,:,:], m, n, h)
+  # visualize_displacement(Uval[1:5:end,:], m, n, h)
 
-  close("all")
-  plot(LinRange(0, 20, NT+1), Uval[:,m+1])
-  xlabel("Time")
-  ylabel("Displacement")
-  savefig("disp.png")
-
-  cb([run(sess, invη)], "true", 0.0)
+  visualize_inv_eta(run(sess, invη), "true")
+  # cb([run(sess, invη)], "true", 0.0)
   error("Stop!")
 end
 
@@ -231,5 +227,5 @@ i_ = []
 l_ = []
 
 
-if isdir(stepsize);mkdir(stepsize); end
 loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
+t

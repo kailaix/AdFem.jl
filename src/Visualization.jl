@@ -163,6 +163,7 @@ function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
     axis("scaled")
     xlabel("x")
     ylabel("y")
+    gca().invert_yaxis()
     function update(i)
         gca().clear()
         # t.set_text("t = $(round(frame * Δt, digits=3))")
@@ -176,6 +177,7 @@ function visualize_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
         k = string(i-1)
         k = repeat("0", 3-length(k))*k 
         title("snapshot = $k")
+        gca().invert_yaxis()
     end
     anim = animate(update, 1:size(S,1))
 end
