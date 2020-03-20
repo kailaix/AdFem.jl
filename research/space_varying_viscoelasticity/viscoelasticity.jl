@@ -198,7 +198,7 @@ sess = Session(); init(sess)
 
 cb = (v, i, l)->begin
   println("[$i] loss = $l")
-  if mod(i,20)==0
+  if i=="true" || mod(i,20)==0
     inv_eta = v[1]
     matwrite("eta$i.mat", Dict("eta"=>inv_eta))
   end
