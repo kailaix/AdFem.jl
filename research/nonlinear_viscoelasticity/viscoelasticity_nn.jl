@@ -9,7 +9,7 @@ using Statistics
 using ADCMEKit
 np = pyimport("numpy")
 
-model_id = 1
+model_id = 2
 if length(ARGS)==1
   global model_id = parse(Int64, ARGS[1])
 end
@@ -186,7 +186,7 @@ for (k,FORCE_SCALE) in enumerate([0.5, 0.8, 1.5, 1.0])
 end
 D = matread("data$model_id.mat")["U"]
 S = matread("data$model_id.mat")["S"]
-loss = sum((U[4][:, 1:m+1] - D[4][:,1:m+1])^2)
+loss = 1e5*sum((U[4][:, 1:m+1] - D[4][:,1:m+1])^2)
 sess = Session(); init(sess)
 
 for i = 0:20

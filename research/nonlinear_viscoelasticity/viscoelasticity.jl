@@ -8,7 +8,7 @@ using MAT
 using Statistics
 np = pyimport("numpy")
 
-model_id = 1
+model_id = 2
 if length(ARGS)==1
   global model_id = parse(Int64, ARGS[1])
 end
@@ -38,7 +38,7 @@ function eta_fun(σ)
   if model_id==1
     return constant(10*ones(4*m*n)) + 5.0/(1+1000*sum(σ[:,1:2]^2, dims=2))
   else
-    return constant(10*ones(4*m*n)) + relu(50.0/(1+1000*sum(σ[:,1:2]^2, dims=2)) - 10.0)
+    return constant(10*ones(4*m*n)) + relu(50.0/(1+1000*sum(σ[:,1:2]^2, dims=2)) - 2.0)
   end
 end
 

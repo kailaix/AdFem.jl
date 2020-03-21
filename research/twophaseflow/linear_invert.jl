@@ -1,5 +1,5 @@
 include("utils.jl")
-mode = "data"
+mode = "training"
 
 noise = 0.0
 if length(ARGS)==1
@@ -42,7 +42,7 @@ D = E/(1+ν)/(1-2ν)*[1-ν ν 0;ν 1-ν 0;0 0 (1-2ν)/2]
 
 if mode!="data"
     A = Variable(diagm(0=>ones(3)))
-    global D = 1.e9 * spd(A)
+    global D = 6.e9 * spd(A)
 end
 
 
@@ -169,8 +169,9 @@ if mode=="data"
 end
 
 @info run(sess, loss)
-BFGS!(sess, loss)
-writedlm("linear$noise.txt", run(sess, D))
+loss_ = BFGS!(sess, loss)
+writedlm("data/linear$noise.txt", run(sess, D))
+writedlm("data/loss_linear$noise.txt", reshape(loss_, :, 1))
 
 # anim = visualize_displacement(50*o1, m, n, h)
 # saveanim(anim, "data/linear_disp.gif")

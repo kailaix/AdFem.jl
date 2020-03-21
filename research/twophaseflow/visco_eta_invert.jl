@@ -1,6 +1,6 @@
 include("utils.jl")
 
-mode = "data"
+mode = "training"
 
 noise = 0.0
 if length(ARGS)==1
@@ -251,8 +251,9 @@ if mode=="data"
     error("Stop")
 end
 @info run(sess, loss)
-BFGS!(sess, loss)
-writedlm("visco$noise.txt", run(sess, [μ λ invη]))
+loss_ = BFGS!(sess, loss)
+writedlm("data/visco$noise.txt", run(sess, [μ, λ, invη[1]])')
+writedlm("data/loss_visco$noise.txt", reshape(loss_, :, 1))
 
 
 
