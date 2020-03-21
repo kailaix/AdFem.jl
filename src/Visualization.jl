@@ -223,13 +223,13 @@ function visualize_von_mises_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h
 end
 
 
-function visualize_saturation(s2, m, n, h)
+function visualize_saturation(s2::Array{Float64,3}, m::Int64, n::Int64, h::Float64)
     # fig, ax = subplots()
     close("all")
     x = (1:m)*h
     y = (1:n)*h
     ln = pcolormesh(x, y, s2[1,:,:], vmin=0.0, vmax=1.0)
-    t = title("t = 0")
+    t = title("snapshot = 000")
     colorbar()
     axis("scaled")
     xlabel("x")
@@ -242,6 +242,21 @@ function visualize_saturation(s2, m, n, h)
     end
     anim = animate(update, 1:size(s2,1))
 end
+
+
+function visualize_saturation(s2::Array{Float64,2}, m::Int64, n::Int64, h::Float64)
+    # fig, ax = subplots()
+    close("all")
+    x = (1:m)*h
+    y = (1:n)*h
+    ln = pcolormesh(x, y, s2, vmin=0.0, vmax=1.0)
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+end
+
+
 
 @doc raw"""
     visualize_potential(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)

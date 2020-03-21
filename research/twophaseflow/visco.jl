@@ -248,8 +248,10 @@ BFGS!(sess, loss)
 
 # # 
 # # visualize_potential(o4)
-# # visualize_displacement(10*o1)
-# # visualize_saturation(o2)
+visualize_displacement(10*o1[end,:], m, n, h); savefig("two_u.pdf")
+visualize_saturation(o2[1,:,:], m, n, h); savefig("two_s0.pdf")
+visualize_saturation(o2[25,:,:], m, n, h); savefig("two_s25.pdf")
+visualize_saturation(o2[51,:,:], m, n, h); savefig("two_s51.pdf")
 # # visualize_potential(o3)
 
 plot(o1[:,1:(m+1)])
