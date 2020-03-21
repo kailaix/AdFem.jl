@@ -12,9 +12,9 @@ h = 30.0 # meter
 
 x = (1:m)*h .- 0.5h
 y = (1:n)*h .- 0.5h
-pcolormesh(x, y, K)
-plot([3*h], [9*h], ">")
-plot([28*h], [9*h], "<")
+pcolormesh(x, y, K, rasterized=true)
+plot([3*h], [9*h], ">r")
+plot([28*h], [9*h], "<g")
 plot(x, 0.45h*ones(m), "v")
 gca().invert_yaxis()
 xlabel("x")
