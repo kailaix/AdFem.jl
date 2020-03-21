@@ -59,11 +59,14 @@ savefig("test")
 res = readdlm("visco.txt")
 d = Dict()
 for i = 1:size(res,1)
-    r = (res[i,2] - D1[1])/D1[1]
-    if haskey(d, res[i,1])
-        push!(d[res[i,1]], r)
-    else
-        d[res[i,1]] = [r]
+    try
+        r = (res[i,2] - D1[1])/D1[1]
+        if haskey(d, res[i,1])
+            push!(d[res[i,1]], r)
+        else
+            d[res[i,1]] = [r]
+        end
+    catch
     end
 end
 arr = [0.0, 0.01, 0.05, 0.1]

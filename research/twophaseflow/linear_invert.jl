@@ -170,8 +170,9 @@ end
 
 @info run(sess, loss)
 loss_ = BFGS!(sess, loss)
+res = [noise;run(sess, D)[:]]'
 open("data/linear.txt", "a") do io 
-    writedlm(io, [noise;run(sess, D)[:]]')
+    writedlm(io, res)
 end
 # writedlm("data/loss_linear$noise.txt", reshape(loss_, :, 1))
 
