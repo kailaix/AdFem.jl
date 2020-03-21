@@ -252,8 +252,11 @@ if mode=="data"
 end
 @info run(sess, loss)
 loss_ = BFGS!(sess, loss)
-writedlm("data/visco$noise.txt", run(sess, [μ, λ, invη[1]])')
-writedlm("data/loss_visco$noise.txt", reshape(loss_, :, 1))
+open("data/visco.txt", "a") do io 
+    writedlm(io, [noise;run(sess, [μ, λ, invη[1]])]')
+end
+# writedlm("data/visco$noise.txt", run(sess, [μ, λ, invη[1]])')
+# writedlm("data/loss_visco$noise.txt", reshape(loss_, :, 1))
 
 
 

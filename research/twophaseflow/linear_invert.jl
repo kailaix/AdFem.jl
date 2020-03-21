@@ -170,8 +170,10 @@ end
 
 @info run(sess, loss)
 loss_ = BFGS!(sess, loss)
-writedlm("data/linear$noise.txt", run(sess, D))
-writedlm("data/loss_linear$noise.txt", reshape(loss_, :, 1))
+open("data/linear.txt", "a") do io 
+    writedlm(io, [noise;run(sess, D)[:]])
+end
+# writedlm("data/loss_linear$noise.txt", reshape(loss_, :, 1))
 
 # anim = visualize_displacement(50*o1, m, n, h)
 # saveanim(anim, "data/linear_disp.gif")
