@@ -195,6 +195,33 @@ function visualize_von_mises_stress(Se::Array{Float64, 3}, m::Int64, n::Int64, h
     visualize_stress(S'|>Array, m, n, h; name = name, kwargs...)
 end
 
+function visualize_von_mises_stress(Se::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+    S = compute_von_mises_stress_term(Se, m, n, h)
+
+    x1 = LinRange(0.5h,m*h,m)|>collect
+    y1 = LinRange(0.5h,n*h,n)|>collect
+    X1, Y1 = np.meshgrid(x1,y1)
+
+    μ = mean(S); σ = std(S)
+    vmin = μ - 2σ
+    vmax = μ + 2σ
+
+
+    S = reshape(S, m, n)'
+    x = (1:m)*h
+    y = (1:n)*h
+    close("all")
+    ln = pcolormesh(x, y, S, vmin= vmin, vmax=vmax, rasterized=true)
+    
+    colorbar()
+    c = contour(x, y, S, cmap="jet")
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    gca().invert_yaxis()
+
+end
+
 
 function visualize_saturation(s2, m, n, h)
     # fig, ax = subplots()
@@ -319,10 +346,10 @@ function visualize_displacement(u::Array{Float64, 1}, m::Int64, n::Int64, h::Flo
     close("all")
     U1, U2 = disp(u)
     s = scatter(U1[:], U2[:], s=5)
-    xmin = minimum(u[:,1:(m+1)*(n+1)])
-    xmax = maximum(u[:,1:(m+1)*(n+1)]) + m*h
-    ymin = minimum(u[:,(m+1)*(n+1)+1:2(m+1)*(n+1)])
-    ymax = maximum(u[:,(m+1)*(n+1)+1:2(m+1)*(n+1)]) + n*h
+    xmin = minimum(u[1:(m+1)*(n+1)])
+    xmax = maximum(u[1:(m+1)*(n+1)]) + m*h
+    ymin = minimum(u[(m+1)*(n+1)+1:2(m+1)*(n+1)])
+    ymax = maximum(u[(m+1)*(n+1)+1:2(m+1)*(n+1)]) + n*h
     xlim(xmin.-h, xmax.+h)
     ylim(ymin.-h, ymax.+h)
     gca().invert_yaxis()

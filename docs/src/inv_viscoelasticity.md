@@ -35,9 +35,9 @@ We assume that the Lamé constants $\lambda$ and $\mu$ are given. The viscosity 
 
 
 
-| True Viscosity Distribution  | Von Mises Stress at Terminal Time   | Displacement at Terminal Time     |
-| ---------------------------- | ----------------------------------- | --------------------------------- |
-| ![](./assets/visco/true.png) | ![](./assets/visco/viscostress.png) | ![](./assets/visco/viscodisp.png) |
+| True Viscosity Distribution  | Von Mises Stress                | Displacement                    |
+| ---------------------------- | ------------------------------- | ------------------------------- |
+| ![](./assets/space/true.png) | ![](./assets/space/space_s.gif) | ![](./assets/space/space_u.gif) |
 
 
 
@@ -72,14 +72,14 @@ Surprisingly, the seemingly complex formula (1) admits a simple implementation u
 
 We present the numerical example here. The true model and inverted model are shown as follows. We assume that the viscosity values are the same horizontally. 
 
-| True model                                   | Inverted result                  |
-| -------------------------------------------- | -------------------------------- |
-| ![](./assets/visco/viscoelasticity_true.png) | ![](./assets/visco/iter0200.png) |
+| True model                   | Inverted result                  |
+| ---------------------------- | -------------------------------- |
+| ![](./assets/space/true.png) | ![](./assets/space/iter0200.png) |
 
 
 We also show the inversion results in each iteration:
 
-![](./assets/visco/iter.gif)
+![](./assets/space/iter.gif)
 
 
 ## Codes
@@ -101,8 +101,15 @@ using LinearAlgebra
 using PyPlot
 using SparseArrays
 using MAT
+using ADCMEKit
 np = pyimport("numpy")
 
+
+stepsize = 1
+if length(ARGS)==1
+  global stepsize = parse(Int64, ARGS[1])
+end
+@info stepsize
 
 mode = "training"
 
@@ -110,14 +117,15 @@ mode = "training"
 β = 1/4; γ = 1/2
 a = b = 0.1
 
-n = 10
+n = 15
 m = 2n 
 h = 0.01
-NT = 500
-it0 = 1
+NT = 100
 Δt = 2.0/NT
 ηmax = 1
 ηmin = 0.5
+
+obs_idx = collect(1:stepsize:m+1)
 
 bdedge = bcedge("right", m, n, h)
 bdnode = bcnode("lower", m, n, h)
@@ -163,7 +171,7 @@ function visualize_inv_eta(X, k)
       return 
     end
     k_ = string(k)
-    k_ = reduce(*, "0" for i = 1:4-length(k_))*k_
+    k_ = reduce(*, "0" for i = 1:3-length(k_))*k_
     title("Iteration = $k_")
     savefig("iter$k_.png")
 end
@@ -184,8 +192,8 @@ end
 
 
 fn_G = invη->begin 
-  G = tensor([1/Δt+μ*invη -μ/3*invη 0.0
-    -μ/3*invη 1/Δt+μ*invη-μ/3*invη 0.0
+  G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
+    -μ/3*invη 1/Δt+2/3*μ*invη 0.0
     0.0 0.0 1/Δt+μ*invη])
   invG = inv(G)
 end
@@ -285,19 +293,17 @@ if mode!="data"
   U.set_shape((NT+1, size(U, 2)))
   idx0 = 1:4m*n
   Sigma = map(x->x[idx0,:], Sigma)
-
-  idx = collect(1:m+1)
-  global loss = sum((U[it0:end, idx] - Uval[it0:end, idx])^2) 
+  global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
 end
 
+if !isdir(string(stepsize));mkdir(string(stepsize)); end
 sess = Session(); init(sess)
 
 cb = (v, i, l)->begin
   println("[$i] loss = $l")
-  if mod(i,20)==0
+  if i=="true" || mod(i,20)==0
     inv_eta = v[1]
-    visualize_inv_eta(inv_eta, i)
-    matwrite("eta$i.mat", Dict("eta"=>inv_eta))
+    matwrite("$stepsize/eta$i.mat", Dict("eta"=>inv_eta))
   end
 end
 
@@ -305,23 +311,18 @@ if mode=="data"
   Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
   matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-  visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
-  visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
-                  xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
+  # p = visualize_von_mises_stress(Sigmaval[1:5:end,:,:], m, n, h); saveanim(p, "space_s.gif")
+  # p = visualize_displacement(Uval[1:5:end,:], m, n, h); saveanim(p, "space_u.gif")
 
-  close("all")
-  plot(LinRange(0, 20, NT+1), Uval[:,m+1])
-  xlabel("Time")
-  ylabel("Displacement")
-  savefig("disp.png")
-
-  cb([run(sess, invη)], "true", 0.0)
+  visualize_inv_eta(run(sess, invη), "true")
+  # cb([run(sess, invη)], "true", 0.0)
   error("Stop!")
 end
 
 v_ = []
 i_ = []
 l_ = []
+
 
 loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
 
