@@ -15,7 +15,7 @@ if length(ARGS)==1
 end
 @info stepsize
 
-mode = "training"
+mode = "data"
 
 ## alpha-scheme
 β = 1/4; γ = 1/2
@@ -24,7 +24,7 @@ a = b = 0.1
 n = 15
 m = 2n 
 h = 0.01
-NT = 100
+NT = 500
 Δt = 2.0/NT
 ηmax = 1
 ηmin = 0.5

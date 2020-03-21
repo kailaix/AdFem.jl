@@ -32,7 +32,6 @@ end
 legend()
 xlabel("Iterations")
 ylabel("Error")
-
 mpl.save("space_loss.tex")
 
 
@@ -64,7 +63,7 @@ out = repeat(out, 1, 4m)'[:]
 visualize_inv_eta(out)
 savefig("space_true.pdf")
 
-eta  = matread("1/eta60.mat")["eta"]
+eta  = matread("1/eta2600.mat")["eta"]
 visualize_inv_eta(eta)
 savefig("space60.pdf")
 
@@ -73,6 +72,6 @@ eta  = matread("1/eta120.mat")["eta"]
 visualize_inv_eta(eta)
 savefig("space120.pdf")
 
-eta  = matread("5/eta180.mat")["eta"]
+eta  = matread("5/eta0.mat")["eta"]
 visualize_inv_eta(eta)
 savefig("space180.pdf")
