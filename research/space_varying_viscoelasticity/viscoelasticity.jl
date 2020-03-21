@@ -5,6 +5,7 @@ using LinearAlgebra
 using PyPlot
 using SparseArrays
 using MAT
+using ADCMEKit
 np = pyimport("numpy")
 
 
@@ -214,8 +215,11 @@ if mode=="data"
   Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
   matwrite("viscoelasticity.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
 
-  # visualize_von_mises_stress(Sigmaval[1:5:end,:,:], m, n, h)
-  # visualize_displacement(Uval[1:5:end,:], m, n, h)
+  # p = visualize_von_mises_stress(Sigmaval[1:5:end,:,:], m, n, h); saveanim(p, "space_s.gif")
+  # p = visualize_displacement(Uval[1:5:end,:], m, n, h); saveanim(p, "space_u.gif")
+
+  # visualize_von_mises_stress(Sigmaval[end,:,:], m, n, h); savefig("space_s.pdf")
+  # visualize_displacement(Uval[end,:], m, n, h); savefig("space_u.pdf")
 
   visualize_inv_eta(run(sess, invη), "true")
   # cb([run(sess, invη)], "true", 0.0)
@@ -226,6 +230,5 @@ v_ = []
 i_ = []
 l_ = []
 
-
-loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
-t
+@info run(sess, loss)
+# loss_ = BFGS!(sess, loss*1e5, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
