@@ -1,27 +1,22 @@
-config = [20,20,20]
-activation = "tanh"
-if length(ARGS)==3
-  nlayer = parse(Int64, ARGS[1])
-  nwidth = parse(Int64, ARGS[2])
-  config = [nwidth for i = 1:nlayer]
-  activation = ARGS[3]
-end
-
-@info config
-
 using Revise
 using PoreFlow
 using PyCall
 using LinearAlgebra
 using PyPlot
 using SparseArrays
-using DelimitedFiles
 using MAT
 using Statistics
 using ADCMEKit
 np = pyimport("numpy")
 
-n = 10
+model_id = 1
+if length(ARGS)==1
+  global model_id = parse(Int64, ARGS[1])
+end
+
+
+
+n = 15
 m = 2n 
 h = 0.01
 NT = 20
@@ -38,23 +33,29 @@ M = compute_fem_mass_matrix1(m, n, h)
 Zero = spzeros((m+1)*(n+1), (m+1)*(n+1))
 M = SparseTensor([M Zero;Zero M])
 
-# pl = placeholder(zeros(4*m*n))
-
 ## alpha-scheme
+β = 1/4; γ = 1/2
+
+# function eta_fun(σ)
+#   return constant(10*ones(4*m*n)) + 5.0/(1+1000*sum(σ[:,1:2]^2, dims=2))
+# end
+
+config = [20,20,20]
 θ = Variable(ae_init([3,config...,1]))
 β = 1/4; γ = 1/2
 function eta_fun(σ)
   # return constant(10*ones(4*m*n)) + 5.0/(1+1000.0*sum(σ^2, dims=2))
-  return ae(σ, [config...,1], θ; activation=activation)
+  return ae(σ, [config...,1], θ)
 end
+
 
 
 # invη is a 4*m*n array 
 function make_matrix(invη)
   a = b = 0.1
   fn_G = invη->begin 
-    G = tensor([1/Δt+μ*invη -μ/3*invη 0.0
-      -μ/3*invη 1/Δt+μ*invη-μ/3*invη 0.0
+    G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
+      -μ/3*invη 1/Δt+2/3*μ*invη 0.0
       0.0 0.0 1/Δt+μ*invη])
     invG = inv(G)
   end
@@ -73,8 +74,9 @@ function make_matrix(invη)
   return C, K, L, S, invG
 end
 
+function simulate(FORCE_SCALE)
 
-function simulate(force_scale)
+
   a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|>constant)
   v = TensorArray(NT+1); v = write(v, 1, zeros(2(m+1)*(n+1))|>constant)
   d = TensorArray(NT+1); d = write(d, 1, zeros(2(m+1)*(n+1))|>constant)
@@ -85,7 +87,7 @@ function simulate(force_scale)
 
   Forces = zeros(NT, 2(m+1)*(n+1))
   for i = 1:NT
-    T = eval_f_on_boundary_edge((x,y)->force_scale*0.1, bdedge, m, n, h)
+    T = eval_f_on_boundary_edge((x,y)->0.1*FORCE_SCALE, bdedge, m, n, h)
 
     T = [-T T]
     rhs = compute_fem_traction_term(T, bdedge, m, n, h)
@@ -136,74 +138,58 @@ function simulate(force_scale)
   end
 
 
+
   i = constant(1, dtype=Int32)
   _, _, _, _, u, sigma, varepsilon = while_loop(condition, body, 
                     [i, a, v, d, U, Sigma, Varepsilon])
 
   U = stack(u)
   Sigma = stack(sigma)
+  Varepsilon = stack(varepsilon)
+
+  U = set_shape(U, (NT+1, size(U,2)))
+  Sigma = set_shape(Sigma, (NT+1, 4*m*n, 3))
+
   return U, Sigma
 end
 
-U, Sigma = simulate(1.0)
-Sigma = set_shape(Sigma, (NT+1, size(Sigma,2), size(Sigma,3)))
-
-U = set_shape(U, NT+1, size(U,2))
-U0 = matread("nndat.mat")["U"]
-Sigma0 = matread("nndat.mat")["S"]
-loss = 1e10*sum((U[end, 1:m+1] - U0[end,1:m+1])^2)
-sess = Session(); init(sess)
-U_, Sigma_ = run(sess, [U,Sigma])
-
-function visualize(i)
-  visualize_von_mises_stress(Sigma_, m, n, h, name="_nn$i")
-  visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0$i", 
-                  xlim_=[-3h, m*h+2h], ylim_=[-2h, n*h+2h])
+function visualize(i, U0, U_, Sigma0, Sigma_)
   close("all")
   figure(figsize=(13,4))
   subplot(121)
-  plot(LinRange(0, 20, NT+1), U0[:,1], "--")
-  plot(LinRange(0, 20, NT+1), U_[:,1])
+  plot(LinRange(0, 2.0, NT+1), U0[:,1], "r--")  # reference
+  plot(LinRange(0, 2.0, NT+1), U_[:,1], "r")
+  plot(LinRange(0, 2.0, NT+1), U0[:,1+(n+1)*(m+1)], "g--")
+  plot(LinRange(0, 2.0, NT+1), U_[:,1+(n+1)*(m+1)], "g")
   xlabel("Time")
   ylabel("Displacement")
   subplot(122)
-  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,1], dims=2)[:],"r--", label="\$\\sigma_{xx}\$")
-  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,2], dims=2)[:],"b--", label="\$\\sigma_{yy}\$")
-  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,3], dims=2)[:],"g--", label="\$\\sigma_{xy}\$")
-  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,1], dims=2)[:],"r-")
-  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,2], dims=2)[:],"b-")
-  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,3], dims=2)[:],"g-")
+  plot(LinRange(0, 2.0, NT+1), mean(Sigma0[:,1:4,1], dims=2)[:],"r--", label="\$\\sigma_{xx}\$")
+  plot(LinRange(0, 2.0, NT+1), mean(Sigma0[:,1:4,2], dims=2)[:],"b--", label="\$\\sigma_{yy}\$")
+  plot(LinRange(0, 2.0, NT+1), mean(Sigma0[:,1:4,3], dims=2)[:],"g--", label="\$\\sigma_{xy}\$")
+  plot(LinRange(0, 2.0, NT+1), mean(Sigma_[:,1:4,1], dims=2)[:],"r-")
+  plot(LinRange(0, 2.0, NT+1), mean(Sigma_[:,1:4,2], dims=2)[:],"b-")
+  plot(LinRange(0, 2.0, NT+1), mean(Sigma_[:,1:4,3], dims=2)[:],"g-")
   legend()
   legend()
   xlabel("Time")
   ylabel("Stress")
-  savefig("disp$i.png")
-  savefig("disp$i.pdf")
-  matwrite("nn$i.mat", Dict("U"=>U_, "S"=>Sigma_))
+  savefig("model$(model_id)disp$i.png")
+  matwrite("model$(model_id)nn$i.mat", Dict("U"=>U_, "S"=>Sigma_))
 end
 
 
-for i = 1:100
-  visualize(i-1)
-  BFGS!(sess, loss, 50)
-  global U_, Sigma_ = run(sess, [U,Sigma])      
+U = Array{PyObject}(undef, 4)
+Sigma = Array{PyObject}(undef, 4)
+for (k,FORCE_SCALE) in enumerate([0.5, 0.8, 1.5, 1.0])
+  U[k], Sigma[k] = simulate(FORCE_SCALE)
 end
-# # step 2
-# @show run(sess, loss)
+D = matread("data$model_id.mat")["U"]
+S = matread("data$model_id.mat")["S"]
+loss = sum((U[4][:, 1:m+1] - D[4][:,1:m+1])^2)
+sess = Session(); init(sess)
 
-# # step 3
-# lineview(sess, pl, loss, zeros(length(pl)), rand(length(pl)), n=5)
-
-# # step 4
-# gradview(sess, pl, loss, rand(4*m*n))
-
-
-
-# Uval, Sigmaval = run(sess, [U,Sigma])
-# matwrite("nndat.mat", Dict("U"=>Uval, "S"=>Sigmaval))
-# visualize_von_mises_stress(Sigmaval, m, n, h, name="_viscoelasticity")
-# visualize_scattered_displacement(Array(Uval'), m, n, h, name="_viscoelasticity", 
-#                 xlim_=[-2h, m*h+2h], ylim_=[-2h, n*h+2h])
-
-
-
+for i = 0:20
+  visualize(i, D[4], run(sess, U[4]), S[4], run(sess,Sigma[4]))
+  BFGS!(sess, loss, 10)
+end
