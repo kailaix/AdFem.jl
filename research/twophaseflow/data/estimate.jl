@@ -4,6 +4,8 @@ using Printf
 using Latexify 
 using Statistics
 using PyPlot
+using PyCall
+mpl = pyimport("tikzplotlib")
 
 E = 6.e9
 ν = 0.35
@@ -29,57 +31,75 @@ D1 = D2
 # end
 
 
+close("all")
 res = readdlm("linear.txt")
 d = Dict()
 for i = 1:size(res,1)
+    try
     r = norm(reshape(res[i,2:end],3,3)-D)/norm(D)
     if haskey(d, res[i,1])
         push!(d[res[i,1]], r)
     else
         d[res[i,1]] = [r]
     end
-end
-arr = [0.0, 0.01, 0.05, 0.1]
-s = zeros(length(arr))
-m = zeros(length(arr))
-for (ix,k) in enumerate(arr)
-    s[ix] = std(d[k])
-    m[ix] = mean(d[k])
-end
-
-semilogy(arr, m)
-fill_between(arr, m - s, m+s, alpha=0.5)
-xlabel("\$\\sigma_{\\mathrm{noise}}\$")
-ylabel("Error")
-savefig("test")
-# mpl.save("poroerror.tex")
-
-
-
-res = readdlm("visco.txt")
-d = Dict()
-for i = 1:size(res,1)
-    try
-        r = (res[i,2] - D1[1])/D1[1]
-        if haskey(d, res[i,1])
-            push!(d[res[i,1]], r)
-        else
-            d[res[i,1]] = [r]
-        end
     catch
     end
 end
-arr = [0.0, 0.01, 0.05, 0.1]
+arr = [0.0, 0.001,0.003,0.009,
+        0.01, 0.02,0.03,0.04, 0.05,0.06, 0.1]
 s = zeros(length(arr))
 m = zeros(length(arr))
 for (ix,k) in enumerate(arr)
+    d[k] = sort(d[k])[2:end-1]
     s[ix] = std(d[k])
     m[ix] = mean(d[k])
 end
-close("all")
+
 semilogy(arr, m)
 fill_between(arr, m - s, m+s, alpha=0.5)
 xlabel("\$\\sigma_{\\mathrm{noise}}\$")
 ylabel("Error")
+# savefig("test")
+mpl.save("twolinear.tex")
+
+plotval = k -> begin 
+    res = readdlm("visco.txt")
+    d = Dict()
+    for i = 1:size(res,1)
+        try
+            r = abs(res[i,k+1] - D1[k])/D1[k]
+            if haskey(d, res[i,1])
+                push!(d[res[i,1]], r)
+            else
+                d[res[i,1]] = [r]
+            end
+        catch
+        end
+    end
+    s = zeros(length(arr))
+    m = zeros(length(arr))
+    for (ix,k) in enumerate(arr)
+        d[k] = sort(d[k])[2:end-1]
+        s[ix] = std(d[k])
+        m[ix] = mean(d[k])
+    end
+    local l 
+    if k == 1
+        l = "\$\\mu\$"
+    elseif k==2
+        l = "\$\\lambda\$"
+    elseif k==3
+        l = "\$\\eta\$"
+    end
+    semilogy(arr, m, label=l)
+    fill_between(arr, m - s, m+s, alpha=0.5)
+end
+close("all")
+plotval(1)
+plotval(2)
+plotval(3)
+xlabel("\$\\sigma_{\\mathrm{noise}}\$")
+ylabel("Error")
+legend()
 savefig("test")
-# mpl.save("poroerror.tex")
+mpl.save("twovisco.tex")

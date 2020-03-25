@@ -1021,3 +1021,45 @@ function compute_strain_energy_term(S::Array{Float64, 2}, m::Int64, n::Int64, h:
     end
     f
 end
+
+
+@doc raw"""
+    compute_strain_energy_term1(S::PyObject, m::Int64, n::Int64, h::Float64)
+
+Computes the strain energy 
+```math
+\int_{A} \sigma : \delta \varepsilon \mathrm{d}x
+```
+where $\sigma$ is provided by `S`, a $4mn \times 2$ matrix. 
+The values $\sigma_{31}, \sigma_{32}$ are defined on 4 Gauss points per element. 
+"""
+function compute_strain_energy_term1(S::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+    @assert size(S,2)==2
+    f = zeros((m+1)*(n+1))
+
+    B = zeros(4, 2, 4)
+    for p = 1:2
+        for q = 1:2
+            ξ = pts[p]; η = pts[q]
+            B[(q-1)*2+p,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+            ]
+        end
+    end
+
+    for i = 1:m
+        for j = 1:n 
+            elem = (j-1)*m + i 
+            σ = S[4(elem-1)+1:4elem, :] # 4×2
+            dof = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+            for p = 1:2
+                for q = 1:2
+                    idx = 2(q-1) + p
+                    f[dof] += (σ[idx,:]' * B[idx,:,:])[:]*0.25*h^2 # length 8 vector
+                end
+            end
+        end
+    end
+    f
+end

@@ -26,6 +26,7 @@ compute_von_mises_stress_term
 compute_fem_source_term1
 compute_fem_flux_term1
 compute_strain_energy_term
+compute_strain_energy_term1
 compute_fem_viscoelasticity_strain_energy_term
 ```
 

@@ -8,7 +8,6 @@ using MAT
 using ADCMEKit
 np = pyimport("numpy")
 
-
 stepsize = 1
 if length(ARGS)==1
   global stepsize = parse(Int64, ARGS[1])

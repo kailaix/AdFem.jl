@@ -1,3 +1,5 @@
+export compute_strain_energy_term1
+
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBD/build/libDirichletBd", "dirichlet_bd", multiple=true)
     ii, jj, vv = find(A)
@@ -15,6 +17,16 @@ function fem_impose_Dirichlet_boundary_condition_experimental(A::Union{SparseMat
     ii,jj,vv,bd,m_,n_,h = convert_to_tensor([ii,jj,vv,bdnode,m,n,h], [Int64,Int64,Float64,Int32,Int32,Int32,Float64])
     ii1,jj1,vv1, ii2,jj2,vv2 = op(ii,jj,vv,bd,m_,n_,h)
     SparseTensor(ii1,jj1,vv1,2(m+1)*(n+1),2(m+1)*(n+1)), SparseTensor(ii2,jj2,vv2,2(m+1)*(n+1),2length(bdnode))
+end
+
+
+function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    idx = bdnode
+    Lbd = L[:, idx]
+    L = scatter_update(L, :, idx, spzero((m+1)*(n+1), length(idx)))
+    L = scatter_update(L, idx, :,  spzero(length(idx), (m+1)*(n+1)))
+    L = scatter_update(L, idx, idx, spdiag(length(idx)))
+    L, Lbd
 end
 
 function fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
@@ -83,6 +95,18 @@ function compute_strain_energy_term(S::PyObject,m::Int64, n::Int64, h::Float64)
     out = strain_energy_(sigma,m_,n_,h)
     out.set_shape((2*(m+1)*(n+1),))
     out
+end
+
+@doc raw"""
+    compute_strain_energy_term1(sigma::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable  operator.
+"""
+function compute_strain_energy_term1(sigma::PyObject, m::Int64, n::Int64, h::Float64)
+    strain_energy_univariate_ = load_op_and_grad("$(@__DIR__)/../deps/StrainEnergy1/build/libStrainEnergyUnivariate","strain_energy_univariate")
+    sigma,m_,n_,h = convert_to_tensor([sigma,m,n,h], [Float64,Int32,Int32,Float64])
+    out = strain_energy_univariate_(sigma,m_,n_,h)
+    set_shape(out, ((m+1)*(n+1),))
 end
 
 """
