@@ -1,0 +1,6 @@
+StrainEnergyUnivariate
+double sigma(?,2)
+int32 m()
+int32 n()
+double h()
+double out(?) -> output 
