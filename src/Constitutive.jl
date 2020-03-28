@@ -13,7 +13,7 @@ The discretization form is
 ```
 """
 function antiplane_viscosity(dε::Union{PyObject, Array{Float64}}, σ::Union{PyObject, Array{Float64}}, 
-        μ::Union{PyObject, Float64, Array{Float64}}, η::Union{PyObject, Float64, Array{Float64}}, Δt::Float64)
+        μ::Union{PyObject, Float64, Array{Float64}}, η::Union{PyObject, Float64, Array{Float64}}, Δt::Union{PyObject,Float64})
     dε, σ, μ, η = convert_to_tensor([dε, σ, μ,η], [Float64, Float64, Float64, Float64])
     if length(size(μ))==0
         η/(η/Δt + μ)*(2μ*dε+σ/Δt)
