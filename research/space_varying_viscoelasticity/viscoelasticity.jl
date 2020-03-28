@@ -14,13 +14,13 @@ if length(ARGS)==1
 end
 @info stepsize
 
-mode = "data"
+mode = "training" 
 
 ## alpha-scheme
 β = 1/4; γ = 1/2
 a = b = 0.1
 
-n = 15
+n = 10
 m = 2n 
 h = 0.01
 NT = 500
@@ -230,4 +230,4 @@ i_ = []
 l_ = []
 
 @info run(sess, loss)
-# loss_ = BFGS!(sess, loss*1e5, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
+loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
