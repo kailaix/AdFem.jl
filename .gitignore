@@ -55,3 +55,4 @@ test/U_total/*.png
 !*custom_op.txt 
 !*CMakeLists.txt 
 *.tex
+.vscode/

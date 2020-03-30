@@ -126,8 +126,9 @@ end
 
 Computes the term 
 ```math
-\int_\Omega f\cdot\delta u dx
+\int_\Omega \mathbf{f}\cdot\delta u \mathrm{d}x
 ```
+Returns a $2(m+1)(n+1)$ vector. 
 """
 function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
     m::Int64, n::Int64, h::Float64)
@@ -810,33 +811,9 @@ Computes the finite element mass matrix
 The matrix size is $2(m+1)(n+1) \times 2(m+1)(n+1)$.
 """
 function compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
-    I = Int64[]; J = Int64[]; V = Float64[]
-    function add!(i, j)
-        idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
-        for l1 = 1:4
-            for l2 = 1:4
-                push!(I, idx[l1]); push!(J, idx[l2]); push!(V, A[l1]*A[l2])
-                push!(I, idx[l1]+(m+1)*(n+1)); push!(J, idx[l2]+(m+1)*(n+1)); push!(V, A[l1]*A[l2])
-            end
-        end
-    end
-    A = zeros(4)
-    for p = 1:2
-        for q = 1:2
-            ξ = pts[p]; η = pts[q]
-            A[1] += (1-ξ)*(1-η)*0.25*h^2
-            A[2] += ξ*(1-η)*0.25*h^2
-            A[3] += (1-ξ)*η*0.25*h^2
-            A[4] += ξ*η*0.25*h^2
-        end
-    end
-    
-    for i = 1:m
-        for j = 1:n 
-            add!(i, j)
-        end
-    end
-    sparse(I, J, V, 2(m+1)*(n+1), 2(m+1)*(n+1))
+    M = compute_fem_mass_matrix1(m, n, h)    
+    Z = spzeros((m+1)*(n+1), (m+1)*(n+1))
+    [M Z;Z M]
 end
     
     
