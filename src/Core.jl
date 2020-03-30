@@ -523,6 +523,10 @@ Computes the traction term
 \int_{\Gamma} t(\mathbf{n})\cdot\delta u \mathrm{d}
 ```
 
+The number of rows of `t` is equal to the number of edges in `bdedge`. 
+The first component of `t` describes the $x$ direction traction, while the second 
+component of `t` describes the $y$ direction traction. 
+
 Also see [`compute_fem_normal_traction_term`](@ref). 
 
 ![](./assets/traction.png)
