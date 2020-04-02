@@ -20,6 +20,11 @@ function fem_impose_Dirichlet_boundary_condition_experimental(A::Union{SparseMat
 end
 
 
+"""
+    fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel for imposing the Dirichlet boundary of a scalar-valued function. 
+"""
 function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
     idx = bdnode
     Lbd = L[:, idx]
@@ -40,6 +45,8 @@ end
 
 @doc raw"""
     compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel for computing the stiffness matrix. 
 """
 function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
     if length(size(hmat))!=3

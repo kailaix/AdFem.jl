@@ -145,7 +145,7 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
     vn = vc + Δt[i]*((1-γ)*ac+γ*y)
 
     εn = eval_strain_on_gauss_pts1(dn, m, n, h)
-    σn = 2* repeat(μ.*η/(η+μ*σ_dt),1,2) .* (εn - εc) + repeat(η/(η+μ*σ_dt), 1, 2) .* σc
+    σn = 2* repeat(μ.*η/(η+μ*Δt[i]),1,2) .* (εn - εc) + repeat(η/(η+μ*Δt[i]), 1, 2) .* σc
 
     op = tf.print(i, norm(σn - εn))
     i = bind(i, op)

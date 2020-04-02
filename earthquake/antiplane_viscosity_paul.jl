@@ -10,15 +10,16 @@ np = pyimport("numpy")
 using PyPlot
 using SpecialFunctions
 
-
-n = 20
-NT = 100
-ρ = 1.0
+# simulation parameter setup
+n = 12
+NT = 200
+ρ = 0.9 # design variable in α-schemes
 
 m = 5n 
 h = 1/n 
-Δt = 1.0/NT 
+Δt = 1/NT 
 
+# coordinates
 xo = zeros((m+1)*(n+1))
 yo = zeros((m+1)*(n+1))
 for i = 1:m+1
@@ -29,13 +30,26 @@ for i = 1:m+1
   end
 end
 
+# Dirichlet boundary condition on three sides, and Neumann boundary condition (traction-free) on the top
 bdnode = bcnode("left | lower | right", m, n, h)
 
-bdnode = bcnode("all", m, n, h)
+# viscoelasticity η and shear modulus μ
 
-μ = 0.5*constant(ones(4*m*n))
-η = 1000000. * constant(ones(4*m*n))
+ηf = (x,y)->begin 
+  if y<=0.25
+    return 100000.
+  else 
+    return 100000.
+  end
+end
 
+η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
+μ = constant(ones(4m*n))
+
+
+
+
+# linear elasticity matrix 
 coef = 2μ*η/(η + μ*Δt)
 mapH = c->begin 
   c * diagm(0=>ones(2))
@@ -44,9 +58,12 @@ H = map(mapH, coef)
 
 Δt = Δt * ones(NT)
 
+# generalized mass matrix and stiffness matrix 
 M = constant(compute_fem_mass_matrix1(m, n, h))
 K = compute_fem_stiffness_matrix1(H, m, n, h)
 
+
+# fixed displacement 
 db = zeros((m+1)*(n+1))
 for j = 1:n+1
   idx = (j-1)*(m+1)+1
@@ -57,31 +74,19 @@ for j = 1:n+1
   end
 end
 
-# turn the problem into homogeneous Dirichlet problem
-homoF = - K * db
+bdval = zeros(length(bdnode))
+for i = 1:length(bdnode)
+  bdval[i] = db[bdnode[i]]
+end
+
+# cast the problem into homogeneous Dirichlet problem
 idof = ones(Bool, (m+1)*(n+1))
 idof[bdnode] .= false
 idof = findall(idof)
 
-
-d0 = zeros((m+1)*(n+1))
+d0 = db
 v0 = zeros((m+1)*(n+1))
 a0 = vector(idof, M[idof, idof]\((-K*db)[idof]), (m+1)*(n+1))
-
-# analytical solution 
-d0 = @. (5-xo)*xo*(1-yo)*yo
-v0 = -d0 
-a0 = d0
-
-ExtForce = zeros(NT, (m+1)*(n+1))
-ts = αscheme_time(Δt)
-for i = 1:NT
-  t = ts[i]
-  f = (x,y)->exp(-t)*(5-x)*x*(1-y)*y - exp(-t)*(-2y*(1-y)-2x*(5-x))
-  fval = eval_f_on_gauss_pts(f, m, n, h)
-  ExtForce[i,:] = compute_fem_source_term1(fval, m, n, h)
-end
-ExtForce = constant(ExtForce)
 
 function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC}, 
   K::Union{SparseTensor, SparseMatrixCSC}, 
@@ -102,8 +107,14 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   d0, v0, a0, Δt = convert_to_tensor([d0, v0, a0, Δt], [Float64, Float64, Float64, Float64])
 
 
+  # A = (1-αm)*M + (1-αf)*K*β*Δt[1]^2
+  # A, Abd = fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)
+
+  
+  M, Mbd = fem_impose_Dirichlet_boundary_condition1(M, bdnode, m, n, h)
+  K, Kbd = fem_impose_Dirichlet_boundary_condition1(K, bdnode, m, n, h)
   A = (1-αm)*M + (1-αf)*K*β*Δt[1]^2
-  A, _ = fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)
+
 
 
   function equ(dc, vc, ac, dt, εc, σc, i)
@@ -118,11 +129,9 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
     Σ = 2* repeat(μ.*η/(η+μ*σ_dt),1,2) .*εc - repeat(η/(η+μ*σ_dt), 1, 2) .* σc
     Force = compute_strain_energy_term1(Σ, m, n, h)
 
-    # rhs = homoF + Force - (M*am + K*df)
-
-    # For wave equation 
-    rhs = ExtForce[i] - (M*am + K*df)
-
+    rhs = - (M*am + K*df) + Force
+    rhs -= Kbd*bdval
+    
     rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
     A\rhs 
     
@@ -159,10 +168,6 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   dM = write(dM, 1, d0)
   vM = write(vM, 1, v0)
   aM = write(aM, 1, a0)
-  # for exact solution 
-  # ε0 = eval_strain_on_gauss_pts1(d0, m, n, h)
-  # σM = write(σM, 1, 2repeat(μ, 1, 2).*ε0)
-
   σM = write(σM, 1, zeros(4m*n,2))
 
   i = constant(1, dtype=Int32)
@@ -174,27 +179,14 @@ end
 d, v, a = antiplane_visco_αscheme(M, K, d0, v0, a0, Δt, ρ=ρ)
 
 
-# function solver(A, rhs)
-#   A, _ = fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)
-#   rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
-#   A\rhs
-# end
-# d, v, a = αscheme(M, spzero((m+1)*(n+1), (m+1)*(n+1)), K, ExtForce, d0, v0, a0, Δt; solve = solver, ρ=ρ)
-
-
 sess = Session(); init(sess)
 d_, v_, a_ = run(sess, [d, v, a])
 
 
-# pcolormesh(reshape(d_[2,:]+db, m+1, n+1))
-# colorbar()
-
 close("all")
 for (k,tid) in enumerate(LinRange{Int64}(1, NT+1, 5))
   t = (tid-1)*Δt[1]
-  dd = @. exp(-t)*(5-xo)*xo*(1-yo)*yo
-  plot(dd[div(n,2)*(m+1) .+ (1:m+1)], "C$k-", label="$tid")
-  plot(d_[tid, :][div(n,2)*(m+1) .+ (1:m+1)],"C$k--o", label="$tid", markersize=3)
+  plot((d_[tid, :]+db)[div(n,2)*(m+1) .+ (1:m+1)],"C$k-", label="$t", markersize=3)
 end
 legend()
 
