@@ -13,11 +13,11 @@ using SpecialFunctions
 
 n = 20
 NT = 100
-ρ = 1.0
+ρ = 0.0
 
 m = 5n 
 h = 1/n 
-Δt = 1.0/NT 
+Δt = 1/NT 
 
 xo = zeros((m+1)*(n+1))
 yo = zeros((m+1)*(n+1))
@@ -29,12 +29,10 @@ for i = 1:m+1
   end
 end
 
-bdnode = bcnode("left | lower | right", m, n, h)
-
 bdnode = bcnode("all", m, n, h)
 
-μ = 0.5*constant(ones(4*m*n))
-η = 1000000. * constant(ones(4*m*n))
+μ = 1000000.0 *constant(ones(4*m*n))
+η = 0.5 * constant(ones(4*m*n))
 
 coef = 2μ*η/(η + μ*Δt)
 mapH = c->begin 
@@ -77,7 +75,7 @@ ExtForce = zeros(NT, (m+1)*(n+1))
 ts = αscheme_time(Δt)
 for i = 1:NT
   t = ts[i]
-  f = (x,y)->exp(-t)*(5-x)*x*(1-y)*y - exp(-t)*(-2y*(1-y)-2x*(5-x))
+  f = (x,y)->exp(-t)*(5-x)*x*(1-y)*y + exp(-t)*(-2y*(1-y)-2x*(5-x))
   fval = eval_f_on_gauss_pts(f, m, n, h)
   ExtForce[i,:] = compute_fem_source_term1(fval, m, n, h)
 end
@@ -121,7 +119,7 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
     # rhs = homoF + Force - (M*am + K*df)
 
     # For wave equation 
-    rhs = ExtForce[i] - (M*am + K*df)
+    rhs = ExtForce[i] - (M*am + K*df) + Force
 
     rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
     A\rhs 
@@ -160,7 +158,17 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   vM = write(vM, 1, v0)
   aM = write(aM, 1, a0)
   ε0 = eval_strain_on_gauss_pts1(d0, m, n, h)
-  σM = write(σM, 1, 2repeat(μ, 1, 2).*ε0)
+
+  # xg = eval_f_on_gauss_pts((x,y)->x, m, n, h)
+  # yg = eval_f_on_gauss_pts((x,y)->x, m, n, h)
+  # for exact solution
+  # dε0 = constant([(@. -(5-2xg)*(1-yg)*yg) (@. -(5-xg)*xg*(1-2yg))])
+  # σM = write(σM, 1, dε0)
+
+  ε0 = eval_strain_on_gauss_pts1(d0, m, n, h)
+  σM = write(σM, 1, zeros(4m*n, 2))
+
+  
   i = constant(1, dtype=Int32)
   _, d, v, a = while_loop(condition, body, [i,dM, vM, aM, σM])
   set_shape(stack(d), (nt+1, length(a0))), set_shape(stack(v), (nt+1, length(a0))), set_shape(stack(a), (nt+1, length(a0)))
@@ -175,7 +183,7 @@ d, v, a = antiplane_visco_αscheme(M, K, d0, v0, a0, Δt, ρ=ρ)
 #   rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
 #   A\rhs
 # end
-# d, v, a = αscheme(M, spzero((m+1)*(n+1), (m+1)*(n+1)), K, ExtForce, d0, v0, a0, Δt; solve = solver, ρ=ρ)
+# d, v, a = αscheme(M, K, spzero((m+1)*(n+1), (m+1)*(n+1)), ExtForce, d0, v0, a0, Δt; solve = solver, ρ=ρ)
 
 
 sess = Session(); init(sess)
@@ -187,10 +195,11 @@ d_, v_, a_ = run(sess, [d, v, a])
 
 close("all")
 for (k,tid) in enumerate(LinRange{Int64}(1, NT+1, 5))
-  plot(d_[tid, :][div(n,2)*(m+1) .+ (1:m+1)],"C$k--", label="$tid")
+  
   t = (tid-1)*Δt[1]
   dd = @. exp(-t)*(5-xo)*xo*(1-yo)*yo
   plot(dd[div(n,2)*(m+1) .+ (1:m+1)], "C$k-", label="$tid")
+  plot(d_[tid, :][div(n,2)*(m+1) .+ (1:m+1)],"C$k--o", label="$tid")
 end
 legend()
 
