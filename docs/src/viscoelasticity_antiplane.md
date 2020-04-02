@@ -2,6 +2,8 @@
 
 In a [previous section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/), we consider the viscoelasticity constitutive relation. In this section, we consider a very important special case: antiplane viscoelasticity. In this case, the displacement only occurs in the $z$ direction, so we can use a scalar valued function $u(x,y)$ to denote the displacement. 
 
+![](./assets/viscosity-antiplane.png)
+
 The constitutive relation is (kinetics equation)
 
 $$\begin{aligned}\dot \sigma_{31} + \frac{\mu}{\eta} \sigma_{31} &= 2\mu\dot\epsilon_{31}\\ \dot \sigma_{32} + \frac{\mu}{\eta} \sigma_{32} &= 2\mu\dot\epsilon_{32}\end{aligned}$$
