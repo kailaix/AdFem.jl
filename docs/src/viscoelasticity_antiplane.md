@@ -10,7 +10,7 @@ $$\begin{aligned}\dot \sigma_{31} + \frac{\mu}{\eta} \sigma_{31} &= 2\mu\dot\eps
 
 Here
 
-$$\epsilon_{13} = \frac{\partial u}{\partial x},\quad \epsilon_{23} = \frac{\partial u}{\partial y}$$
+$$\epsilon_{31} = \frac{\partial u}{\partial x},\quad \epsilon_{32} = \frac{\partial u}{\partial y}$$
 
 To complete the equation, we also have the balance of linear momentum (kinematic equation)
 
@@ -19,24 +19,32 @@ $$\sigma_{31,1} + \sigma_{32,2} + f = \rho \ddot u \tag{1}$$
 where $f$ is the body force and $\rho$ is the density. 
 
 !!! note 
+    In the case $\eta$ is very small, the constitutive relation can be approximated by  
 
-In the case $\eta$ is very small, the constitutive relation can be approximated by  
+    $$\sigma_{31} = 2\eta \dot\epsilon_{31},\quad \sigma_{32} = 2\eta \dot\epsilon_{32}$$
 
-$$\sigma_{31} = 2\eta \dot\epsilon_{31},\quad \sigma_{32} = 2\eta \dot\epsilon_{32}$$
+    By plugging the equations into Equation 1 (ignoring the body force), and integrate  in time
 
-By plugging the equations into Equation 1 (ignoring the body force), and integrate  in time
+    $$2\eta (\epsilon_{31,1} + \epsilon_{32,2})  = \rho \dot u \Rightarrow 2\eta \Delta u = \rho \dot u \tag{2}$$
 
-$$2\eta (\epsilon_{31,1} + \epsilon_{32,2})  = \rho \dot u \Rightarrow 2\eta \Delta u = \rho \dot u \tag{2}$$
+    Equation 2 is a **diffusion equation**. 
 
-Equation 2 is a diffusion equation. 
+!!! note
+    In the case $\eta$ is very large, the constitutive relation is reduced to linear elasticity
 
-We discretize the constitutive relation using an implicit scheme
+    $$\sigma = 2\mu\epsilon$$
 
-$$\frac{\sigma^{n+1} - \sigma^n}{\Delta t} + \frac{\mu}{\eta}\sigma^{n+1} = 2\mu \frac{\epsilon^{n+1}-\epsilon^n}{\Delta t}$$
+    Therefore, the kinematic equation is reduced to a **wave equation**
 
-which is equivalent to 
+    $$2\mu \Delta u = \ddot u$$
 
-$$\sigma^{n+1} = \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n+1}- \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n} + \frac{\eta}{\eta+\mu\Delta t}\sigma^n $$
+    We discretize the constitutive relation using an implicit scheme
+
+    $$\frac{\sigma^{n+1} - \sigma^n}{\Delta t} + \frac{\mu}{\eta}\sigma^{n+1} = 2\mu \frac{\epsilon^{n+1}-\epsilon^n}{\Delta t}$$
+
+    which is equivalent to 
+    
+    $$\sigma^{n+1} = \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n+1}- \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n} + \frac{\eta}{\eta+\mu\Delta t}\sigma^n $$
 
 
 

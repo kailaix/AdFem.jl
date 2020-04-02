@@ -7,7 +7,7 @@ makedocs(sitename="PoreFlow", modules=[PoreFlow],
 pages = Any[
     "index.md",
     "Examples"=>Any["coupled.md", "staticelasticity.md", "plasticity.md", 
-        "viscoelasticity.md", "strikeslipfault.md", "heatequation.md","elastodynamics.md", "twophaseflow.md"],
+        "viscoelasticity.md", "viscoelasticity_antiplane.md", "strikeslipfault.md", "heatequation.md","elastodynamics.md", "twophaseflow.md"],
     "Inverse Modeling"=>Any["inverse.md", "inv_viscoelasticity.md", "coupled_viscoelasticity.md",
             "inv_twophaseflow.md", "inv_viscoelasticity_nonparametric.md"],
     "api.md"
