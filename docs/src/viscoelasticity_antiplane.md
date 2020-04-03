@@ -46,3 +46,8 @@ where $f$ is the body force and $\rho$ is the density.
     
     $$\sigma^{n+1} = \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n+1}- \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n} + \frac{\eta}{\eta+\mu\Delta t}\sigma^n$$
 
+## Numerical example
+
+|displacement $u$                                 |velocity $\dot u$                              | strain rate   $\partial \dot u / \partial x$     |
+|:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
+|![](./assets/visco-antiplane/displacement.gif)   |![](./assets/visco-antiplane/velocity.gif)    |![](./assets/visco-antiplane/strain_rate.gif)      |

@@ -202,25 +202,31 @@ d_, v_, a_ = run(sess, [d, v, a])
 
 
 # pcolormesh(reshape(d_[end,:], m+1, n+1)')
-
+figure()
 pl, = plot([], [], "o-", markersize = 3)
 t = title("0")
 xi = (0:m)*h 
 xlim(-h, (m+1)*h)
+xlabel("Distance")
 ylim(-0.1, 1.1)
+ylabel("Displacement")
+tight_layout()
 function update(i)
   pl.set_data(xi[:], d_[i,1:m+1])
   t.set_text("time = $(i*Δt[1])")
 end
 p = animate(update, [1:1:20;25:5:NT+1])
-saveanim(p, "slip.gif")
+saveanim(p, "displacement.gif")
 
-
+figure()
 pl, = plot([], [], "o-", markersize = 3)
 t = title("time = 0")
 xi = (0:m)*h 
 xlim(-h, (m+1)*h)
+xlabel("Distance")
 ylim(-0.0001, 0.0005)
+ylabel("Velocity")
+tight_layout()
 function update(i)
   pl.set_data(xi[:], v_[i,1:m+1])
   t.set_text("time = $(i*Δt[1])")
@@ -228,12 +234,15 @@ end
 p = animate(update, [1:1:20;25:5:NT+1])
 saveanim(p, "velocity.gif")
 
-
+figure()
 pl, = plot([], [], "o-", markersize = 3)
 t = title("time = 0")
 xi = (0:m)*h 
 xlim(-h, (m+1)*h)
+xlabel("Distance")
 ylim(-0.001, 0.001)
+ylabel("Strain Rate")
+tight_layout()
 function update(i)
   pl.set_data(xi[1:end-1], (v_[i,2:m+1]-v_[i,1:m])/h)
   t.set_text("time = $(i*Δt[1])")
