@@ -34,9 +34,15 @@ function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array
     L, Lbd
 end
 
+"""
+    fem_impose_Dirichlet_boundary_condition(L::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel for imposing the Dirichlet boundary of a vector-valued function. 
+"""
 function fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
     idx = [bdnode; bdnode .+ (m+1)*(n+1)]
     Lbd = L[:, idx]
+    Lbd = scatter_update(Lbd, idx, :, spzero(length(idx), length(idx)))
     L = scatter_update(L, :, idx, spzero(2*(m+1)*(n+1), length(idx)))
     L = scatter_update(L, idx, :,  spzero(length(idx), 2*(m+1)*(n+1)))
     L = scatter_update(L, idx, idx, spdiag(length(idx)))
