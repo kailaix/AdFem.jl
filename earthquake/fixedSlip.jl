@@ -26,10 +26,10 @@ Force = zeros(NT, dof)
 H = diagm(0=>ones(2))
 M = compute_fem_mass_matrix1(m, n, h)
 K = compute_fem_stiffness_matrix1(H, m, n, h)
-C = 0.1 * M + 0.1 * K
+C = 0.0 * M + 0.0 * K
 
 # Compute the force term 
-αt = αintegration_time(Δt)
+αt = αscheme_time(Δt)
 ub = zeros(dof, NT)
 for i = 1:NT 
   ub[left, i] .= Δu
@@ -55,7 +55,7 @@ function solver(A, rhs)
   A\rhs  
 end
 
-d, v, a = αintegration(M, C, K, Force, d0, v0, a0, Δt; solve = solver)
+d, v, a = αscheme(M, C, K, Force, d0, v0, a0, Δt; solve = solver)
 
 # Simulation
 sess = Session()
@@ -64,3 +64,9 @@ d_, v_, a_ = run(sess, [d, v, a])
 d_[:, left] .+= Δu
 # visualize_potential(permutedims(reshape(d_, NT, m+1, n+1), [1,3,2])[:,1:n,1:m], m, n, h)
 
+close("all")
+for (k,tid) in enumerate(LinRange{Int64}(1, NT+1, 5))
+  t = (tid-1)*Δt[1]
+  plot((d_[tid, :])[(1:m+1)],"C$k-", label="$t", markersize=3)
+end
+legend()

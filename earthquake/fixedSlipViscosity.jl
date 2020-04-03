@@ -44,7 +44,7 @@ C = 0.0 * M + 0.0 * K
 
 
 # Compute the force term 
-αt = αintegration_time(Δt)
+αt = αscheme_time(Δt)
 ub = zeros(dof, NT)
 for i = 1:NT 
   ub[left, i] .= Δu
@@ -175,8 +175,6 @@ d, v, a = αintegration_visco(M, C, K, Force, d0, v0, a0, Δt; solve = solver)
 # Simulation
 sess = Session()
 d_, v_, a_ = run(sess, [d, v, a])
-
-d_[:, left] .+= Δu
 # visualize_potential(permutedims(reshape(d_, NT, m+1, n+1), [1,3,2])[:,1:n,1:m], m, n, h)
 
 # close("all")
@@ -192,5 +190,6 @@ d_[:, left] .+= Δu
 # legend()
 
 
-plot(a_[1:100,1:m+1])
+plot(d_[:,1:m+1])
+pcolormesh(reshape(d_[end,:], m+1, n+1)')
 

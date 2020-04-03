@@ -12,11 +12,11 @@ using SpecialFunctions
 
 # simulation parameter setup
 n = 20
-NT = 100
+NT = 400
 ρ = 0.1 # design variable in α-schemes
 m = 5n 
 h = 1/n 
-Δt = 100. /NT 
+Δt = 10000. /NT 
 
 # coordinates
 xo = zeros((m+1)*(n+1))
@@ -30,7 +30,7 @@ for i = 1:m+1
 end
 
 # Dirichlet boundary condition on three sides, and Neumann boundary condition (traction-free) on the top
-bdnode = bcnode("left  | right", m, n, h)
+bdnode = bcnode("left  | lower | right", m, n, h)
 
 # viscoelasticity η and shear modulus μ
 
@@ -43,7 +43,7 @@ bdnode = bcnode("left  | right", m, n, h)
 end
 
 η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
-μ = 0.5 * constant(ones(4m*n))
+μ = 0.001 * constant(ones(4m*n))
 
 
 
@@ -71,7 +71,7 @@ for j = 1:n+1
   if j<=div(n, 4)
     db[idx] = 1.
   else
-    db[idx] = 1. #(1-(j-div(n, 4))/(3div(n, 4)))
+    db[idx] = (1-(j-div(n, 4))/(3div(n, 4)))
   end
   # y = (j-1)*h
   # db[idx] = y * (1-y) * 0.0
@@ -210,6 +210,33 @@ xlim(-h, (m+1)*h)
 ylim(-0.1, 1.1)
 function update(i)
   pl.set_data(xi[:], d_[i,1:m+1])
-  t.set_text("$i")
+  t.set_text("time = $(i*Δt[1])")
 end
-animate(update, 1:5:NT+1)
+p = animate(update, [1:1:20;25:5:NT+1])
+saveanim(p, "slip.gif")
+
+
+pl, = plot([], [], "o-", markersize = 3)
+t = title("time = 0")
+xi = (0:m)*h 
+xlim(-h, (m+1)*h)
+ylim(-0.0001, 0.0005)
+function update(i)
+  pl.set_data(xi[:], v_[i,1:m+1])
+  t.set_text("time = $(i*Δt[1])")
+end
+p = animate(update, [1:1:20;25:5:NT+1])
+saveanim(p, "velocity.gif")
+
+
+pl, = plot([], [], "o-", markersize = 3)
+t = title("time = 0")
+xi = (0:m)*h 
+xlim(-h, (m+1)*h)
+ylim(-0.001, 0.001)
+function update(i)
+  pl.set_data(xi[1:end-1], (v_[i,2:m+1]-v_[i,1:m])/h)
+  t.set_text("time = $(i*Δt[1])")
+end
+p = animate(update, [1:1:20;25:5:NT+1])
+saveanim(p, "strain_rate.gif")

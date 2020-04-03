@@ -62,7 +62,7 @@ d0 = [(@. u1(x, y, 0.0)); (@. u2(x, y, 0.0))]
 
 
 function solver(A, rhs, i)
-    A, Abd = fem_impose_Dirichlet_boundary_condition(A, bd, m, n, h)
+    A, Abd = fem_impose_Dirichlet_boundary_condition_experimental(A, bd, m, n, h)
     rhs = rhs - Abd * abd[i]
     rhs = scatter_update(rhs, [bd; bd .+ (m+1)*(n+1)], abd[i]) 
     return A\rhs

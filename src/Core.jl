@@ -832,16 +832,16 @@ Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 
 """
 function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
     out = zeros(4*m*n)
-    k = 0
     for i = 1:m 
         for j = 1:n 
+            idx = (j-1)*m + i 
             x1 = (i-1)*h 
             y1 = (j-1)*h
             for p = 1:2
                 for q = 1:2
+                    k = (idx-1)*4 + 2*(q-1) + p
                     ξ = pts[p]; η = pts[q]
                     x = x1 + ξ*h; y = y1 + η*h
-                    k += 1
                     out[k] = f(x, y)
                 end
             end
