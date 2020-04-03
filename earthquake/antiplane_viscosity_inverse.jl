@@ -9,6 +9,7 @@ using ADCMEKit
 np = pyimport("numpy")
 using PyPlot
 using SpecialFunctions
+include("viscosity_accel/viscosity_accel.jl")
 
 ADCME.options.sparse.auto_reorder = false
 # simulation parameter setup
@@ -116,7 +117,7 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   Δt::Array{Float64}; 
   ρ::Float64 = 1.0)
   nt = length(Δt)
-  # nt = 1
+
   αm = (2ρ-1)/(ρ+1)
   αf = ρ/(1+ρ)
   γ = 1/2-αm+αf 
@@ -127,8 +128,13 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   K = isa(K, SparseMatrixCSC) ? constant(K) : K
   d0, v0, a0, Δt = convert_to_tensor([d0, v0, a0, Δt], [Float64, Float64, Float64, Float64])
 
-  A = (1-αm)*M + (1-αf)*K*β*Δt[1]^2
+  Kterm = (1-αf)*K*β*Δt[1]^2
+  Kterm, _ = fem_impose_Dirichlet_boundary_condition1(Kterm, bdnode, m, n, h)
+  A = (1-αm)*M + Kterm
   A, _ = fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)
+
+  ii, jj, vv = find(Kterm)
+  opp = push_matrices(A, Kterm)
 
   function equ(dc, vc, ac, dt, εc, σc, i)
     dn = dc + dt*vc + dt^2/2*(1-2β)*ac 
@@ -148,7 +154,9 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
 
     
     # @info "here"
-    A\rhs     
+    visco_solve(rhs,vv,opp)
+    # A\rhs     
+    # rhs
   end
 
   function condition(i, tas...)
