@@ -22,6 +22,19 @@ void solve(double * out, const double * rhs, int d){
     for(int i=0;i<d;i++) out[i] = x[i];
 }
 
+void backward(double *grad_rhs, double *grad_vv, const double *grad_out, const double *out, int d){
+  Eigen::Map<const Eigen::VectorXd> RHS(grad_out, d);
+  Eigen::VectorXd g = solvert.solve(RHS);
+  for(int i=0;i<d;i++) grad_rhs[i] = 0.0;
+  for(int i=0;i<iiK.size();i++) grad_vv[i] = 0.0;
+  for(int i=0;i<d;i++) grad_rhs[i] = g[i];
+  for(int i=0;i<iiK.size();i++){
+    grad_vv[i] = -g[iiK[i]]*out[jjK[i]];
+  }
+  // std::cout << Eigen::MatrixXd(g) << std::endl;
+
+}
+
 REGISTER_OP("ViscoSolve")
 
 .Input("rhs : double")
@@ -141,6 +154,7 @@ public:
 
     // extra check
     // int m = Example.dim_size(0);
+    int d = rhs_shape.dim_size(0);
         
     // create output shape
     
@@ -170,6 +184,7 @@ public:
     // implement your backward function here 
 
     // TODO:
+    backward(grad_rhs_tensor, grad_vv_tensor, grad_out_tensor, out_tensor, d);
     
   }
 };

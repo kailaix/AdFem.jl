@@ -8,44 +8,55 @@ Random.seed!(233)
 
 function push_matrices(ii1,jj1,vv1,ii2,jj2,vv2,d)
     push_matrices_ = load_op_and_grad("./build/libPushMatrices","push_matrices")
-ii1,jj1,vv1,ii2,jj2,vv2,d = convert_to_tensor([ii1,jj1,vv1,ii2,jj2,vv2,d], [Int64,Int64,Float64,Int64,Int64,Float64,Int64])
+    ii1,jj1,vv1,ii2,jj2,vv2,d = convert_to_tensor([ii1,jj1,vv1,ii2,jj2,vv2,d], [Int64,Int64,Float64,Int64,Int64,Float64,Int64])
     push_matrices_(ii1,jj1,vv1,ii2,jj2,vv2,d)
 end
 
 function visco_solve(rhs,vv, op)
     visco_solve_ = load_op_and_grad("./build/libViscoSolve","visco_solve")
-rhs,vv, op = convert_to_tensor([rhs,vv, op], [Float64,Float64, Int64])
+    rhs,vv, op = convert_to_tensor([rhs,vv, op], [Float64,Float64, Int64])
     visco_solve_(rhs,vv, op)
 end
 
 A = sprand(10,10,0.7)
 B = sprand(10,10,0.2)
+A = A + B
 rhs = rand(10)
 op = push_matrices(find(constant(A))..., find(constant(B))..., 10)
-ii, jj, vv = find(constant(A))
+ii, jj, vv = find(constant(B))
 
 sol = visco_solve(rhs, vv, op)
 
 sess = Session(); init(sess)
 
-@show run(sess, sol)
-@show A\rhs - run(sess, sol)
+# @show run(sess, sol)
+# @show A\rhs - run(sess, sol)
+
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(visco_solve(rhs,vv)^2)
+Al = sprand(10,10,0.7)
+function scalar_function(vv)
+    A = constant(Al)
+    B = SparseTensor(ii, jj, vv, 10, 10)
+    A = A + B
+    op = independent(push_matrices(find(A)..., find(B)..., 10))
+
+    return sum(visco_solve(rhs, vv, op)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+# m_ = constant(rand(length(rhs)))
+# v_ = rand(length(rhs))
+
+m_ = constant(rand(length(vv)))
+v_ = rand(length(vv))
 y_ = scalar_function(m_)
-dy_ = gradients(y_, m_)
+dy_ = constant(run(sess, gradients(y_, m_)))
 ms_ = Array{Any}(undef, 5)
 ys_ = Array{Any}(undef, 5)
 s_ = Array{Any}(undef, 5)

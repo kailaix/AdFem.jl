@@ -25,20 +25,22 @@ void push_matrix(int64 *flag, const int64 *ii1, const int64 *jj1, const double *
     // std::cout << A << std::endl;
     solver.analyzePattern(A);
     solver.factorize(A);
-    printf("A Factorized!");
+    // printf("A Factorized!\n");
 
     SpMat B = A.transpose();
     // std::cout << A << std::endl;
     solvert.analyzePattern(B);
     solvert.factorize(B);
-    printf("B Factorized!");
+    // printf("B Factorized!\n");
 
     iiK.resize(n2); 
     jjK.resize(n2);
     for(int i=0;i<n2;i++){
-      iiK[i] = ii2[i];
-      jjK[i] = jj2[i];
+      iiK[i] = ii2[i]-1;
+      jjK[i] = jj2[i]-1;
     }
+
+    // printf("size of K value vectors: %d\n", n2);
 
     *flag = (count++);
 
