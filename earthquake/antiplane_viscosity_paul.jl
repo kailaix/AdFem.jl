@@ -36,9 +36,9 @@ bdnode = bcnode("left  | right", m, n, h)
 
 ηf = (x,y)->begin 
   if y<=0.25
-    return 100000.
+    return 10000.
   else 
-    return 100000.
+    return 1.
   end
 end
 
