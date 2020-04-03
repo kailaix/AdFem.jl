@@ -16,7 +16,7 @@ nt = 601
 nx = 51
 ny = 51
 # eq_ind = collect(1:nt)[(v[1,:] .> 1e-1)[:]]
-eq_ind = collect(220:280)
+eq_ind = collect(190:200)
 
 m = 50
 n = 50
