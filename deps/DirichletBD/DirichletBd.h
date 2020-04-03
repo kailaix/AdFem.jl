@@ -1,5 +1,7 @@
 #include <set>
 #include <vector>
+#include <algorithm>
+#include <map>
 using std::set;
 using std::vector;
 
@@ -16,11 +18,23 @@ class Forward{
       const int*bd, int bdn, int m, int n, double h){
         set<int> bdset(bd, bd+bdn);
         for(int i=0;i<bdn;i++) bdset.insert(bd[i]+(m+1)*(n+1));
+
+        vector<int> bdvec(bd, bd+bdn);
+        for(int i=0;i<bdn;i++) bdvec.push_back(bd[i]+(m+1)*(n+1));
+
+        std::map<int, int> bdmap;
+        int k = 1;
+        for(auto i: bdvec){
+          bdmap[i] = (k++);
+        }
+        
         for(int i=0;i<N;i++){
-          if(bdset.count(ii[i])>0 || bdset.count(jj[i])>0) continue;
-          ii1.push_back(ii[i]); jj1.push_back(jj[i]); vv1.push_back(vv[i]); 
-          if(bdset.count(jj[i])>0 && bdset.count(ii[i])==0){
-              ii2.push_back(ii[i]); jj2.push_back(jj[i]); vv2.push_back(vv[i]); 
+          if(bdset.count(ii[i])==0 && bdset.count(jj[i])==0) {
+              ii1.push_back(ii[i]); jj1.push_back(jj[i]); vv1.push_back(vv[i]);
+          }
+              
+          if(bdset.count(ii[i])==0 && bdset.count(jj[i])>0){
+              ii2.push_back(ii[i]); jj2.push_back(bdmap[jj[i]]); vv2.push_back(vv[i]); 
           }
         }
         for(auto i: bdset) {
@@ -77,17 +91,19 @@ void backward(
   double * grad_vv, const int64 * ii, const int64 * jj,
   const double * grad_vv1, const double * grad_vv2, int N, 
       const int*bd, int bdn, int m, int n, double h){
+
     set<int> bdset(bd, bd+bdn);
     for(int i=0;i<N;i++) grad_vv[i] = 0.0;
     for(int i=0;i<bdn;i++) bdset.insert(bd[i]+(m+1)*(n+1));
-
-
     int k1 = 0, k2 = 0;
     for(int i=0;i<N;i++){
-      if(bdset.count(ii[i])>0 || bdset.count(jj[i])>0) continue;
-      grad_vv[i] += grad_vv1[k1++];
-      if(bdset.count(jj[i])>0 && bdset.count(ii[i])==0){
+      if(bdset.count(ii[i])==0 && bdset.count(jj[i])==0) {
+        grad_vv[i] += grad_vv1[k1++];
+      }
+
+      if(bdset.count(ii[i])==0 && bdset.count(jj[i])>0){
           grad_vv[i] += grad_vv2[k2++];
       }
     }
+   
 }

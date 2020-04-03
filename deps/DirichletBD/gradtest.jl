@@ -1,8 +1,10 @@
+using Revise
 using ADCME
 using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using PoreFlow
 Random.seed!(233)
 
 function dirichlet_bd(ii,jj,vv,bd,m,n,h)
@@ -16,14 +18,20 @@ end
 # TODO: specify your input parameters
 m = 10
 n = 10
-ii = rand(1:2(m+1)*(n+1), 200)
-jj = rand(1:2(m+1)*(n+1), 200)
+ii = rand(1:2(m+1)*(n+1), 100)
+jj = rand(1:2(m+1)*(n+1), 100)
 vv = rand(100)
-bd = rand(1:(m+1)*(n+1), 10)
+bd = unique(rand(1:(m+1)*(n+1), 90))
 h = 0.1
-u = dirichlet_bd(ii,jj,vv,bd,m,n,h)
+ii2,jj2,vv2, ii1,jj1,vv1 = dirichlet_bd(ii,jj,vv,bd,m,n,h)
 sess = Session(); init(sess)
-# @show run(sess, u)
+
+A0, B0 = SparseTensor(ii2, jj2, vv2, 2(m+1)*(n+1), 2(m+1)*(n+1)),  SparseTensor(ii1, jj1, vv1, 2(m+1)*(n+1), 2length(bd))
+A = SparseTensor(ii, jj, vv, 2(m+1)*(n+1), 2(m+1)*(n+1))
+A1, B1 = fem_impose_Dirichlet_boundary_condition(A, bd, m, n, h)
+
+@show run(sess, A0)-run(sess, A1)
+@show run(sess, B0)-run(sess, B1)
 
 # uncomment it for testing gradients
 # error() 
@@ -33,7 +41,7 @@ sess = Session(); init(sess)
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(vv)
-    return sum(dirichlet_bd(ii,jj,vv,bd,m,n,h)[3]^2 + dirichlet_bd(ii,jj,vv,bd,m,n,h)[6]^2)
+    return sum(dirichlet_bd(ii,jj,vv,bd,m,n,h)[3]^2)# + dirichlet_bd(ii,jj,vv,bd,m,n,h)[6]^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values

@@ -255,6 +255,8 @@ I & 0 \\
 A_{IB} 
 \end{bmatrix}
 ```
+
+`bd` must NOT have duplicates. 
 """
 function fem_impose_Dirichlet_boundary_condition1(A::SparseMatrixCSC{Float64,Int64}, 
     bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
