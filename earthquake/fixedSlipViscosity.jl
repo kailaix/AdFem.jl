@@ -11,37 +11,25 @@ using PyPlot
 using SpecialFunctions
 
 
-
-
 # Parameters setup 
-h1 = 1
-h2 = 3
-μ1 = 1
-μ2 = 1
-η1 = 1
-η2 = 1
-Δu = 1
-κ = h2*h1*μ1/η2
-tR = h1 * η2 / (h2 * μ1)
-
 NT = 100
-dt = 2. *tR/NT 
+dt = 1/NT
 Δt = ones(NT)*dt
 Δu = 1.0 # fixed Dirichlet boundary condition on the left hand side 
 n = 10
-m = 3n 
-h = 4/n
+m = 10n 
+h = 4. /n
 left = bcnode("left", m, n, h)
 right = bcnode("right", m, n, h)
 dof = (m+1)*(n+1)
 Force = zeros(NT, dof)
 
 
-μ = constant(ones(4*m*n)) * 100000.
-η = constant(ones(4*m*n)) 
+μ = constant(ones(4*m*n))* 100000.
+η = constant(ones(4*m*n))  
 
-coef = μ*η/(η + μ*dt)
-coef = tf.ones_like(coef) * 1.0/dt
+coef = 2μ*η/(η + μ*dt)
+coef = tf.ones_like(coef) * 2.0
 mapH = c->begin 
   c * diagm(0=>ones(2))
 end
@@ -51,17 +39,32 @@ H = map(mapH, coef)
 # H = diagm(0=>ones(2))
 M = constant(compute_fem_mass_matrix1(m, n, h))
 K = compute_fem_stiffness_matrix1(H, m, n, h)
-C = 0.1 * M + 0.1 * K
+C = 0.0 * M + 0.0 * K
+
+
 
 # Compute the force term 
 αt = αintegration_time(Δt)
 ub = zeros(dof, NT)
-for i = 2:NT 
+for i = 1:NT 
   ub[left, i] .= Δu
   ub[right, i] .= 0.0
   # Force at αt[i]
 end
-Force = (-K * ub)'
+ushift = constant(ub[:,1])
+Force = (-K * ub)' 
+
+C = K 
+K = spzero((m+1)*(n+1))
+
+strain_rate = zeros((m+1)*(n+1))
+for i = 1:m+1
+  for j = 1:n+1
+    idx = (j-1)*(m+1)+i
+    strain_rate[idx] = (m+1-i)/m 
+  end
+end
+
 
 # Initial conditions
 d0 = zeros(dof)
@@ -71,7 +74,11 @@ a0 = zeros(dof)
 idof = ones(Bool, dof)
 idof[[left;right]] .= false
 idof = findall(idof)
-a0 = vector(idof, M[idof, idof]\(Force[1,idof]), dof)
+# a0 = vector(idof, M[idof, idof]\(Force[1,idof]), dof)
+a0 = vector(idof, M[idof, idof]\constant(strain_rate)[idof], dof)
+
+
+
 
 
 # α scheme time stepping
@@ -91,8 +98,9 @@ function αintegration_visco(M::Union{SparseTensor, SparseMatrixCSC},
   a0::Union{Array{Float64, 1}, PyObject}, 
   Δt::Array{Float64}; solve::Union{Missing, Function} = missing)
     n_ = length(Δt)
-    αm = 0.5
-    αf = 0.5
+    ρ = 1.0
+    αm = (2ρ-1)/(1+ρ)
+    αf = ρ/(1+ρ)
     γ = 1/2-αm+αf 
     β = 0.25*(1-αm+αf)^2
     d = length(d0)
@@ -110,11 +118,12 @@ function αintegration_visco(M::Union{SparseTensor, SparseMatrixCSC},
       vf = (1-αf)*vn + αf*vc 
       am = αm*ac 
 
-      # σn = antiplane_viscosity(-εc/dt, σc, μ, η, dt)
-      σn = -2*εc/dt
+      σn = antiplane_viscosity(-εc/dt, σc, μ, η, dt)
+      # σn = -2*εc/dt
       Force_σ = compute_strain_energy_term1(σn, m, n, h) 
 
-      rhs = Force - (M*am + C*vf + K*df) - Force_σ
+      # rhs = Force - (M*am + C*vf + K*df) + K * (dc + ushift)  # - Force_σ
+      rhs = - (M*am + C*vf + K*df) 
       A = (1-αm)*M + (1-αf)*C*dt*γ + (1-αf)*K*β*dt^2
 
       if !ismissing(solve)
@@ -137,9 +146,9 @@ function αintegration_visco(M::Union{SparseTensor, SparseMatrixCSC},
       y = equ(dc, vc, ac, σc, εc, Δt[i], Force[i])
       dn = dc + Δt[i]*vc + Δt[i]^2/2*((1-2β)*ac+2β*y)
       vn = vc + Δt[i]*((1-γ)*ac+γ*y)
-      εnew = eval_strain_on_gauss_pts1(dn, m, n, h)
-      # σnew = antiplane_viscosity((εnew-εc)/Δt[i], σc, μ, η, Δt[i])
-      σnew = 2*(εnew-εc)/dt
+      εnew = eval_strain_on_gauss_pts1(dn + ushift, m, n, h)
+      σnew = antiplane_viscosity((εnew-εc)/Δt[i], σc, μ, η, Δt[i])
+      # σnew = 2*(εnew-εc)/dt
       i+1, write(dc_arr, i+1, dn), write(vc_arr, i+1, vn), 
           write(ac_arr, i+1, y), write(σ_arr, i+1, σnew),
           write(ε_arr, i+1, εnew)
@@ -163,8 +172,6 @@ end
 d, v, a = αintegration_visco(M, C, K, Force, d0, v0, a0, Δt; solve = solver)
 
 
-
-
 # Simulation
 sess = Session()
 d_, v_, a_ = run(sess, [d, v, a])
@@ -172,11 +179,18 @@ d_, v_, a_ = run(sess, [d, v, a])
 d_[:, left] .+= Δu
 # visualize_potential(permutedims(reshape(d_, NT, m+1, n+1), [1,3,2])[:,1:n,1:m], m, n, h)
 
-close("all")
-for α in [0.25, 0.5, 0.75, 1.0, 2.0]
-  idx = Int64(round(α*tR/dt))
-  @info idx
-  plot((0:m)*h, d_[idx,  1:m+1], label="\$t/T=$α\$")
-end
-xlim(0, 5.0)
-legend()
+# close("all")
+# for α in [0.25, 0.5, 0.75, 1.0]
+#   idx = Int64(round(α/dt))
+#   @info idx
+#   t = α*tR
+#   # κ = 2.
+#   # plot((0:m)*h, erfc.((0:m)*h/2/√t/√κ))
+#   plot((0:m)*h, d_[idx,  1:m+1], "+--", label="\$t/T=$α\$")
+# end
+# xlim(0, 5.0)
+# legend()
+
+
+plot(a_[1:100,1:m+1])
+
