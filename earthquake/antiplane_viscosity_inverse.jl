@@ -13,11 +13,14 @@ using SpecialFunctions
 ADCME.options.sparse.auto_reorder = false
 # simulation parameter setup
 n = 20
-NT = 400
+NT = 100
 ρ = 0.1 # design variable in α-schemes
 m = 5n 
 h = 1/n 
 Δt = 10000. /NT 
+
+# mode = "data"
+mode = "inv" 
 
 # coordinates
 xo = zeros((m+1)*(n+1))
@@ -39,14 +42,22 @@ bdnode = bcnode("left  | lower | right", m, n, h)
   if y<=0.25
     return 10000.
   else 
-    return 1.
+    if mode == "data"
+      return 1.
+    else
+      return 0.5
+    end
   end
 end
 
-η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
+if mode == "data"
+  η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
+else
+  η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
+end 
+
+
 μ = 0.001 * constant(ones(4m*n))
-
-
 
 
 # linear elasticity matrix 
@@ -159,8 +170,8 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
     εn = eval_strain_on_gauss_pts1(dn, m, n, h)
     σn = 2* repeat(μ.*η/(η+μ*Δt[i]),1,2) .* (εn - εc) + repeat(η/(η+μ*Δt[i]), 1, 2) .* σc
 
-    op = tf.print(i)
-    i = bind(i, op)
+    # op = tf.print(i)
+    # i = bind(i, op)
     i+1, write(dc_arr, i+1, dn), write(vc_arr, i+1, vn), write(ac_arr, i+1, y), write(σc_arr, i+1, σn)
   end
 
@@ -196,11 +207,48 @@ end
 vobs, strain_rate_obs = observation(v)
 
 sess = Session(); init(sess)
-@time d_, v_, a_ = run(sess, [d, v, a])
-
-# save_profile("test2.json")
+# d_, v_, a_ = run(sess, [d, v, a])
 
 
+# function visulization()
+#   figure()
+#   pl, = plot([], [], "o-", markersize = 3)
+#   t = title("time = 0")
+#   # xi = (0:m)*h 
+#   xi = 1:size(v_)[1] 
+#   xlim(-h, (m+1)*h)
+#   xlabel("Distance")
+#   ylim(-0.0001, 0.0005)
+#   ylabel("Velocity")
+#   tight_layout()
+#   function update(i)
+#     pl.set_data(xi[:], v_[i,:])
+#     t.set_text("time = $(i*Δt[1])")
+#   end
+#   p = animate(update, 1:size(v_)[1])
+# end
+
+if mode == "data"
+  v_, strain_rate_ = run(sess, [vobs, strain_rate_obs]) 
+  matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
+  # visulization()
+end
+
+if mode!="data"
+  data = matread("viscoelasticity.mat")
+  global V, StrainRate = data["V"], data["strain_rate"]
+  # U.set_shape((NT+1, size(U, 2)))
+  # idx0 = 1:4m*n
+  # Sigma = map(x->x[idx0,:], Sigma)
+  # global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
+  # global loss = sum((V - vobs)^2) + sum((StrainRate - strain_rate_obs)^2)
+  global loss = sum((V - vobs)^2)
+end
+
+
+@info run(sess, loss)
+@time run(sess, loss)
+BFGS!(sess, loss, vars=[η])
 
 
 
