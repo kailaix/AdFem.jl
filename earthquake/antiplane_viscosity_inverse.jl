@@ -14,14 +14,14 @@ include("viscosity_accel/viscosity_accel.jl")
 ADCME.options.sparse.auto_reorder = false
 # simulation parameter setup
 n = 20
-NT = 100
+NT = 400
 ρ = 0.1 # design variable in α-schemes
 m = 5n 
 h = 1/n 
 Δt = 10000. /NT 
 
-# mode = "data"
-mode = "inv" 
+mode = "data"
+# mode = "inv" 
 
 # coordinates
 xo = zeros((m+1)*(n+1))
@@ -153,9 +153,10 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
     rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
 
     
-    # @info "here"
-    visco_solve(rhs,vv,opp)
-    # A\rhs     
+    # @info "visco_solve"
+    # visco_solve(rhs,vv,opp)
+    # @info "A - rhs"
+    A\rhs     
     # rhs
   end
 
@@ -206,7 +207,7 @@ function observation(v)
   idx_plus = idx .+ 1
   idx_minus = idx .- 1
   idx_t = div(NT, 2):2:NT+1
-  vobs = v[idx_t, 2:2:end-1]
+  vobs = v[idx_t, idx]
   strain_rate_obs = (v[idx_t, idx_plus] - v[idx_t, idx_minus])/2h 
   return vobs, strain_rate_obs
 end
@@ -218,28 +219,28 @@ sess = Session(); init(sess)
 # d_, v_, a_ = run(sess, [d, v, a])
 
 
-# function visulization()
-#   figure()
-#   pl, = plot([], [], "o-", markersize = 3)
-#   t = title("time = 0")
-#   # xi = (0:m)*h 
-#   xi = 1:size(v_)[1] 
-#   xlim(-h, (m+1)*h)
-#   xlabel("Distance")
-#   ylim(-0.0001, 0.0005)
-#   ylabel("Velocity")
-#   tight_layout()
-#   function update(i)
-#     pl.set_data(xi[:], v_[i,:])
-#     t.set_text("time = $(i*Δt[1])")
-#   end
-#   p = animate(update, 1:size(v_)[1])
-# end
+function visulization()
+  figure()
+  pl, = plot([], [], "o-", markersize = 3)
+  t = title("time = 0")
+  # xi = (0:m)*h 
+  xi = 1:size(v_)[2] 
+  xlim(0, size(v_)[2])
+  xlabel("Distance")
+  ylim(-0.0001, 0.0005)
+  ylabel("Velocity")
+  tight_layout()
+  function update(i)
+    pl.set_data(xi[:], v_[i,:])
+    t.set_text("time = $(i*Δt[1])")
+  end
+  p = animate(update, 1:size(v_)[1])
+end
 
 if mode == "data"
   v_, strain_rate_ = run(sess, [vobs, strain_rate_obs]) 
   matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
-  # visulization()
+  visulization()
 end
 
 if mode!="data"
@@ -251,12 +252,14 @@ if mode!="data"
   # global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
   # global loss = sum((V - vobs)^2) + sum((StrainRate - strain_rate_obs)^2)
   global loss = sum((V - vobs)^2)
+
+  BFGS!(sess, loss*1e10, vars=[η])
 end
 
 
-@info run(sess, loss)
-@time run(sess, loss)
-BFGS!(sess, loss, vars=[η])
+# @info run(sess, loss)
+# @time run(sess, loss)
+# BFGS!(sess, loss*1e10, vars=[η])
 
 
 
