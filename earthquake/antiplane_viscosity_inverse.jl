@@ -154,9 +154,9 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
 
     
     # @info "visco_solve"
-    # visco_solve(rhs,vv,opp)
+    visco_solve(rhs,vv,opp)
     # @info "A - rhs"
-    A\rhs     
+    # A\rhs     
     # rhs
   end
 
@@ -238,9 +238,9 @@ function visulization()
 end
 
 if mode == "data"
-  v_, strain_rate_ = run(sess, [vobs, strain_rate_obs]) 
-  matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
-  visulization()
+  @time v_, strain_rate_ = run(sess, [vobs, strain_rate_obs]) 
+  # matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
+  # visulization()
 end
 
 if mode!="data"
