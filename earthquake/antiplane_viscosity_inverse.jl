@@ -14,13 +14,13 @@ include("viscosity_accel/viscosity_accel.jl")
 ADCME.options.sparse.auto_reorder = false
 # simulation parameter setup
 n = 20
-NT = 400
+NT = 100
 ρ = 0.1 # design variable in α-schemes
 m = 5n 
 h = 1/n 
-Δt = 10000. /NT 
+Δt = 2500. /NT 
 
-mode = "data"
+mode = "inv"
 # mode = "inv" 
 
 # coordinates
@@ -54,7 +54,11 @@ end
 if mode == "data"
   η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
 else
-  η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
+  # η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
+  η_ = [10000. *ones(5); ones(15)]
+  global v_var = [constant(ones(5));Variable(2ones(n-5))]
+  η = v_var .* η_
+  global η = layer_model(η, m, n, h)
 end 
 
 
@@ -239,7 +243,7 @@ end
 
 if mode == "data"
   @time v_, strain_rate_ = run(sess, [vobs, strain_rate_obs]) 
-  # matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
+  matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
   # visulization()
 end
 
@@ -253,7 +257,10 @@ if mode!="data"
   # global loss = sum((V - vobs)^2) + sum((StrainRate - strain_rate_obs)^2)
   global loss = sum((V - vobs)^2)
 
-  BFGS!(sess, loss*1e10, vars=[η])
+  cb = (vs, iter, loss) -> begin
+    printstyled("Estimated η = $(vs[1])\n", color=:green)
+  end
+  BFGS!(sess, loss*1e10, vars=[v_var]; callback = cb)
 end
 
 

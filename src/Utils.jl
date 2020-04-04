@@ -1,13 +1,30 @@
 export femidx, fvmidx, get_edge_normal,
-plot_u,bcnode,bcedge
-function femidx(i, m)
+plot_u,bcnode,bcedge, layer_model
+
+
+"""
+    femidx(d::Int64, m::Float64)
+
+Returns the FEM index of the dof `d`. Basically, `femidx` is the inverse of 
+```
+(i,j) → d = (j-1)*(m+1) + i
+```
+"""
+function femidx(i::Int64, m::Float64)
     ii = mod(i, m+1)
     ii = ii == 0 ? m+1 : ii 
     jj = div(i-1, m+1) + 1
     return ii, jj
 end
 
-function fvmidx(i, m)
+"""
+    fvmidx(d::Int64, m::Float64)
+
+Returns the FVM index of the dof `d`. Basically, `femidx` is the inverse of 
+```
+(i,j) → d = (j-1)*m + i
+"""
+function fvmidx(i::Int64, m::Float64)
     ii = mod(i, m)
     ii = ii == 0 ? m : ii 
     jj = div(i-1, m) + 1
@@ -22,6 +39,28 @@ function plot_u(u::Array{Float64}, m::Int64, n::Int64, h::Float64)
     V = reshape(u[(m+1)*(n+1)+1:end], m+1, n+1)'|>Array
     X, Y, U, V
 end
+
+@doc raw"""
+    layer_model(u::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+
+Convert the vertical profile of a quantity to a layer model. 
+The input `u` is a length $n$ vector, the output is a length $4mn$ vector, representing the $4mn$ Gauss points. 
+"""
+function layer_model(u::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    repeat(reshape(u, :, 1), 1, 4m)'[:]
+end
+
+
+@doc raw"""
+    layer_model(u::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differential kernel for [`layer_model`](@ref). 
+"""
+function layer_model(u::PyObject, m::Int64, n::Int64, h::Float64)
+    reshape(repeat(u, 1, 4m), (-1,))
+end
+
+
 """
     get_edge_normal(edge::Array{Int64,1}, m::Int64, n::Int64, h::Float64)   
 

@@ -40,23 +40,36 @@ eval_strain_on_gauss_pts
 eval_strain_on_gauss_pts1
 ```
 
+## Boundary Conditions
+```@docs
+fem_impose_Dirichlet_boundary_condition
+fem_impose_Dirichlet_boundary_condition1
+```
+
+
 ## Visualization 
 ```@docs
 visualize_pressure
 visualize_displacement
 visualize_stress
 visualize_von_mises_stress
+visualize_scalar_on_gauss_points
+```
+
+## Modeling Tools
+```@docs
+layer_model
+compute_vel
+compute_plane_strain_matrix
 ```
 
 ## Misc
 
 ```@docs
-fem_impose_Dirichlet_boundary_condition
-fem_impose_Dirichlet_boundary_condition1
 trim_coupled
-compute_elasticity_tangent
 coupled_impose_pressure
-compute_vel
 bcnode
 bcedge
+femidx
+fvmidx
 ```

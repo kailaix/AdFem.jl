@@ -25,7 +25,8 @@ fem_impose_coupled_Dirichlet_boundary_condition,
 eval_strain_on_gauss_pts,
 eval_stress_on_gauss_pts,
 compute_fvm_mass_matrix,
-compute_strain_energy_term
+compute_strain_energy_term,
+compute_plane_strain_matrix
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -670,11 +671,11 @@ function get_gauss_points(m, n, h)
 end
 
 """
-    compute_elasticity_tangent(E::Float64, ν::Float64)
+    compute_plane_strain_matrix(E::Float64, ν::Float64)
 
 Computes the elasticity matrix for 2D plane strain
 """
-function compute_elasticity_tangent(E::Float64, ν::Float64)
+function compute_plane_strain_matrix(E::Float64, ν::Float64)
     E*(1-ν)/(1+ν)/(1-2ν)*[
     1 ν/(1-ν) ν/(1-ν)
     ν/(1-ν) 1 ν/(1-ν)
