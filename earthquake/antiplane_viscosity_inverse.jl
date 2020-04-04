@@ -14,7 +14,8 @@ include("viscosity_accel/viscosity_accel.jl")
 ADCME.options.sparse.auto_reorder = false
 # simulation parameter setup
 n = 20
-NT = 100
+# NT = 400
+NT = 50
 ρ = 0.1 # design variable in α-schemes
 m = 5n 
 h = 1/n 
@@ -41,32 +42,38 @@ bdnode = bcnode("left  | lower | right", m, n, h)
 
 ηf = (x,y)->begin 
   if y<=0.25
-    return 10000.
+    return 2.
   else 
-    if mode == "data"
-      return 1.
-    else
-      return 0.5
-    end
+    # if mode == "data"
+    return 1.
+    # else
+    #   return 0.5
+    # end
   end
 end
 
+v_var0 = [2*constant(ones(5));constant(ones(n-5))]
 if mode == "data"
   η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
 else
   # η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
-  η_ = [10000. *ones(5); ones(15)]
-  global v_var = [constant(ones(5));Variable(2ones(n-5))]
+  # η_ = [10000. *ones(5); ones(15)]
+  η_ = ones(n)
+  # global v_var = [constant(ones(5));Variable(2ones(n-5))]
+  global v_var = Variable(1.5ones(n))
   η = v_var .* η_
   global η = layer_model(η, m, n, h)
+  # global η = placeholder(eval_f_on_gauss_pts(ηf, m, n, h)) 
 end 
+
+# pl = placeholder([1.0])
 
 
 μ = 0.001 * constant(ones(4m*n))
 
 
 # linear elasticity matrix 
-coef = 2μ*η/(η + μ*Δt)
+coef = 2μ*η/(η + μ*Δt) 
 mapH = c->begin 
   c * diagm(0=>ones(2))
 end
@@ -105,14 +112,6 @@ v0 = zeros((m+1)*(n+1))
 
 a0 = vector(idof, M[idof, idof]\((-K*db)[idof]), (m+1)*(n+1))
 
-
-function solver(A, rhs)
-  A, _ = fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)
-  rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
-  A\rhs
-end
-
-
 function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC}, 
   K::Union{SparseTensor, SparseMatrixCSC}, 
   d0::Union{Array{Float64, 1}, PyObject}, 
@@ -133,9 +132,10 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   d0, v0, a0, Δt = convert_to_tensor([d0, v0, a0, Δt], [Float64, Float64, Float64, Float64])
 
   Kterm = (1-αf)*K*β*Δt[1]^2
-  Kterm, _ = fem_impose_Dirichlet_boundary_condition1(Kterm, bdnode, m, n, h)
+  Kterm = fem_impose_Dirichlet_boundary_condition1(Kterm, bdnode, m, n, h)[1]
+
   A = (1-αm)*M + Kterm
-  A, _ = fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)
+  A =  fem_impose_Dirichlet_boundary_condition1(A, bdnode, m, n, h)[1]
 
   ii, jj, vv = find(Kterm)
   opp = push_matrices(A, Kterm)
@@ -150,17 +150,19 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
 
     σ_dt = (1-αf)*dt
     Σ = 2* repeat(μ.*η/(η+μ*σ_dt),1,2) .*εc - repeat(η/(η+μ*σ_dt), 1, 2) .* σc
-    Force = compute_strain_energy_term1(Σ, m, n, h)
+    Force = compute_strain_energy_term1(Σ, m, n, h) # ok 
 
     rhs = - (M*am + C*vf + K*df) + Force
     
-    rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))
+    rhs = scatter_update(rhs, bdnode, zeros(length(bdnode)))  # ok
 
     
     # @info "visco_solve"
-    visco_solve(rhs,vv,opp)
+    # op = tf.print(norm(visco_solve(rhs,vv,opp)-A\rhs))
+    # rhs = bind(rhs, op)
+    # visco_solve(rhs,vv,opp)
     # @info "A - rhs"
-    # A\rhs     
+    A\rhs
     # rhs
   end
 
@@ -198,7 +200,7 @@ function antiplane_visco_αscheme(M::Union{SparseTensor, SparseMatrixCSC},
   σM = write(σM, 1, σ0)
 
   i = constant(1, dtype=Int32)
-  _, d, v, a = while_loop(condition, body, [i,dM, vM, aM, σM])
+  _, d, v, a = while_loop(condition, body, [i,dM, vM, aM, σM], parallel_iterations=1)
   set_shape(stack(d), (nt+1, length(a0))), set_shape(stack(v), (nt+1, length(a0))), set_shape(stack(a), (nt+1, length(a0)))
 end
 
@@ -242,26 +244,59 @@ function visulization()
 end
 
 if mode == "data"
-  @time v_, strain_rate_ = run(sess, [vobs, strain_rate_obs]) 
-  matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_))
+  @time d_, v_, strain_rate_ = run(sess, [d, vobs, strain_rate_obs]) 
+  matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_, "D"=>d_[:, 1:m+1]))
   # visulization()
+  error("Stop manually")
+end
+
+cb = (vs, iter, loss)->begin 
+  # clf()
+  # vs = reshape(vs, )
+  if mod(iter, 10)==0
+    clf()
+    plot(vs[1])
+    savefig("figures/test$iter.png")
+  end
+  printstyled("[#iter $iter] eta = $(vs[1]), dist = $(vs[3])\n", color=:green)
 end
 
 if mode!="data"
   data = matread("viscoelasticity.mat")
-  global V, StrainRate = data["V"], data["strain_rate"]
+  global D, V, StrainRate =  data["D"], data["V"], data["strain_rate"]
   # U.set_shape((NT+1, size(U, 2)))
   # idx0 = 1:4m*n
   # Sigma = map(x->x[idx0,:], Sigma)
   # global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
   # global loss = sum((V - vobs)^2) + sum((StrainRate - strain_rate_obs)^2)
-  global loss = sum((V - vobs)^2)
+  # global loss = 1e10*sum((V - vobs)^2)
+  global loss = 1e10*sum((D - d[:, 1:m+1])^2)
+  global dist = norm(v_var - v_var0)
 
-  cb = (vs, iter, loss) -> begin
-    printstyled("Estimated η = $(vs[1])\n", color=:green)
-  end
-  BFGS!(sess, loss*1e10, vars=[v_var]; callback = cb)
+  # global loss = 1e10*sum(v)
+
+  global loss_ = BFGS!(sess, loss*1e10, vars=[v_var, η, dist], callback=cb)
 end
+
+# # η_ = [10000. *ones(5); ones(15)]
+# # v_var = [constant(ones(5));constant(2ones(n-5))]
+# # η0 = v_var .* η_
+# # η0 = layer_model(η0, m, n, h)
+
+# η_ = ones(n)
+# # global v_var = [constant(ones(5));Variable(2ones(n-5))]
+# global v_var = Variable(1.5ones(n))
+# η0 = v_var .* η_
+# global η0 = layer_model(η0, m, n, h)
+
+# sess = Session();init(sess)
+# @show run(sess, loss)
+
+# η0 = run(sess, η0)
+
+# lineview(sess, η, loss, eval_f_on_gauss_pts(ηf, m, n, h), η0)
+# # gradview(sess, η, loss, η0)
+# # gradview(sess, pl, loss, [1.0])
 
 
 # @info run(sess, loss)
