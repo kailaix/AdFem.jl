@@ -379,6 +379,7 @@ end
 Visualizes the scalar `u` using pcolormesh. Here `u` is a length $4mn$ vector and the values are defined on the Gauss points
 """
 function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+    close("all")
     z = zeros(2m, 2n)
     x = zeros(2m)
     y = zeros(2n)
@@ -415,6 +416,6 @@ function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int6
     ylabel("y")
     levels = LinRange(vmin, vmax, 10) |> Array
     c = contour(x, y, z', levels, cmap="jet", vmin=vmin, vmax=vmax)
-    # gca().invert_yaxis()
+    gca().invert_yaxis()
     return x, y, z 
 end
