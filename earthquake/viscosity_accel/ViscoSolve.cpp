@@ -25,7 +25,7 @@ void solve(double * out, const double * rhs, int d){
 void backward(double *grad_rhs, double *grad_vv, const double *grad_out, const double *out, int d){
   Eigen::Map<const Eigen::VectorXd> RHS(grad_out, d);
   Eigen::VectorXd g = solvert.solve(RHS);
-  for(int i=0;i<d;i++) grad_rhs[i] = 0.0;
+  // for(int i=0;i<d;i++) grad_rhs[i] = 0.0;
   for(int i=0;i<iiK.size();i++) grad_vv[i] = 0.0;
   for(int i=0;i<d;i++) grad_rhs[i] = g[i];
   for(int i=0;i<iiK.size();i++){
