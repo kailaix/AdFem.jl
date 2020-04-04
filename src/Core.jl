@@ -137,11 +137,12 @@ function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
     k = 0
     for i = 1:m
         for j = 1:n
+            idx = (j-1)*m + i 
             for p = 1:2
                 for q = 1:2
                     ξ = pts[p]; η = pts[q]
 
-                    k += 1
+                    k = (idx-1)*4 + 2*(q-1) + p
                     val1 = f1[k] * h^2 * 0.25
                     val2 = f2[k] * h^2 * 0.25
                     
@@ -175,13 +176,13 @@ Returns a $(m+1)\times (n+1)$ vector.
 """
 function compute_fem_source_term1(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
     rhs = zeros((m+1)*(n+1))
-    k = 0
     for i = 1:m
         for j = 1:n
+            idx = (j-1)*m + i 
             for p = 1:2
                 for q = 1:2
                     ξ = pts[p]; η = pts[q]
-                    k += 1
+                    k = (idx-1)*4 + 2*(q-1) + p
                     val1 = f[k] * h^2 * 0.25
                     rhs[(j-1)*(m+1) + i] += val1 * (1-ξ)*(1-η)
                     rhs[(j-1)*(m+1) + i+1] += val1 * ξ*(1-η)
@@ -776,13 +777,13 @@ function compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Flo
             Me[(p-1)*2+q,:,:] = A*A'*0.25*h^2
         end
     end
-    k = 0
     for i = 1:m
         for j = 1:n 
+            elem_idx = (j-1)*m + i 
             idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
             for p = 1:2
                 for q = 1:2
-                    k += 1
+                    k = (elem_idx-1)*4 + 2*(q-1) + p
                     ρ_ = ρ[k]
                     add(idx, idx, ρ_*Me[(p-1)*2+q,:,:])
                 end
