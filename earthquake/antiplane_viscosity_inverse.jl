@@ -12,6 +12,7 @@ using SpecialFunctions
 include("viscosity_accel/viscosity_accel.jl")
 
 ADCME.options.sparse.auto_reorder = false
+matplotlib.use("Agg")
 close("all")
 
 
@@ -249,7 +250,8 @@ if mode == "data"
 end
 
 cb = (vs, iter, loss)->begin 
-    if mod(iter, 10) == 0 || iter < 50
+    if mod(iter, 10) == 0 || iter < 10
+        # clf()
         # plot(vs[1])
         x_tmp, y_tmp, z_tmp = visualize_scalar_on_gauss_points(vs[2], m, n, h)
         clf()
