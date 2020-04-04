@@ -19,7 +19,7 @@ NT = 50
 ρ = 0.1 # design variable in α-schemes
 m = 5n 
 h = 1/n 
-Δt = 2500. /NT 
+Δt = 1000. /NT 
 
 mode = "inv"
 # mode = "inv" 
@@ -53,6 +53,8 @@ bdnode = bcnode("left  | lower | right", m, n, h)
 end
 
 v_var0 = [2*constant(ones(5));constant(ones(n-5))]
+# v_var0 = constant(ones(n))
+
 if mode == "data"
   η = constant(eval_f_on_gauss_pts(ηf, m, n, h))
 else
@@ -64,12 +66,18 @@ else
   η = v_var .* η_
   global η = layer_model(η, m, n, h)
   # global η = placeholder(eval_f_on_gauss_pts(ηf, m, n, h)) 
+  # global v_var = Variable(2.0)*ones(n)
+  # η = v_var
+  # global η = layer_model(η, m, n, h)
 end 
 
 # pl = placeholder([1.0])
 
 
 μ = 0.001 * constant(ones(4m*n))
+
+# μ_ = Variable(2.0)
+# μ = μ_ * 0.001 * constant(ones(4m*n))
 
 
 # linear elasticity matrix 
@@ -247,7 +255,7 @@ if mode == "data"
   @time d_, v_, strain_rate_ = run(sess, [d, vobs, strain_rate_obs]) 
   matwrite("viscoelasticity.mat", Dict("V"=>v_, "strain_rate"=>strain_rate_, "D"=>d_[:, 1:m+1]))
   # visulization()
-  error("Stop manually")
+  # error("Stop manually")
 end
 
 cb = (vs, iter, loss)->begin 
@@ -303,24 +311,24 @@ end
 # @time run(sess, loss)
 # BFGS!(sess, loss*1e10, vars=[η])
 
+d_, v_, a_ = run(sess, [d, v, a])
 
 
-
-# # pcolormesh(reshape(d_[end,:], m+1, n+1)')
-# figure()
-# pl, = plot([], [], "o-", markersize = 3)
-# t = title("0")
-# xi = (0:m)*h 
-# xlim(-h, (m+1)*h)
-# xlabel("Distance")
-# ylim(-0.1, 1.1)
-# ylabel("Displacement")
-# tight_layout()
-# function update(i)
-#   pl.set_data(xi[:], d_[i,1:m+1])
-#   t.set_text("time = $(i*Δt[1])")
-# end
-# p = animate(update, [1:1:20;25:5:NT+1])
+# pcolormesh(reshape(d_[end,:], m+1, n+1)')
+figure()
+pl, = plot([], [], "o-", markersize = 3)
+t = title("0")
+xi = (0:m)*h 
+xlim(-h, (m+1)*h)
+xlabel("Distance")
+ylim(-0.1, 1.1)
+ylabel("Displacement")
+tight_layout()
+function update(i)
+  pl.set_data(xi[:], d_[i,1:m+1])
+  t.set_text("time = $(i*Δt[1])")
+end
+p = animate(update, [1:1:20;25:5:NT+1])
 # saveanim(p, "displacement.gif")
 
 # figure()
