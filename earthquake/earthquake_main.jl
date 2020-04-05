@@ -3,8 +3,8 @@ using MAT
 using PyPlot
 using ADCMEKit
 
-## Load inital state from outside simulation
-meta = matopen("data.mat")
+## Load inital state from outside simulation Scycle
+meta = matopen("data-scycle.mat")
 data = read(meta, "d")
 time = data["time"]
 tau = data["tauP"]
