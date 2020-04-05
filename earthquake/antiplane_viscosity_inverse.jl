@@ -18,15 +18,15 @@ close("all")
 
 # simulation parameter setup
 n = 20
-NT = 100
+NT = 300
 ρ = 0.1 # design variable in α-schemes
-m = 5n 
+m = 4n 
 h = 1 / n 
-Δt = 1000. / NT 
+Δt = 3000. / NT 
 density = 100.
 
-mode = "inv"
-# mode = "inv" 
+# mode = "data"
+mode = "inv" 
 
 # coordinates
 xo = zeros((m + 1) * (n + 1))
@@ -63,12 +63,24 @@ if mode == "data"
 else
   
   ### 2D inversion
-    η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
+    # η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
 
   ### 1D layer inversion
     η_ = [10000. * ones(5); ones(15)]
     global v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
     η = v_var .* η_
+
+    ## invert log η
+    # v_var = Variable(log(2.5) * ones(n))
+    # η = exp(v_var)
+
+    ## inv 1/η
+    # η_ = [10000. * ones(5); ones(15)]
+    # global v_var = [constant(ones(5)); Variable(1. / 2.5 * ones(n - 5))]
+    # η = 1/v_var .* η_
+
+    # v_var = Variable(2.5 * ones(n))
+    # η = v_var
     global η = layer_model(η, m, n, h)
 
   ### uniform model inversion
@@ -155,6 +167,8 @@ function antiplane_visco_αscheme(M::Union{SparseTensor,SparseMatrixCSC},
   # for visco_solve
   # ii, jj, vv = find(Kterm)
   # opp = push_matrices(A, Kterm)
+    
+    A = factorize(A)
 
     function equ(dc, vc, ac, dt, εc, σc, i)
         dn = dc + dt * vc + dt^2 / 2 * (1 - 2β) * ac 
@@ -231,7 +245,7 @@ function observation(d, v)
     idx = 2:m 
     idx_plus = idx .+ 1
     idx_minus = idx .- 1
-    idx_t = div(NT, 3):NT + 1
+    idx_t = div(NT, 9):NT + 1
     dobs = d[idx_t, idx]
     vobs = v[idx_t, idx]
     strain_rate_obs = (v[idx_t, idx_plus] - v[idx_t, idx_minus]) / 2h 
@@ -327,7 +341,7 @@ function update(i)
     pl.set_data(xi[:], d_[i,1:m + 1])
     t.set_text("time = $(i * Δt[1])")
 end
-p = animate(update, [NT÷3:NT+1;])
+p = animate(update, [NT÷9:NT+1;])
 # p = animate(update, [NT÷2:5:NT+1])
 # saveanim(p, "displacement.gif")
 
