@@ -12,21 +12,21 @@ using SpecialFunctions
 include("viscosity_accel/viscosity_accel.jl")
 
 ADCME.options.sparse.auto_reorder = false
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 close("all")
 
 
 # simulation parameter setup
 n = 20
-NT = 100
+NT = 300
 ρ = 0.1 # design variable in α-schemes
-m = 5n 
+m = 4n 
 h = 1 / n 
-Δt = 1000. / NT 
+Δt = 3000. / NT 
 density = 100.
 
-mode = "inv"
-# mode = "inv" 
+# mode = "data"
+mode = "inv" 
 
 # coordinates
 xo = zeros((m + 1) * (n + 1))
@@ -40,7 +40,7 @@ for i = 1:m + 1
 end
 
 # Dirichlet boundary condition on three sides, and Neumann boundary condition (traction-free) on the top
-bdnode = bcnode("left  | lower | right", m, n, h)
+bdnode = bcnode("left | lower | right", m, n, h)
 
 # viscoelasticity η and shear modulus μ
 ηf = (x, y)->begin 
@@ -63,12 +63,24 @@ if mode == "data"
 else
   
   ### 2D inversion
-    η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
+    # η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
 
   ### 1D layer inversion
     η_ = [10000. * ones(5); ones(15)]
     global v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
     η = v_var .* η_
+
+    ## invert log η
+    # v_var = Variable(log(2.5) * ones(n))
+    # η = exp(v_var)
+
+    ## inv 1/η
+    # η_ = [10000. * ones(5); ones(15)]
+    # global v_var = [constant(ones(5)); Variable(1. / 2.5 * ones(n - 5))]
+    # η = 1/v_var .* η_
+
+    # v_var = Variable(2.5 * ones(n))
+    # η = v_var
     global η = layer_model(η, m, n, h)
 
   ### uniform model inversion
@@ -155,6 +167,8 @@ function antiplane_visco_αscheme(M::Union{SparseTensor,SparseMatrixCSC},
   # for visco_solve
   # ii, jj, vv = find(Kterm)
   # opp = push_matrices(A, Kterm)
+    
+    A = factorize(A)
 
     function equ(dc, vc, ac, dt, εc, σc, i)
         dn = dc + dt * vc + dt^2 / 2 * (1 - 2β) * ac 
@@ -231,7 +245,7 @@ function observation(d, v)
     idx = 2:m 
     idx_plus = idx .+ 1
     idx_minus = idx .- 1
-    idx_t = div(NT, 3):NT + 1
+    idx_t = div(NT, 9):NT + 1
     dobs = d[idx_t, idx]
     vobs = v[idx_t, idx]
     strain_rate_obs = (v[idx_t, idx_plus] - v[idx_t, idx_minus]) / 2h 
@@ -244,7 +258,7 @@ sess = Session(); init(sess)
 
 if mode == "data"
     @time disp, vel, strain_rate = run(sess, [dobs, vobs, strain_rate_obs]) 
-    matwrite("viscoelasticity.mat", Dict("vel" => vel, "strain_rate" => strain_rate, "disp" => disp))
+    matwrite("data-visc.mat", Dict("vel" => vel, "strain_rate" => strain_rate, "disp" => disp))
     # visulization()
     @info "Data Generated."
 end
@@ -262,22 +276,24 @@ cb = (vs, iter, loss)->begin
         ylabel("y")
         gca().invert_yaxis()
         title("Iter = $iter")
-        savefig("figures/inv_$iter.png", bbox_size="tight")
+        savefig("figures/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
+        matwrite("results/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
     end
     printstyled("[#iter $iter] eta = $(vs[1])\n", color = :green)
 end
 
 if mode != "data"
-    data = matread("viscoelasticity.mat")
+    data = matread("data-visc.mat")
     global disp, vel, strain_rate =  data["disp"], data["vel"], data["strain_rate"]
-    # global loss = 1e10 * sum((vel - vobs)^2)
-    global loss = 1e10 * sum((disp - dobs)^2)
+    global loss = 1e10 * sum((vel - vobs)^2)
+    # global loss = 1e10 * sum((disp - dobs)^2)
+    @info run(sess, loss)
     global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb, var_to_bounds=Dict(v_var=>(0., 5.0)))
 end
 
 ## DEBUG
-# η_ = [10000. *ones(5); ones(15)]
-# v_var = [constant(ones(5)); constant(ones(n-5))]
+# η_ = [10000. * ones(5); ones(15)]
+# v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
 # η0 = v_var .* η_
 # η0 = layer_model(η0, m, n, h)
 # sess = Session();init(sess)
@@ -287,10 +303,7 @@ end
 # gradview(sess, η, loss, η0)
 # gradview(sess, pl, loss, [1.0])
 
-# @info run(sess, loss)
 # @time run(sess, loss)
-# BFGS!(sess, loss*1e10, vars=[η])
-
 
 ## plot model
 
@@ -326,7 +339,7 @@ function update(i)
     pl.set_data(xi[:], d_[i,1:m + 1])
     t.set_text("time = $(i * Δt[1])")
 end
-p = animate(update, [NT÷3:NT+1;])
+p = animate(update, [NT÷9:NT+1;])
 # p = animate(update, [NT÷2:5:NT+1])
 # saveanim(p, "displacement.gif")
 
