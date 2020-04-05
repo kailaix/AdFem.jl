@@ -12,7 +12,7 @@ using SpecialFunctions
 include("viscosity_accel/viscosity_accel.jl")
 
 ADCME.options.sparse.auto_reorder = false
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 close("all")
 
 
@@ -20,13 +20,13 @@ close("all")
 n = 20
 NT = 100
 ρ = 0.1 # design variable in α-schemes
-m = 5n 
+m = 4n 
 h = 1 / n 
 Δt = 1000. / NT 
 density = 100.
 
-mode = "inv"
-# mode = "inv" 
+# mode = "data"
+mode = "inv" 
 
 # coordinates
 xo = zeros((m + 1) * (n + 1))
@@ -69,6 +69,18 @@ else
     η_ = [10000. * ones(5); ones(15)]
     global v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
     η = v_var .* η_
+
+    ## invert log η
+    # v_var = Variable(log(2.5) * ones(n))
+    # η = exp(v_var)
+
+    ## inv 1/η
+    # η_ = [10000. * ones(5); ones(15)]
+    # global v_var = [constant(ones(5)); Variable(1. / 2.5 * ones(n - 5))]
+    # η = 1/v_var .* η_
+
+    # v_var = Variable(2.5 * ones(n))
+    # η = v_var
     global η = layer_model(η, m, n, h)
 
   ### uniform model inversion
@@ -244,13 +256,13 @@ sess = Session(); init(sess)
 
 if mode == "data"
     @time disp, vel, strain_rate = run(sess, [dobs, vobs, strain_rate_obs]) 
-    matwrite("viscoelasticity.mat", Dict("vel" => vel, "strain_rate" => strain_rate, "disp" => disp))
+    matwrite("data-visc.mat", Dict("vel" => vel, "strain_rate" => strain_rate, "disp" => disp))
     # visulization()
     @info "Data Generated."
 end
 
 cb = (vs, iter, loss)->begin 
-    if mod(iter, 10) == 0 
+    if mod(iter, 10) == 0 || iter < 10
         # clf()
         # plot(vs[1])
         x_tmp, y_tmp, z_tmp = visualize_scalar_on_gauss_points(vs[2], m, n, h)
@@ -269,16 +281,17 @@ cb = (vs, iter, loss)->begin
 end
 
 if mode != "data"
-    data = matread("viscoelasticity.mat")
+    data = matread("data-visc.mat")
     global disp, vel, strain_rate =  data["disp"], data["vel"], data["strain_rate"]
     global loss = 1e10 * sum((vel - vobs)^2)
     # global loss = 1e10 * sum((disp - dobs)^2)
+    @info run(sess, loss)
     global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb, var_to_bounds=Dict(v_var=>(0., 5.0)))
 end
 
 ## DEBUG
-# η_ = [10000. *ones(5); ones(15)]
-# v_var = [constant(ones(5)); constant(ones(n-5))]
+# η_ = [10000. * ones(5); ones(15)]
+# v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
 # η0 = v_var .* η_
 # η0 = layer_model(η0, m, n, h)
 # sess = Session();init(sess)
@@ -288,10 +301,7 @@ end
 # gradview(sess, η, loss, η0)
 # gradview(sess, pl, loss, [1.0])
 
-# @info run(sess, loss)
 # @time run(sess, loss)
-# BFGS!(sess, loss*1e10, vars=[η])
-
 
 ## plot model
 
