@@ -3,7 +3,7 @@ using MAT
 using PyPlot
 using ADCMEKit
 
-## debug
+## Load inital state from outside simulation
 meta = matopen("data.mat")
 data = read(meta, "d")
 time = data["time"]
@@ -18,6 +18,8 @@ ny = 51
 # eq_ind = collect(1:nt)[(v[1,:] .> 1e-1)[:]]
 eq_ind = collect(190:200)
 
+
+## model setup
 m = 50
 n = 50
 h = 0.1
@@ -29,8 +31,11 @@ ind = [right;left]
 μ = 30
 VPL = 1e-9 # plat loading velocity
 f0 = 0.6
-Ψ0 = ones(n+1) * 1.01 * f0
 
+# Initial data 
+V0 = v[:, eq_ind[1]]
+Ψ0 = psi[:, eq_ind[1]]
+# Ψ0 = ones(n+1) * 1.01 * f0
 
 η = constant(4.7434)
 a = constant(ones(n+1) * 0.01)
@@ -58,13 +63,11 @@ end
 # σn = RangeVariable(0.0, 2.0, n+1) * 30
 # bd_left0 = RangeVariable(0.0, 2.0, n+1) * 0.3
 
-
 # pl = placeholder(ones(1))
-Δt = time[eq_ind[2:end]] - time[eq_ind[1:end-1]]
-fix_Δt = 0.01
-t = collect(0:fix_Δt:time[eq_ind[end]]-time[eq_ind[1]])
+Δt = 0.01
+t = collect(0:Δt:time[eq_ind[end]]-time[eq_ind[1]])
 NT = length(t)
-Δt = constant(ones(NT) .* fix_Δt)
+Δt = constant(ones(NT) .* Δt)
 
 # @show NT
 # NT = 5
@@ -84,15 +87,13 @@ K_[ind, :] .= 0.0
 K_[ind, ind] = spdiagm(0=>ones(length(ind)))
 K_ = dropzeros(K_)
 
-
-## debug
+## DEBUG
 # u_bd = zeros(NT+1, n+1)
 # for i = 1:NT+1
 #     u_bd[i, :] = (i-1)*fix_Δt*VPL .+ bd_right[:, eq_ind[1]]
 #     # u_bd[i, :] = bd_right[:, eq_ind[i]]
 # end
 # u_bd = constant(u_bd)
-
 
 σzx_id = Int64[]
 for i = 1:n 
@@ -101,10 +102,6 @@ for i = 1:n
 end
 push!(σzx_id, σzx_id[end]+2)
 
-
-# initial data 
-V0 = v[:, eq_ind[1]]
-Ψ0 = psi[:, eq_ind[1]]
 sess = Session(); 
 
 # u0 = vector([left; right], [bd_left[:,eq_ind[1]]; bd_right[:,eq_ind[1]]], (m+1)*(n+1))

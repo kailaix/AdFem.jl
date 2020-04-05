@@ -40,7 +40,7 @@ for i = 1:m + 1
 end
 
 # Dirichlet boundary condition on three sides, and Neumann boundary condition (traction-free) on the top
-bdnode = bcnode("left  | lower | right", m, n, h)
+bdnode = bcnode("left | lower | right", m, n, h)
 
 # viscoelasticity η and shear modulus μ
 ηf = (x, y)->begin 
@@ -250,7 +250,7 @@ if mode == "data"
 end
 
 cb = (vs, iter, loss)->begin 
-    if mod(iter, 10) == 0 || iter < 10
+    if mod(iter, 10) == 0 
         # clf()
         # plot(vs[1])
         x_tmp, y_tmp, z_tmp = visualize_scalar_on_gauss_points(vs[2], m, n, h)
@@ -262,7 +262,8 @@ cb = (vs, iter, loss)->begin
         ylabel("y")
         gca().invert_yaxis()
         title("Iter = $iter")
-        savefig("figures/inv_$iter.png", bbox_size="tight")
+        savefig("figures/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
+        matwrite("results/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
     end
     printstyled("[#iter $iter] eta = $(vs[1])\n", color = :green)
 end
@@ -270,8 +271,8 @@ end
 if mode != "data"
     data = matread("viscoelasticity.mat")
     global disp, vel, strain_rate =  data["disp"], data["vel"], data["strain_rate"]
-    # global loss = 1e10 * sum((vel - vobs)^2)
-    global loss = 1e10 * sum((disp - dobs)^2)
+    global loss = 1e10 * sum((vel - vobs)^2)
+    # global loss = 1e10 * sum((disp - dobs)^2)
     global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb, var_to_bounds=Dict(v_var=>(0., 5.0)))
 end
 
