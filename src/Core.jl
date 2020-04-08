@@ -10,6 +10,7 @@ compute_fvm_tpfa_matrix,
 trim_coupled,
 compute_elasticity_tangent,
 compute_fem_traction_term,
+compute_fem_traction_term1,
 compute_fem_normal_traction_term,
 coupled_impose_pressure,
 compute_von_mises_stress_term,
@@ -548,6 +549,35 @@ function compute_fem_traction_term(t::Array{Float64, 2},
     end
     rhs
 end
+
+
+
+@doc raw"""
+    compute_fem_traction_term1(t::Array{Float64, 2},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+
+Computes the traction term 
+```math
+\int_{\Gamma} t(n) \delta u \mathrm{d}
+```
+
+The number of rows of `t` is equal to the number of edges in `bdedge`. 
+The output is a length $(m+1)*(n+1)$ vector. 
+
+Also see [`compute_fem_traction_term`](@ref). 
+"""
+function compute_fem_traction_term1(t::Array{Float64, 1},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+    @assert length(t)==size(bdedge,1)
+    rhs = zeros((m+1)*(n+1))
+    for k = 1:size(bdedge, 1)
+        ii, jj = bdedge[k,:]
+        rhs[ii] += t[k,1]*0.5*h 
+        rhs[jj] += t[k,1]*0.5*h
+    end
+    rhs
+end
+
 
 @doc raw"""
     compute_fem_flux_term1(t::Array{Float64},

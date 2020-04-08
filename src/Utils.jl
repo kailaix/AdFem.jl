@@ -3,14 +3,14 @@ plot_u,bcnode,bcedge, layer_model
 
 
 """
-    femidx(d::Int64, m::Float64)
+    femidx(d::Int64, m::Int64)
 
 Returns the FEM index of the dof `d`. Basically, `femidx` is the inverse of 
 ```
 (i,j) → d = (j-1)*(m+1) + i
 ```
 """
-function femidx(i::Int64, m::Float64)
+function femidx(i::Int64, m::Int64)
     ii = mod(i, m+1)
     ii = ii == 0 ? m+1 : ii 
     jj = div(i-1, m+1) + 1
@@ -18,13 +18,13 @@ function femidx(i::Int64, m::Float64)
 end
 
 """
-    fvmidx(d::Int64, m::Float64)
+    fvmidx(d::Int64, m::Int64)
 
 Returns the FVM index of the dof `d`. Basically, `femidx` is the inverse of 
 ```
 (i,j) → d = (j-1)*m + i
 """
-function fvmidx(i::Int64, m::Float64)
+function fvmidx(i::Int64, m::Int64)
     ii = mod(i, m)
     ii = ii == 0 ? m : ii 
     jj = div(i-1, m) + 1
