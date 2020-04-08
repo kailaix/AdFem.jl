@@ -22,8 +22,36 @@ H = zeros(4*m*n, 2, 2)
 for i = 1:4*m*n 
     H[i,:,:] = mu[i] * diagm(0=>ones(2))
 end
-
 type = 1
+u = spatial_varying_tangent_elastic(mu,m,n,h,type)
+sess = Session(); init(sess)
+# @show run(sess, u)-H
+
+
+m = 10
+n = 5
+h = 0.1
+mu = [rand(4*m*n); rand(4*m*n)]
+H = zeros(4*m*n, 2, 2)
+
+for i = 1:4*m*n 
+    H[i,:,:] = [mu[i] 0.0; 0.0 mu[i+4*m*n]]
+end
+type = 2
+u = spatial_varying_tangent_elastic(mu,m,n,h,type)
+sess = Session(); init(sess)
+@show run(sess, u)-H
+
+m = 10
+n = 5
+h = 0.1
+mu = rand(4*m*n*3)
+H = zeros(4*m*n, 2, 2)
+
+for i = 1:4*m*n 
+    H[i,:,:] = [mu[i] mu[i+8*m*n]; mu[i+8*m*n] mu[i+4*m*n]]
+end
+type = 3
 u = spatial_varying_tangent_elastic(mu,m,n,h,type)
 sess = Session(); init(sess)
 @show run(sess, u)-H
@@ -40,8 +68,8 @@ function scalar_function(m_)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(4*m*n))
-v_ = rand(4*m*n)
+m_ = constant(rand(4*m*n*3))
+v_ = rand(4*m*n*3)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)

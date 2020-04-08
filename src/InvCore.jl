@@ -180,7 +180,15 @@ Computes the space varying tangent elasticity matrix given $\mu$. It returns a m
 
 * If `type==1`, the $i$-th matrix will be 
 
-$$\begin{bmatrix}\mu_i & 0 \\ \mu_i & 0\end{bmatrix}$$
+$$\begin{bmatrix}\mu_i & 0 \\ 0 & \mu_i \end{bmatrix}$$
+
+* If `type==2`, the $i$-th matrix will be 
+
+$$\begin{bmatrix}\mu_i & 0 \\ 0 & \mu_{i+4mn} \end{bmatrix}$$
+
+* If `type==3`, the $i$-th matrix will be 
+
+$$\begin{bmatrix}\mu_i & \mu_{i+8mn} \\ \mu_{i+8mn} & \mu_{i+4mn}\end{bmatrix}$$
 """
 function compute_space_varying_tangent_elasticity_matrix(mu::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64,type::Int64=1)
     spatial_varying_tangent_elastic_ = load_op_and_grad("$(@__DIR__)/../deps/SpatialVaryingTangentElastic/build/libSpatialVaryingTangentElastic","spatial_varying_tangent_elastic")
