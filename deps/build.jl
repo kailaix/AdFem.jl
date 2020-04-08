@@ -28,3 +28,5 @@ compile("$(@__DIR__)/StrainEnergy1")
 compile("$(@__DIR__)/SpatialFemStiffness")
 compile("$(@__DIR__)/ComputeVel")
 compile("$(@__DIR__)/VolumetricStrain")
+compile("$(@__DIR__)/SpatialVaryingTangentElastic")
+

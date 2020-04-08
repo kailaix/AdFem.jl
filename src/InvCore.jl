@@ -1,4 +1,4 @@
-export compute_strain_energy_term1
+export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBD/build/libDirichletBd", "dirichlet_bd", multiple=true)
@@ -171,4 +171,20 @@ function compute_vel(a::Union{PyObject, Array{Float64, 1}},
     compute_vel_ = load_op_and_grad("$(@__DIR__)/../deps/ComputeVel/build/libComputeVel","compute_vel")
     a,v0,psi,sigma,tau,eta = convert_to_tensor([a,v0,psi,sigma,tau,eta], [Float64,Float64,Float64,Float64,Float64,Float64])
     compute_vel_(a,v0,psi,sigma,tau,eta)
+end
+
+@doc raw"""
+    compute_space_varying_tangent_elasticity_matrix(mu::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64,type::Int64=1)
+
+Computes the space varying tangent elasticity matrix given $\mu$. It returns a matrix of size $4mn\times 2\times 2$
+
+* If `type==1`, the $i$-th matrix will be 
+
+$$\begin{bmatrix}\mu_i & 0 \\ \mu_i & 0\end{bmatrix}$$
+"""
+function compute_space_varying_tangent_elasticity_matrix(mu::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64,type::Int64=1)
+    spatial_varying_tangent_elastic_ = load_op_and_grad("$(@__DIR__)/../deps/SpatialVaryingTangentElastic/build/libSpatialVaryingTangentElastic","spatial_varying_tangent_elastic")
+    mu,m_,n_,h,type = convert_to_tensor([mu,m,n,h,type], [Float64,Int64,Int64,Float64,Int64])
+    H = spatial_varying_tangent_elastic_(mu,m_,n_,h,type)
+    set_shape(H, (4*m*n, 2, 2))
 end
