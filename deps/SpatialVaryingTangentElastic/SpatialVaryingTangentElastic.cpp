@@ -112,7 +112,15 @@ public:
     // implement your forward function here 
 
     // TODO:
-    forward(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    if (*type_tensor==1){
+      forward(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    }
+    else if(*type_tensor==2){
+      forward2(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    }
+    else if (*type_tensor==3){
+      forward3(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    }
 
   }
 };
@@ -197,9 +205,21 @@ public:
 
     // TODO:
 
-    backward(
-      grad_mu_tensor, grad_hmat_tensor, 
-      hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    if (*type_tensor==1){
+      backward(
+        grad_mu_tensor, grad_hmat_tensor, 
+        hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    }
+    else if (*type_tensor==2){
+      backward2(
+        grad_mu_tensor, grad_hmat_tensor, 
+        hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    }
+    else if(*type_tensor==3){
+      backward3(
+        grad_mu_tensor, grad_hmat_tensor, 
+        hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+    }
     
   }
 };
