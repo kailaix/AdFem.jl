@@ -11,6 +11,75 @@ using PyPlot
 using SpecialFunctions
 include("viscosity_accel/viscosity_accel.jl")
 
+
+using PyCall
+using Ipopt
+using ADCME
+
+
+# function IPOPT!(sess::PyObject, loss::PyObject, max_iter::Int64=15000; 
+#             verbose::Int64=0, vars::Array{PyObject}=PyObject[], 
+#                     callback::Union{Function, Nothing}=nothing, kwargs...)
+#     losses = Float64[]
+#     loss_ = 0
+#     cnt_ = -1
+#     iter_ = 0
+#     IPOPT = CustomOptimizer() do f, df, c, dc, x0, x_L, x_U
+#         n_variables = length(x0)
+#         nz = length(dc(x0)) 
+#         m = div(nz, n_variables) # Number of constraints
+#         # g_L, g_U = [-Inf;-Inf], [0.0;0.0]
+#         g_L = Float64[]
+#         g_U = Float64[]
+#         function eval_jac_g(x, mode, rows, cols, values); end
+#         function eval_f(x)
+#           loss_ = f(x)
+#           iter_ += 1
+#           if iter_==1
+#             push!(losses, loss_)
+#             if !isnothing(callback)
+#                 callback(run(sess, vars), cnt_, loss_)
+#             end
+#           end
+#           println("iter $iter_, current loss= $loss_")
+#           return loss_
+#         end
+
+#         function eval_g(x, g)
+#           if cnt_>=1
+#             push!(losses, loss_)
+#             if !isnothing(callback)
+#                 callback(run(sess, vars), cnt_, loss_)
+#             end
+#           end
+#           cnt_ += 1
+#           if cnt_>=1
+#             println("================ ITER $cnt_ ===============")
+#           end
+#           g[:]=df(x)
+#         end
+      
+#         nele_jac = 0 # Number of non-zeros in Jacobian
+#         prob = Ipopt.createProblem(n_variables, x_L, x_U, m, g_L, g_U, nz, nele_jac,
+#                 eval_f, (x,g)->(), eval_g, eval_jac_g, nothing)
+#         addOption(prob, "hessian_approximation", "limited-memory")
+#         addOption(prob, "max_iter", max_iter)
+#         addOption(prob, "print_level", verbose) # 0 -- 15, the larger the number, the more detailed the information
+
+#         prob.x = x0
+#         status = Ipopt.solveProblem(prob)
+#         if status == 0
+#           printstyled(Ipopt.ApplicationReturnStatus[status],"\n", color=:green)
+#         else 
+#           printstyled(Ipopt.ApplicationReturnStatus[status],"\n", color=:red)
+#         end
+#         prob.x
+#     end
+#     opt = IPOPT(loss; kwargs...)
+#     minimize(opt, sess)
+#     return losses
+# end
+
 ADCME.options.sparse.auto_reorder = false
 # matplotlib.use("Agg")
 close("all")
@@ -18,11 +87,11 @@ close("all")
 
 # simulation parameter setup
 n = 20
-NT = 10
+NT = 100
 ρ = 0.1 # design variable in α-schemes
 m = 4n 
 h = 1 / n 
-Δt = 100. / NT 
+Δt = 4000. / NT 
 density = 100.
 
 # mode = "data"
@@ -46,13 +115,13 @@ bdnode = bcnode("right", m, n, h)
 # viscoelasticity η and shear modulus μ
 ηf = (x, y)->begin 
     if y <= 0.25
-        return 1000.
+        return 3
     elseif y <= 0.45
-        return 4.
+        return 3
     elseif y <= 0.65
         return 3
     elseif y <= 0.85
-        return 2
+        return 1
     else 
       return 1
     end
@@ -67,9 +136,9 @@ else
     η = Variable(eval_f_on_gauss_pts(ηf, m, n, h))
 
   ### 1D layer inversion
-    η_ = [10000. * ones(5); ones(15)]
-    global v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
-    η = v_var .* η_
+    # η_ = [10000. * ones(5); ones(15)]
+    # global v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
+    # η = v_var .* η_
 
     ## invert log η
     # v_var = Variable(log(2.5) * ones(n))
@@ -80,8 +149,13 @@ else
     # global v_var = [constant(ones(5)); Variable(1. / 2.5 * ones(n - 5))]
     # η = 1/v_var .* η_
 
-    # v_var = Variable(2.5 * ones(n))
-    # η = v_var
+    v_var = Variable(2.5 * ones(n))
+
+    # v_var = Variable([ones(5)*5.; ones(4)*4.; ones(4)*3.; ones(4)*2; ones(3)*1.1])
+
+    # v_var = Variable(LinRange(5.5, 0.5, n)|>Array)
+
+    η = v_var
     global η = layer_model(η, m, n, h)
 
   ### uniform model inversion
@@ -97,7 +171,7 @@ end
 ## DEBUG
 # pl = placeholder([1.0])
 
-μ = 0.001 * constant(ones(4m * n))
+μ = 0.00001 * constant(ones(4m * n))
 
 ### uniform model inversion
 # μ_ = Variable(2.0)
@@ -105,10 +179,11 @@ end
 
 # linear elasticity matrix 
 coef = 2μ * η / (η + μ * Δt) 
-mapH = c->begin 
-    c * diagm(0 => ones(2))
-end
-H = map(mapH, coef)
+# mapH = c->begin 
+#     c * diagm(0 => ones(2))
+# end
+# H = map(mapH, coef)
+H = compute_space_varying_tangent_elasticity_matrix(coef, m, n, h)
 
 Δt = Δt * ones(NT)
 
@@ -117,7 +192,7 @@ M = density * constant(compute_fem_mass_matrix1(m, n, h))
 K = compute_fem_stiffness_matrix1(H, m, n, h)
 C = spzero((m + 1) * (n + 1))
 
-C = 0.1 * M + 0.1 * K 
+# C = 0.1 * M + 0.1 * K 
 
 # fixed displacement 
 db = zeros((m + 1) * (n + 1))
@@ -252,13 +327,15 @@ d, v, a = antiplane_visco_αscheme(M, K, d0, v0, a0, Forces, Δt, ρ = ρ)
 # d, v, a = αscheme(M, C, K, zeros(NT, (m+1)*(n+1)), d0, v0, a0, Δt; solve = solver)
 
 function observation(d, v)
-    idx = 2:m 
-    idx_plus = idx .+ 1
-    idx_minus = idx .- 1
+    idx = 1:m+1
+    # idx = 1:(m+1)*(n+1)
+    # idx_plus = idx .+ 1
+    # idx_minus = idx .- 1
     idx_t = 1:NT + 1
     dobs = d[idx_t, idx]
     vobs = v[idx_t, idx]
-    strain_rate_obs = (v[idx_t, idx_plus] - v[idx_t, idx_minus]) / 2h 
+    # strain_rate_obs = (v[idx_t, idx_plus] - v[idx_t, idx_minus]) / 2h 
+    strain_rate_obs = constant(zeros(1))
     return dobs, vobs, strain_rate_obs
 end
 
@@ -295,10 +372,11 @@ end
 if mode != "data"
     data = matread("data-visc.mat")
     global disp, vel, strain_rate =  data["disp"], data["vel"], data["strain_rate"]
-    global loss = 1e10 * sum((vel - vobs)^2)
-    # global loss = 1e10 * sum((disp - dobs)^2)
+    # global loss = 1e10 * sum((vel - vobs)^2)
+    # global loss = sum((disp, d))
+    global loss = 1e10 * sum((disp - dobs)^2)
     @info run(sess, loss)
-    global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb)
+    global loss_ = BFGS!(sess, loss, vars = [v_var, η], callback = cb)
 end
 
 ## DEBUG
@@ -342,7 +420,7 @@ t = title("0")
 xi = (0:m) * h 
 xlim(-h, (m + 1) * h)
 xlabel("Distance")
-ylim(-0.1, 1.1)
+ylim(-0.1, 100.1)
 ylabel("Displacement")
 tight_layout()
 function update(i)

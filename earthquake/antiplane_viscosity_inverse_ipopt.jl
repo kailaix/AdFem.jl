@@ -3,6 +3,7 @@ using PoreFlow
 using PyCall
 using LinearAlgebra
 using PyPlot
+using Ipopt
 using SparseArrays
 using MAT
 using ADCMEKit
@@ -40,14 +41,18 @@ for i = 1:m + 1
 end
 
 # Dirichlet boundary condition on three sides, and Neumann boundary condition (traction-free) on the top
-bdnode = bcnode("left | lower | right", m, n, h)
+bdnode = bcnode("left | low | right", m, n, h)
 
 # viscoelasticity η and shear modulus μ
 ηf = (x, y)->begin 
     if y <= 0.25
         return 100.
-    elseif y <= 0.6
-        return 2.
+    elseif y <= 0.45
+        return 4.
+    elseif y <= 0.65
+        return 3
+    elseif y <= 0.85
+        return 2
     else 
       return 1
     end
@@ -101,11 +106,10 @@ end
 
 # linear elasticity matrix 
 coef = 2μ * η / (η + μ * Δt) 
-# mapH = c->begin 
-#     c * diagm(0 => ones(2))
-# end
-# H = map(mapH, coef)
-H = compute_space_varying_tangent_elasticity_matrix(coef, m, n, h)
+mapH = c->begin 
+    c * diagm(0 => ones(2))
+end
+H = map(mapH, coef)
 
 # H = reshape([coef constant(zeros(4*m*n)) coef constant(zeros(4*m*n))], (4*m*n,2,2))
 
@@ -270,26 +274,82 @@ cb = (vs, iter, loss)->begin
         # plot(vs[1])
         x_tmp, y_tmp, z_tmp = visualize_scalar_on_gauss_points(vs[2], m, n, h)
         clf()
-        pcolormesh(x_tmp, y_tmp, z_tmp', vmax=3, vmin = 0, rasterized=true)
+        pcolormesh(x_tmp, y_tmp, z_tmp', vmax=5, vmin = 0, rasterized=true)
         colorbar(shrink=0.2)
         axis("scaled")
         xlabel("x")
         ylabel("y")
         gca().invert_yaxis()
         title("Iter = $iter")
-        savefig("figures2/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
-        matwrite("results2/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
+        savefig("figures/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
+        matwrite("results/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
     end
     printstyled("[#iter $iter] eta = $(vs[1])\n", color = :green)
 end
 
 if mode != "data"
+
+    count = 0
+    iter = 0
+    IPOPT = CustomOptimizer() do f, df, c, dc, x0, x_L, x_U
+      n_variables = length(x0)
+      nz = length(dc(x0)) 
+      m = div(nz, n_variables) # Number of constraints
+      # g_L, g_U = [-Inf;-Inf], [0.0;0.0]
+      # function eval_jac_g(x, mode, rows, cols, values)
+      #     if mode == :Structure
+      #         rows[1] = 1; cols[1] = 1
+      #         rows[2] = 1; cols[2] = 1
+      #         rows[3] = 2; cols[3] = 1
+      #         rows[4] = 2; cols[4] = 1
+      #     else
+      #         values[:]=dc(x)
+      #     end
+      # end
+
+      g_L = Float64[]
+      g_U = Float64[]
+      function eval_jac_g(x, mode, rows, cols, values)
+        if mode == :Structure
+        else
+        end
+      end
+
+      function f_callback(x)
+        global iter += 1
+        print("iter $iter, current loss=$(f(x))\n")
+        return f(x)
+      end
+
+      function df_callback(x)
+        global  count += 1
+        print("================ ITER $count ===============\n")
+        printstyled("[#ter $count] loss = $(f(x))\n x = $(x)\n", color = :green)
+        return df(x)
+      end
+    
+      nele_jac = 0 # Number of non-zeros in Jacobian
+      prob = Ipopt.createProblem(n_variables, x_L, x_U, m, g_L, g_U, nz, nele_jac,
+              f_callback, (x,g)->(g[:]=c(x)), (x,g)->(g[:]=df_callback(x)), eval_jac_g, nothing)
+      addOption(prob, "hessian_approximation", "limited-memory")
+      addOption(prob, "max_iter", 100)
+      addOption(prob, "print_level", 2) # 0 -- 15, the larger the number, the more detailed the information
+
+      prob.x = x0
+      status = Ipopt.solveProblem(prob)
+      println(Ipopt.ApplicationReturnStatus[status])
+      println(prob.x)
+      prob.x
+    end
+
     data = matread("data-visc.mat")
     global disp, vel, strain_rate =  data["disp"], data["vel"], data["strain_rate"]
-    # global loss = 1e10 * sum((vel - vobs)^2)
-    global loss = 1e10 * sum((disp - dobs)^2)
+    global loss = 1e10 * sum((vel - vobs)^2)
+    # global loss = 1e10 * sum((disp - dobs)^2)
     @info run(sess, loss)
-    global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb)
+    # global loss_ = BFGS!(sess, loss, vars = [v_var, η], callback = cb)
+    opt = IPOPT(loss)
+    minimize(opt, sess)
 end
 
 ## DEBUG
@@ -310,7 +370,7 @@ end
 
 x, y, z = visualize_scalar_on_gauss_points(run(sess, η), m, n, h)
 figure()
-pcolormesh(x, y, z', vmax=3, vmin = 0, rasterized=true)
+pcolormesh(x, y, z', vmax=5, vmin = 0, rasterized=true)
 colorbar(shrink=0.2)
 axis("scaled")
 xlabel("x")
@@ -318,7 +378,7 @@ ylabel("y")
 gca().invert_yaxis()
 if mode == "data"
   title(L"""Viscosity Model
-  (top elastic layer: $η=100$)""")
+  (top elastic layer: $η=1000$)""")
   savefig("viscosity-model.png", bbox_size="tight")
 else
   title("Inverted Model")
