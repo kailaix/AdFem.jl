@@ -12,9 +12,18 @@ class Forward{
     Forward(const double *hmat, int m, int n, double h){
       // printf("m=%d, n=%d\n", m, n); 
       Eigen::Matrix<double,4,4> Omega;
-      Eigen::Matrix<double,2,4> B;
+      Eigen::Matrix<double,2,4> Bs[4];
+      Eigen::Matrix<double,4,2> Bt[4];
       Eigen::Matrix<double,2,2> K;
       Eigen::Vector<int,4> idx;
+
+      for(int ei=0;ei<2;ei++)
+            for(int ej=0;ej<2;ej++){
+              double xi = pts[ei], eta = pts[ej];
+              Bs[2*ej+ei] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
+                    -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
+              Bt[2*ej+ei] = Bs[2*ej+ei].transpose();
+        }
       
       // std::cout << Omega << std::endl;
       for(int i=0;i<m;i++){
@@ -26,10 +35,8 @@ class Forward{
               K << hmat[ids], hmat[ids+1], 
                   hmat[ids+2], hmat[ids+3];
               // std::cout << "***\n" << K << std::endl;
-              double xi = pts[ei], eta = pts[ej];
-              B << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
-                    -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
-              Omega = B.transpose() * K * B * 0.25 * h* h;
+              
+              Omega = Bt[2*ej+ei] * K * Bs[2*ej+ei] * 0.25 * h* h;
               for(int p=0;p<4;p++){
                 for(int q=0;q<4;q++){
                   ii.push_back(idx[p]+1);
@@ -77,6 +84,18 @@ void backward(
       Eigen::Matrix<double,2,4> B;
       Eigen::Matrix<double,2,2> dK;
       Eigen::Matrix<double,4,4> dOmega;
+
+      Eigen::Matrix<double,2,4> Bs[4];
+      Eigen::Matrix<double,4,2> Bt[4];
+
+      for(int ei=0;ei<2;ei++)
+            for(int ej=0;ej<2;ej++){
+              double xi = pts[ei], eta = pts[ej];
+              Bs[2*ej+ei] << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
+                    -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
+              Bt[2*ej+ei] = Bs[2*ej+ei].transpose();
+        }
+
       int k = 0;
       for(int ei=0;ei<m;ei++){
         for(int ej=0;ej<n;ej++){
@@ -91,9 +110,7 @@ void backward(
                   dOmega(p, q) = grad_vv[k++];
                 }
               }
-              B << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta, 
-                -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
-              dK = B * dOmega * B.transpose() * 0.25 * h* h;
+              dK = Bs[2*j+i] * dOmega * Bt[2*j+i] * 0.25 * h* h;
 
               // std::cout << dK << std::endl;
               grad_hmat[ids] = dK(0,0);
