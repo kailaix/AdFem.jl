@@ -25,8 +25,8 @@ h = 1 / n
 Δt = 3000. / NT 
 density = 100.
 
-# mode = "data"
-mode = "inv" 
+mode = "data"
+# mode = "inv" 
 
 # coordinates
 xo = zeros((m + 1) * (n + 1))
@@ -340,7 +340,7 @@ function update(i)
     pl.set_data(xi[:], d_[i,1:m + 1])
     t.set_text("time = $(i * Δt[1])")
 end
-p = animate(update, [NT÷6:NT+1;])
+p = animate(update, [NT÷6:10:NT+1;])
 # p = animate(update, [NT÷2:5:NT+1])
 # saveanim(p, "displacement.gif")
 
@@ -357,7 +357,7 @@ p = animate(update, [NT÷6:NT+1;])
 #   pl.set_data(xi[:], v_[i,1:m+1])
 #   t.set_text("time = $(i*Δt[1])")
 # end
-# p = animate(update, [NT÷3:NT+1;])
+# p = animate(update, [NT÷6:10:NT+1;])
 # saveanim(p, "velocity.gif")
 
 # figure()
@@ -373,5 +373,5 @@ p = animate(update, [NT÷6:NT+1;])
 #   pl.set_data(xi[1:end-1], (v_[i,2:m+1]-v_[i,1:m])/h)
 #   t.set_text("time = $(i*Δt[1])")
 # end
-# p = animate(update, [NT÷3:NT+1;])
+# p = animate(update, [NT÷6:10:NT+1;])
 # saveanim(p, "strain_rate.gif")
