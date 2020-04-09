@@ -51,3 +51,15 @@ where $f$ is the body force and $\rho$ is the density.
 |displacement $u$                                 |velocity $\dot u$                              | strain rate   $\partial \dot u / \partial x$     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
 |![](./assets/visco-antiplane/displacement.gif)   |![](./assets/visco-antiplane/velocity.gif)    |![](./assets/visco-antiplane/strain_rate.gif)      |
+
+
+## Inversion
+
+| True model                   | Inverted result                  |
+| ---------------------------- | -------------------------------- |
+| ![](./assets/visco-antiplane/viscosity-model.png) | ![](./assets/visco-antiplane/viscosity-inversion.png) |
+
+
+We also show the inversion results in each iteration:
+
+![](./assets/visco-antiplane/viscosity-inversion.gif)

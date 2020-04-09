@@ -8,13 +8,14 @@ using MAT
 using ADCMEKit
 np = pyimport("numpy")
 using PyPlot
+using NLopt
 using SpecialFunctions
 include("viscosity_accel/viscosity_accel.jl")
 
 ADCME.options.sparse.auto_reorder = false
 # matplotlib.use("Agg")
 close("all")
-
+reset_default_graph()
 
 # simulation parameter setup
 n = 20
@@ -25,8 +26,8 @@ h = 1 / n
 Δt = 3000. / NT 
 density = 100.
 
-mode = "data"
-# mode = "inv" 
+# mode = "data"
+mode = "inv" 
 
 # coordinates
 xo = zeros((m + 1) * (n + 1))
@@ -40,14 +41,18 @@ for i = 1:m + 1
 end
 
 # Dirichlet boundary condition on three sides, and Neumann boundary condition (traction-free) on the top
-bdnode = bcnode("left | lower | right", m, n, h)
+bdnode = bcnode("left | low | right", m, n, h)
 
 # viscoelasticity η and shear modulus μ
 ηf = (x, y)->begin 
     if y <= 0.25
         return 100.
-    elseif y <= 0.6
-        return 2.
+    elseif y <= 0.45
+        return 4.
+    elseif y <= 0.65
+        return 3
+    elseif y <= 0.85
+        return 2
     else 
       return 1
     end
@@ -63,7 +68,8 @@ else
 
   ### 1D layer inversion
     η_ = [100. * ones(5); ones(15)]
-    global v_var = [constant(ones(5)); Variable(2.5ones(n - 5))]
+    var = Variable(2.5ones(n - 5))
+    global v_var = [constant(ones(5)); var]
     η = v_var .* η_
 
     ## invert log η
@@ -101,11 +107,10 @@ end
 
 # linear elasticity matrix 
 coef = 2μ * η / (η + μ * Δt) 
-# mapH = c->begin 
-#     c * diagm(0 => ones(2))
-# end
-# H = map(mapH, coef)
-H = compute_space_varying_tangent_elasticity_matrix(coef, m, n, h)
+mapH = c->begin 
+    c * diagm(0 => ones(2))
+end
+H = map(mapH, coef)
 
 # H = reshape([coef constant(zeros(4*m*n)) coef constant(zeros(4*m*n))], (4*m*n,2,2))
 
@@ -270,26 +275,63 @@ cb = (vs, iter, loss)->begin
         # plot(vs[1])
         x_tmp, y_tmp, z_tmp = visualize_scalar_on_gauss_points(vs[2], m, n, h)
         clf()
-        pcolormesh(x_tmp, y_tmp, z_tmp', vmax=3, vmin = 0, rasterized=true)
+        pcolormesh(x_tmp, y_tmp, z_tmp', vmax=5, vmin = 0, rasterized=true)
         colorbar(shrink=0.2)
         axis("scaled")
         xlabel("x")
         ylabel("y")
         gca().invert_yaxis()
         title("Iter = $iter")
-        savefig("figures2/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
-        matwrite("results2/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
+        savefig("figures/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
+        matwrite("results/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
     end
     printstyled("[#iter $iter] eta = $(vs[1])\n", color = :green)
 end
 
+
+function NLOPT!(sess::PyObject, loss::PyObject, max_iter::Int64=15000; 
+  algorithm::Union{Symbol, Enum} = :LD_LBFGS, vars::Array{PyObject}=PyObject[], 
+          callback::Union{Function, Nothing}=nothing, kwargs...)
+  losses = Float64[]
+  iter_ = 0 
+  NLOPT = CustomOptimizer() do f, df, c, dc, x0, x_L, x_U 
+    opt = Opt(algorithm, length(x0))
+    opt.upper_bounds = x_U
+    opt.lower_bounds = x_L
+    opt.maxeval = max_iter
+    opt.min_objective = (x,g)->begin
+        g[:]= df(x); 
+        iter_ += 1
+        l = f(x)[1]
+        println("================ ITER $iter_ ===============")
+        # println("current loss= $l")
+        printstyled("[#ter $iter_] loss = $l\n x = $x\n", color = :green)
+        push!(losses, l)
+        if !isnothing(callback)
+            callback(run(sess, vars), iter_, l)
+        end
+        return f(x)[1]
+      end
+    (minf,minx,ret) = NLopt.optimize(opt, x0)
+    minx
+  end
+  print(kwargs)
+  opt = NLOPT(loss; kwargs...)
+  minimize(opt, sess)
+  return losses
+end
+
 if mode != "data"
+
     data = matread("data-visc.mat")
     global disp, vel, strain_rate =  data["disp"], data["vel"], data["strain_rate"]
-    # global loss = 1e10 * sum((vel - vobs)^2)
-    global loss = 1e10 * sum((disp - dobs)^2)
+    global loss = 1e10 * sum((vel - vobs)^2)
+    # global loss = 1e10 * sum((disp - dobs)^2)
+    
     @info run(sess, loss)
-    global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb)
+    # global loss_ = BFGS!(sess, loss * 1e10, vars = [v_var, η], callback = cb, var_to_bounds=Dict(v_var=>(0., 5.0)))
+    # NLOPT!(sess, loss, vars=[var], algorithm = :GD_STOGO_RAND, var_to_bounds=Dict(var=>(0., 10.0)))
+    NLOPT!(sess, loss, vars=[var], algorithm = :GD_STOGO, var_to_bounds=Dict(var=>(0., 10.0)))
 end
 
 ## DEBUG
@@ -310,7 +352,7 @@ end
 
 x, y, z = visualize_scalar_on_gauss_points(run(sess, η), m, n, h)
 figure()
-pcolormesh(x, y, z', vmax=3, vmin = 0, rasterized=true)
+pcolormesh(x, y, z', vmax=5, vmin = 0, rasterized=true)
 colorbar(shrink=0.2)
 axis("scaled")
 xlabel("x")
@@ -318,7 +360,7 @@ ylabel("y")
 gca().invert_yaxis()
 if mode == "data"
   title(L"""Viscosity Model
-  (top elastic layer: $η=100$)""")
+  (top elastic layer: $η=1000$)""")
   savefig("viscosity-model.png", bbox_size="tight")
 else
   title("Inverted Model")
@@ -340,7 +382,7 @@ function update(i)
     pl.set_data(xi[:], d_[i,1:m + 1])
     t.set_text("time = $(i * Δt[1])")
 end
-p = animate(update, [NT÷6:10:NT+1;])
+p = animate(update, [NT÷6:NT+1;])
 # p = animate(update, [NT÷2:5:NT+1])
 # saveanim(p, "displacement.gif")
 
@@ -357,7 +399,7 @@ p = animate(update, [NT÷6:10:NT+1;])
 #   pl.set_data(xi[:], v_[i,1:m+1])
 #   t.set_text("time = $(i*Δt[1])")
 # end
-# p = animate(update, [NT÷6:10:NT+1;])
+# p = animate(update, [NT÷3:NT+1;])
 # saveanim(p, "velocity.gif")
 
 # figure()
@@ -373,5 +415,5 @@ p = animate(update, [NT÷6:10:NT+1;])
 #   pl.set_data(xi[1:end-1], (v_[i,2:m+1]-v_[i,1:m])/h)
 #   t.set_text("time = $(i*Δt[1])")
 # end
-# p = animate(update, [NT÷6:10:NT+1;])
+# p = animate(update, [NT÷3:NT+1;])
 # saveanim(p, "strain_rate.gif")
