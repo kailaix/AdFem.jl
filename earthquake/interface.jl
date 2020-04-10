@@ -17,10 +17,12 @@ function interface(x, y, t, θ, x0, x1, x2, y1, y2, t1, t2)
   vy = zeros(size(vx))
   if length(x) == 1
     if x > x0
-      vy =  vx * tan(θ)
+      vy =  vx * sin(θ)
+      vx = vx * cos(θ)
     end
   else
-    vy[x .> x0] = vx[x .> x0] .* tan(θ)
+    vy[x .> x0] = vx[x .> x0] .* sin(θ)
+    vx[x .> x0] = vx[x .> x0] .* cos(θ)
   end
 
   dt = t[2] - t[1]
