@@ -58,6 +58,8 @@ for i = 1:size(elements, 1)
         
 end
 
+savefig("marker.png")
+
 new_nodes = hcat(new_nodes...)
 nodes = [nodes;new_nodes']
 
@@ -130,12 +132,18 @@ Simulation
 ===========#
 NT = 100
 Δt = 1.0/NT
-ts = ExplicitSolverTime(Δt, NT)
+Solver = GeneralizedAlphaSolver
+SolverTime = Symbol(Solver, "Time")
+@eval  ts = $SolverTime(Δt, NT)
 ubd, abd = compute_boundary_info(domain, globdat, ts)
 d0, v0, a0 = SolverInitial(Δt, globdat, domain)
 
 H = elems[1].mat[1].H
-d, v, a = ExplicitSolver(globdat, domain, d0, v0, a0, Δt, NT, H)
+Hs = zeros(getNGauss(domain), 3, 3)
+for i = 1:size(Hs,1)
+    Hs[i,:,:] = H 
+end
+@eval d, v, a = $Solver(globdat, domain, d0, v0, a0, Δt, NT, Hs)
 
 sess = Session(); init(sess)
 
