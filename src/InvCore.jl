@@ -53,10 +53,14 @@ end
     compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
 
 A differentiable kernel for computing the stiffness matrix. 
+Two possible shapes for `hmat` are supported: 
+
+- `4mn \times 2\times 2`
+- `2 \times 2`
 """
 function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
-    if length(size(hmat))!=3
-        error("Only 4mn x 2 x 2 matrix `hmat` is supported.")
+    if !(length(size(hmat)) in [2,3])
+        error("Only 4mn x 2 x 2 or 2 x 2 `hmat` is supported.")
     end
     univariate_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/FemStiffness1/build/libUnivariateFemStiffness","univariate_fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
