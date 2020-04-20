@@ -1,5 +1,5 @@
 export femidx, fvmidx, get_edge_normal,
-plot_u,bcnode,bcedge, layer_model
+plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, subdomain
 
 
 """
@@ -167,3 +167,60 @@ function bcnode_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
 end
 
 
+@doc raw"""
+    gauss_nodes(m::Int64, n::Int64, h::Float64)
+
+Returns the node matrix of Gauss points for all elements. The matrix has a size $4mn\times 2$
+"""
+function gauss_nodes(m::Int64, n::Int64, h::Float64)
+    xs = zeros(4*m*n, 2)
+    k = 1
+    for i = 1:m 
+        for j = 1:n 
+            idx = (j-1)*m + i 
+            x1 = (i-1)*h 
+            y1 = (j-1)*h
+            for p = 1:2
+                for q = 1:2
+                    k = (idx-1)*4 + 2*(q-1) + p
+                    ξ = pts[p]; η = pts[q]
+                    x = x1 + ξ*h; y = y1 + η*h
+                    xs[k,:] = [x;y]
+                    k += 1
+                end
+            end
+        end
+    end
+    xs
+end
+
+@doc raw"""
+    fem_nodes(m::Int64, n::Int64, h::Float64)
+
+Returns the FEM node matrix of size $(m+1)(n+1)\times 2$
+"""
+function fem_nodes(m::Int64, n::Int64, h::Float64)
+    xs = zeros((m+1)*(n+1), 2)
+    k = 1
+    for i = 1:m+1
+        for j = 1:n+1
+            idx = (j-1)*(m+1) + i 
+            x1 = (i-1)*h 
+            y1 = (j-1)*h
+            xs[k,:] = [x1;y1]
+            k += 1
+        end
+    end
+    xs
+end
+
+"""
+    subdomain(f::Function, m::Int64, n::Int64, h::Float64)
+
+Returns the subdomain defined by `f(x, y)==true`.
+"""
+function subdomain(f::Function, m::Int64, n::Int64, h::Float64)
+    nodes = fem_nodes(m, n, h)
+    idx = f.(nodes[:,1], nodes[:,2])
+    findall(idx)
+end

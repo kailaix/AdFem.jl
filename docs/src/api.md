@@ -73,4 +73,7 @@ bcnode
 bcedge
 femidx
 fvmidx
+subdomain
+gauss_nodes
+fem_nodes
 ```
