@@ -173,7 +173,7 @@ Computes the term
 ```math
 \int_\Omega f \delta u dx
 ```
-Returns a $(m+1)\times (n+1)$ vector. 
+Returns a $(m+1)\times (n+1)$ vector. `f` is a length $4mn$ vector, given by its values on Gauss points. 
 """
 function compute_fem_source_term1(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
     rhs = zeros((m+1)*(n+1))
