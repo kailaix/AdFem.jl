@@ -54,6 +54,7 @@ visualize_displacement
 visualize_stress
 visualize_von_mises_stress
 visualize_scalar_on_gauss_points
+visualize_scalar_on_fem_points
 ```
 
 ## Modeling Tools
@@ -71,6 +72,7 @@ trim_coupled
 coupled_impose_pressure
 bcnode
 bcedge
+interior_node
 femidx
 fvmidx
 subdomain

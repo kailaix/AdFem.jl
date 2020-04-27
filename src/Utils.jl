@@ -1,11 +1,12 @@
 export femidx, fvmidx, get_edge_normal,
-plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, subdomain
+plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, subdomain, interior_node
 
 
 """
     femidx(d::Int64, m::Int64)
 
 Returns the FEM index of the dof `d`. Basically, `femidx` is the inverse of 
+
 ```
 (i,j) → d = (j-1)*(m+1) + i
 ```
@@ -21,8 +22,10 @@ end
     fvmidx(d::Int64, m::Int64)
 
 Returns the FVM index of the dof `d`. Basically, `femidx` is the inverse of 
+
 ```
 (i,j) → d = (j-1)*m + i
+```
 """
 function fvmidx(i::Int64, m::Int64)
     ii = mod(i, m)
@@ -110,13 +113,8 @@ end
 
 
 
-
-
-
-
-
 """
-Abstract    bcnode(desc::String, m::Int64, n::Int64, h::Float64)
+    bcnode(desc::String, m::Int64, n::Int64, h::Float64)
 
 Returns the node indices for the description. Multiple descriptions can be concatented via `|`
 
@@ -164,6 +162,16 @@ function bcnode_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
         error("$desc is not a valid specification. Only `upper`, `lower`, `left`, `right`, `all` or their combination via `|`, is accepted.")
     end
     return nodes
+end
+
+"""
+    interior_node(desc::String, m::Int64, n::Int64, h::Float64)
+
+In contrast to [`bcnode`](@ref), `interior_node` returns the nodes that are not specified by `desc`, including thosee on the boundary.
+"""
+function interior_node(desc::String, m::Int64, n::Int64, h::Float64)
+    bc = bcnode(desc, m, n, h)
+    collect(setdiff(Set(1:(m+1)*(n+1)), bc))
 end
 
 
