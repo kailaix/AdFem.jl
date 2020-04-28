@@ -73,3 +73,61 @@ function mlp(x, k, id; nout = 1)
     return x
 end
 
+
+
+#------------------------------------------------------------------------------------------
+"""
+Example:
+sol = solve_batch_pde(solve_poisson, ones(128,2))
+sess = Session(); init(sess)
+@time sol_, J_ = run(sess, sol)
+visualize_scalar_on_fem_points(sol_[1,:], m, n, h)
+"""
+function solve_batch_pde(solver, c; jac = false, obs = false)
+    c = constant(c)
+    if !jac 
+        sol = map(x->solver(x; jac=false, obs=obs), c)
+    else 
+        sol, J = tf.map_fn(x->solver(x; jac=true, obs=obs), c, dtype=(tf.float64, tf.float64), back_prop=false)
+    end
+end
+
+function sample_poisson_mixture_model_(n)
+    d = MixtureModel(MvNormal[
+        MvNormal([0.0;2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([-2;-2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([2;-2.0], [0.5 0.0;0.0 0.5])])
+    v = Array(rand(d, 10000)')[:,1:2]
+    v = v * noise_level .+ [1.0 1.0]
+end
+
+function sample_moons_(n)
+    v = sample_moons(n)
+    v = v * noise_level .+ [1.0 1.0]
+end
+
+
+function sample_dirichlet_(n)
+    v = sample_dirichlet(n)
+    v = v * noise_level .+ [1.0 1.0]
+end
+
+function sample_observation(solver, sess, n, sampler)
+    @info "Sampler: ", sampler
+    if isnothing(sampler)
+        sol = run(sess, solver(ones(2), obs=true))
+        out = zeros(n, length(sol))
+        for i = 1:n 
+            out[i,:] = sol .* (1 .+ noise_level*randn(length(sol)))
+        end
+        return sol 
+    end
+    v = sampler(n)
+    sol = solve_batch_pde(solver, v, obs=true)
+    run(sess, sol)
+end
+
+function generate_A_and_b(sess, c0)
+    sol, A = solver(c0, jac=true, obs=true)
+    sol, A = run(sess, [sol, A])
+end
