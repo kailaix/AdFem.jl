@@ -142,7 +142,7 @@ function plot3(model_id, depth)
     end
     # gca().tick_params(axis="both", which="major", labelsize=20)
     gca().tick_params(axis="both", which="major", labelsize=10)
-    ylabel("Iteartion")
+    ylabel("Iterations")
 
     savefig("nn$(model_id)$depth.png")
     savefig("nn$(model_id)$depth.pdf")
