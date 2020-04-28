@@ -8,6 +8,7 @@ src/tests.jl
 src/*.png
 *.DS_Store
 docs/build
+*.png
 test/*.png
 test/*.gif
 .vscode/*
