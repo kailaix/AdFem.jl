@@ -57,3 +57,4 @@ test/U_total/*.png
 !*CMakeLists.txt 
 *.tex
 .vscode/
+!research/viscoelasticity_experimental_data
