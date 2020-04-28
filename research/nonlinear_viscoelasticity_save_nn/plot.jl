@@ -93,6 +93,61 @@ function plot2(model_id)
     savefig("nlv$(model_id).png")
 end
 
+function normalize(x, n=201)
+    T = zeros(n)
+    T[1:length(x)] = log.(x)/log(10)
+    for i = length(x)+1:n 
+        T[i] = T[length(x)]
+    end
+    return T
+end
+
+function get_data(model_id, width, depth, activation)
+    loss = readdlm("data/loss_$(model_id)_$(width)_$(depth)_$(activation).txt")[:]
+    return normalize(loss)
+end
+
+
+function plot3(model_id, depth)
+    U = zeros(20, 201)
+    close("all")
+    k = 0
+    for activation in ["tanh", "relu", "selu", "elu"]
+        for width in [1 5 10 20 40]
+            k += 1
+            U[k,:] = get_data(model_id, width, depth, activation)
+            @info activation, width
+        end
+    end
+    # subplot(120+v)
+    close("all")
+    pcolormesh(U', rasterized=true, cmap="hot")
+    xticks([collect(0.5:1.0:19.5);2.5;7.5;12.5;17.5], 
+        [repeat([1 5 10 20 40], 1,4)[:];"tanh"; "relu"; "selu"; "elu"])
+    c = colorbar()
+    c.set_ticks([-2,-1,0,1,2,3])
+    c.set_ticklabels(["\$10^{-2}\$", "\$10^{-1}\$", 
+            "\$10^0\$", "\$10^{1}\$", "\$10^{2}\$", "\$10^{3}\$"])
+    va = -0.05*ones(5)
+    ts = gca().get_xticklabels( )
+    for i = 21:24
+        ts[i].set_y( va[i-20] )
+    end
+    z = 0:200
+    for i = 0:20
+        plot(ones(201)*i, z, "k", alpha=0.2)
+    end
+    for i in [5, 10, 15]
+        plot(ones(201)*i, z, "k")
+    end
+    # gca().tick_params(axis="both", which="major", labelsize=20)
+    gca().tick_params(axis="both", which="major", labelsize=10)
+    ylabel("Iteartion")
+
+    savefig("nn$(model_id)$depth.png")
+    savefig("nn$(model_id)$depth.pdf")
+end
+
 plot1(1, 0)
 plot1(1, 20)
 plot1(2, 0)
@@ -100,3 +155,8 @@ plot1(2, 20)
 
 plot2(1)
 plot2(2)
+
+for i in [1,3,5,10]
+    plot3(1, i)
+    plot3(2, i)
+end
