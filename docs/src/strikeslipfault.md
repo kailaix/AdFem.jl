@@ -1,2 +1,0 @@
-# Strike Slip Fault
-

@@ -1,0 +1,7 @@
+SpatialVaryingTangentElastic
+double mu(?)
+int64 m()
+int64 n()
+double h()
+int64 type()
+double hmat(?,2,2) -> output

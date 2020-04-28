@@ -1,7 +1,7 @@
 export visualize_pressure, visualize_displacement, 
     visualize_stress, visualize_scattered_displacement, 
     visualize_von_mises_stress, visualize_saturation,
-    visualize_potential
+    visualize_potential, visualize_scalar_on_gauss_points
 
 """ 
     visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
@@ -373,3 +373,49 @@ function visualize_displacement(u::Array{Float64, 1}, m::Int64, n::Int64, h::Flo
     axis("equal")
 end
 
+@doc raw"""
+    visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+
+Visualizes the scalar `u` using pcolormesh. Here `u` is a length $4mn$ vector and the values are defined on the Gauss points
+"""
+function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+    close("all")
+    z = zeros(2m, 2n)
+    x = zeros(2m)
+    y = zeros(2n)
+
+    for i = 1:m 
+        x[2*(i-1)+1] = pts[1] * h + (i-1)*h 
+        x[2*(i-1)+2] = pts[2] * h + (i-1)*h 
+    end
+
+    for j = 1:n
+        y[2*(j-1)+1] = pts[1] * h + (j-1)*h 
+        y[2*(j-1)+2] = pts[2] * h + (j-1)*h 
+    end
+
+    for j = 1:n 
+    end
+
+    for i = 1:m 
+        for j = 1:n 
+            idx = (j-1)*m+i
+            z[2(i-1)+1, 2(j-1)+1] = u[4*(idx-1)+1]
+            z[2(i-1)+2, 2(j-1)+1] = u[4*(idx-1)+2]
+            z[2(i-1)+1, 2(j-1)+2] = u[4*(idx-1)+3]
+            z[2(i-1)+2, 2(j-1)+2] = u[4*(idx-1)+4]
+        end
+    end
+
+    vmin = mean(z) - 2std(z)
+    vmax = mean(z) + 2std(z)
+    pcolormesh(x, y, z', vmin=vmin, vmax=vmax,rasterized=true, args...; kwargs...)
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    levels = LinRange(vmin, vmax, 10) |> Array
+    c = contour(x, y, z', levels, cmap="jet", vmin=vmin, vmax=vmax)
+    gca().invert_yaxis()
+    return x, y, z 
+end

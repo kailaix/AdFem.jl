@@ -27,7 +27,7 @@ void forward(double *strain, const double *u, int m, int n, double h){
           for(int p=0;p<2;p++){
             for(int q=0;q<2;q++){
               int idx = 2*q + p;
-              auto x = Bs[idx] * uA;
+              Eigen::VectorXd x = Bs[idx] * uA;
               // std::cout << "***\n" <<  Bs[idx] << std::endl  << std::endl;
               strain[2*(4*elem + idx)] = x[0];
               strain[2*(4*elem + idx)+1] = x[1];
@@ -66,8 +66,8 @@ void backward(
               int idx = 2*q + p;
               gs <<   grad_strain[2*(4*elem + idx)],
                       grad_strain[2*(4*elem + idx)+1];
-              auto x = gs * Bs[idx]; // 1 x 8 vector
-              for(int l=0;l<4;l++) grad_u[dof[l]] += x[l];
+              Eigen::MatrixXd x = gs * Bs[idx]; // 1 x 8 vector
+              for(int l=0;l<4;l++) grad_u[dof[l]] += x(0, l);
             }
           }
         }

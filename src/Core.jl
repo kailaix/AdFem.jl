@@ -10,6 +10,7 @@ compute_fvm_tpfa_matrix,
 trim_coupled,
 compute_elasticity_tangent,
 compute_fem_traction_term,
+compute_fem_traction_term1,
 compute_fem_normal_traction_term,
 coupled_impose_pressure,
 compute_von_mises_stress_term,
@@ -25,7 +26,8 @@ fem_impose_coupled_Dirichlet_boundary_condition,
 eval_strain_on_gauss_pts,
 eval_stress_on_gauss_pts,
 compute_fvm_mass_matrix,
-compute_strain_energy_term
+compute_strain_energy_term,
+compute_plane_strain_matrix
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -126,8 +128,9 @@ end
 
 Computes the term 
 ```math
-\int_\Omega f\cdot\delta u dx
+\int_\Omega \mathbf{f}\cdot\delta u \mathrm{d}x
 ```
+Returns a $2(m+1)(n+1)$ vector. 
 """
 function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
     m::Int64, n::Int64, h::Float64)
@@ -135,11 +138,12 @@ function compute_fem_source_term(f1::Array{Float64}, f2::Array{Float64},
     k = 0
     for i = 1:m
         for j = 1:n
+            idx = (j-1)*m + i 
             for p = 1:2
                 for q = 1:2
                     ξ = pts[p]; η = pts[q]
 
-                    k += 1
+                    k = (idx-1)*4 + 2*(q-1) + p
                     val1 = f1[k] * h^2 * 0.25
                     val2 = f2[k] * h^2 * 0.25
                     
@@ -169,17 +173,17 @@ Computes the term
 ```math
 \int_\Omega f \delta u dx
 ```
-Returns a $(m+1)\times (n+1)$ vector. 
+Returns a $(m+1)\times (n+1)$ vector. `f` is a length $4mn$ vector, given by its values on Gauss points. 
 """
 function compute_fem_source_term1(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
     rhs = zeros((m+1)*(n+1))
-    k = 0
     for i = 1:m
         for j = 1:n
+            idx = (j-1)*m + i 
             for p = 1:2
                 for q = 1:2
                     ξ = pts[p]; η = pts[q]
-                    k += 1
+                    k = (idx-1)*4 + 2*(q-1) + p
                     val1 = f[k] * h^2 * 0.25
                     rhs[(j-1)*(m+1) + i] += val1 * (1-ξ)*(1-η)
                     rhs[(j-1)*(m+1) + i+1] += val1 * ξ*(1-η)
@@ -254,6 +258,8 @@ I & 0 \\
 A_{IB} 
 \end{bmatrix}
 ```
+
+`bd` must NOT have duplicates. 
 """
 function fem_impose_Dirichlet_boundary_condition1(A::SparseMatrixCSC{Float64,Int64}, 
     bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
@@ -522,6 +528,10 @@ Computes the traction term
 \int_{\Gamma} t(\mathbf{n})\cdot\delta u \mathrm{d}
 ```
 
+The number of rows of `t` is equal to the number of edges in `bdedge`. 
+The first component of `t` describes the $x$ direction traction, while the second 
+component of `t` describes the $y$ direction traction. 
+
 Also see [`compute_fem_normal_traction_term`](@ref). 
 
 ![](./assets/traction.png)
@@ -539,6 +549,35 @@ function compute_fem_traction_term(t::Array{Float64, 2},
     end
     rhs
 end
+
+
+
+@doc raw"""
+    compute_fem_traction_term1(t::Array{Float64, 2},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+
+Computes the traction term 
+```math
+\int_{\Gamma} t(n) \delta u \mathrm{d}
+```
+
+The number of rows of `t` is equal to the number of edges in `bdedge`. 
+The output is a length $(m+1)*(n+1)$ vector. 
+
+Also see [`compute_fem_traction_term`](@ref). 
+"""
+function compute_fem_traction_term1(t::Array{Float64, 1},
+    bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
+    @assert length(t)==size(bdedge,1)
+    rhs = zeros((m+1)*(n+1))
+    for k = 1:size(bdedge, 1)
+        ii, jj = bdedge[k,:]
+        rhs[ii] += t[k,1]*0.5*h 
+        rhs[jj] += t[k,1]*0.5*h
+    end
+    rhs
+end
+
 
 @doc raw"""
     compute_fem_flux_term1(t::Array{Float64},
@@ -663,11 +702,11 @@ function get_gauss_points(m, n, h)
 end
 
 """
-    compute_elasticity_tangent(E::Float64, ν::Float64)
+    compute_plane_strain_matrix(E::Float64, ν::Float64)
 
 Computes the elasticity matrix for 2D plane strain
 """
-function compute_elasticity_tangent(E::Float64, ν::Float64)
+function compute_plane_strain_matrix(E::Float64, ν::Float64)
     E*(1-ν)/(1+ν)/(1-2ν)*[
     1 ν/(1-ν) ν/(1-ν)
     ν/(1-ν) 1 ν/(1-ν)
@@ -768,13 +807,13 @@ function compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Flo
             Me[(p-1)*2+q,:,:] = A*A'*0.25*h^2
         end
     end
-    k = 0
     for i = 1:m
         for j = 1:n 
+            elem_idx = (j-1)*m + i 
             idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
             for p = 1:2
                 for q = 1:2
-                    k += 1
+                    k = (elem_idx-1)*4 + 2*(q-1) + p
                     ρ_ = ρ[k]
                     add(idx, idx, ρ_*Me[(p-1)*2+q,:,:])
                 end
@@ -810,33 +849,9 @@ Computes the finite element mass matrix
 The matrix size is $2(m+1)(n+1) \times 2(m+1)(n+1)$.
 """
 function compute_fem_mass_matrix(m::Int64, n::Int64, h::Float64)
-    I = Int64[]; J = Int64[]; V = Float64[]
-    function add!(i, j)
-        idx = [i+(j-1)*(m+1); i+1+(j-1)*(m+1); i+j*(m+1); i+1+j*(m+1)]
-        for l1 = 1:4
-            for l2 = 1:4
-                push!(I, idx[l1]); push!(J, idx[l2]); push!(V, A[l1]*A[l2])
-                push!(I, idx[l1]+(m+1)*(n+1)); push!(J, idx[l2]+(m+1)*(n+1)); push!(V, A[l1]*A[l2])
-            end
-        end
-    end
-    A = zeros(4)
-    for p = 1:2
-        for q = 1:2
-            ξ = pts[p]; η = pts[q]
-            A[1] += (1-ξ)*(1-η)*0.25*h^2
-            A[2] += ξ*(1-η)*0.25*h^2
-            A[3] += (1-ξ)*η*0.25*h^2
-            A[4] += ξ*η*0.25*h^2
-        end
-    end
-    
-    for i = 1:m
-        for j = 1:n 
-            add!(i, j)
-        end
-    end
-    sparse(I, J, V, 2(m+1)*(n+1), 2(m+1)*(n+1))
+    M = compute_fem_mass_matrix1(m, n, h)    
+    Z = spzeros((m+1)*(n+1), (m+1)*(n+1))
+    [M Z;Z M]
 end
     
     
@@ -849,16 +864,16 @@ Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 
 """
 function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
     out = zeros(4*m*n)
-    k = 0
     for i = 1:m 
         for j = 1:n 
+            idx = (j-1)*m + i 
             x1 = (i-1)*h 
             y1 = (j-1)*h
             for p = 1:2
                 for q = 1:2
+                    k = (idx-1)*4 + 2*(q-1) + p
                     ξ = pts[p]; η = pts[q]
                     x = x1 + ξ*h; y = y1 + η*h
-                    k += 1
                     out[k] = f(x, y)
                 end
             end
