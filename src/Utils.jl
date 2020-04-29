@@ -1,6 +1,6 @@
 export femidx, fvmidx, get_edge_normal,
 plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, subdomain, interior_node,
-cholesky_outproduct, cholesky_factorize
+cholesky_outproduct, cholesky_factorize, cholesky_logdet
 
 
 """
@@ -249,7 +249,7 @@ and `A` (length=9) is also a vectorized form of $A$
 """
 function cholesky_outproduct(o::Union{Array{<:Real,2}, PyObject})
     @assert size(o,2)==6
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp","cholesky_backward_op")
+    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build","cholesky_backward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end
@@ -259,9 +259,21 @@ end
 
 Returns the cholesky factor of `A`. See [`cholesky_outproduct`](@ref) for details. 
 """
-function cholesky_factorize(o::Union{Array{<:Real,2}, PyObject})
+function cholesky_factorize(A::Union{Array{<:Real,2}, PyObject})
     @assert size(o,2)==9
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp","cholesky_forward_op")
+    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build","cholesky_forward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
+end
+
+
+@doc raw"""
+    cholesky_logdet(A::Union{Array{<:Real,2}, PyObject})
+
+Returns the cholesky factor of `A` as well as the log determinant. See [`cholesky_outproduct`](@ref) for details. 
+"""
+function cholesky_logdet(A::Union{Array{<:Real,2}, PyObject})
+    op_ = load_op_and_grad("$(@__DIR__)/../depsCholeskyOp/build/libCholeskyOp/build","cholesky_logdet")
+    A = convert_to_tensor(A, dtype=Float64)
+    L, J = op_(A)
 end

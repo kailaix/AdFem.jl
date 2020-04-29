@@ -1,5 +1,9 @@
 #include "adept.h"
 #include "adept_arrays.h"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+
+
 using namespace adept;
 void factorize_forward(double *l, const double *a, int n){
   // https://rosettacode.org/wiki/Cholesky_decomposition
@@ -19,6 +23,42 @@ void factorize_forward(double *l, const double *a, int n){
     l[3] = l21;
     l[4] = l31;
     l[5] = l32;
+    a += 9;
+    l += 6;
+  }
+}
+
+void factorize_logdet(
+  double * logdet,
+  double * l, 
+  const double *a, int n){
+  Stack stack;
+  Eigen::MatrixXd jac(6,6);
+  for (int i=0;i<n;i++){
+    std::vector<adouble> x(6);
+    x[0] = a[0];
+    x[1] = a[3];
+    x[2] = a[4];
+    x[3] = a[6];
+    x[4] = a[7];
+    x[5] = a[8];
+    stack.new_recording();
+    std::vector<adouble> lvec(6);
+    adouble a11 = x[0], a21 = x[1], a31 = x[3],
+           a12 = x[1], a22 = x[2], a32 = x[4],
+           a13 = x[3], a23 = x[4], a33 = x[5];
+
+    lvec[0] = sqrt(a11);
+    lvec[3] = a21/lvec[0];
+    lvec[4] = a31/lvec[0];
+    lvec[1] = sqrt(a22-lvec[3]*lvec[3]);
+    lvec[5] = (a32-lvec[3]*lvec[4])/lvec[1];
+    lvec[2] = sqrt(a33-(lvec[4]*lvec[4]+lvec[5]*lvec[5]));
+    for(int j=0;j<6;j++) l[j] = value(lvec[j]);
+    stack.independent(&x[0], 6);
+    stack.dependent(&lvec[0], 6);
+    stack.jacobian(jac.data());
+    logdet[i] = log(abs(jac.determinant()));
     a += 9;
     l += 6;
   }

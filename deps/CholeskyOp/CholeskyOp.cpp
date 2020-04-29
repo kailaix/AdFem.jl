@@ -10,6 +10,73 @@
 using namespace tensorflow;
 #include "CholeskyOp.h"
 
+REGISTER_OP("CholeskyLogdet")
+
+.Input("a : double")
+.Output("l : double")
+.Output("jac : double")
+.SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+    
+        shape_inference::ShapeHandle a_shape;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 2, &a_shape));
+
+        c->set_output(0, c->Matrix(c->Dim(c->input(0), 0),6));
+        c->set_output(1, c->Vector(c->Dim(c->input(0), 0)));
+    return Status::OK();
+  });
+
+class CholeskyLogdetOp : public OpKernel {
+private:
+  
+public:
+  explicit CholeskyLogdetOp(OpKernelConstruction* context) : OpKernel(context) {
+
+  }
+
+  void Compute(OpKernelContext* context) override {    
+    DCHECK_EQ(1, context->num_inputs());
+    
+    
+    const Tensor& a = context->input(0);
+    
+    
+    const TensorShape& a_shape = a.shape();
+    
+    
+    DCHECK_EQ(a_shape.dims(), 2);
+
+    // extra check
+        
+    // create output shape
+    int n = a_shape.dim_size(0);
+    TensorShape l_shape({n,6});
+    TensorShape jac_shape({n});
+            
+    // create output tensor
+    
+    Tensor* l = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(0, l_shape, &l));
+    Tensor* jac = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(1, jac_shape, &jac));
+    
+    // get the corresponding Eigen tensors for data access
+    
+    auto a_tensor = a.flat<double>().data();
+    auto l_tensor = l->flat<double>().data();
+    auto jac_tensor = jac->flat<double>().data();   
+
+    // implement your forward function here 
+
+    // TODO:
+    factorize_logdet(jac_tensor, l_tensor, a_tensor, n);
+
+  }
+};
+REGISTER_KERNEL_BUILDER(Name("CholeskyLogdet").Device(DEVICE_CPU), CholeskyLogdetOp);
+
+
+
+
 
 REGISTER_OP("CholeskyForwardOp")
 

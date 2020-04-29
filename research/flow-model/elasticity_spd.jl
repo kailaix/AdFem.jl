@@ -86,29 +86,18 @@ forward(fo::PoissonFlow, x) = ADCME.forward(fo.o, x)
 backward(fo::PoissonFlow, x) = ADCME.backward(fo.o, x)
 
 # transform to (0, infty) and (0, c2)
-mutable struct LameFlow <: FlowOp
+mutable struct CholFlow <: FlowOp
     dim::Int64 
-    c1::Float64
-    c2::Float64
 end
-function LameFlow(c1::Float64, c2::Float64) 
-    LameFlow(2, c1, c2)
+function CholFlow() 
+    CholFlow(9)
 end
-function forward(fo::LameFlow, x) 
-    x1, x2 = x[:,1], x[:,2]
-    z1  = log(x1)
-    z2 = (x2-fo.c1)/(fo.c2-fo.c1)
-    z2 = log(z2/(1-z2))
-    z = [z1 z2]
-    J = 1/x1 + log(1/(x2-fo.c1)) + log(1/(fo.c2-x2))
-    return z, J 
+function forward(fo::CholFlow, x) 
+    z, logdet = cholesky_factorize_logdet(x)
 end
-function backward(fo::LameFlow, z)
-    z1, z2 = z[:,1], z[:,2]
-    σ2 = sigmoid(z2)
-    x = [exp(z1) fo.c1+σ2*(fo.c2-fo.c1)]
-    J = z1 + log(σ2*(1-σ2)*(fo.c2-fo.c1))
-    return x, J 
+function backward(fo::CholFlow, z)
+    x = cholesky_outproduct(z)
+    return x, nothing
 end
 
 
