@@ -101,6 +101,19 @@ function sample_poisson_mixture_model_(n)
     v = v * noise_level .+ [1.0 1.0]
 end
 
+
+function sample_elasticity_mixture_model_(n)
+    d = MixtureModel(MvNormal[
+        MvNormal([0.0;2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([-2;-2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([2;-2.0], [0.5 0.0;0.0 0.5])])
+    v = Array(rand(d, 10000)')[:,1:2] .* [1.0 0.5] 
+    v = v * noise_level * 0.4 .+ [2.0 0.35]
+    v[v[:,2] .< 0.0, :] .= 0.0
+    v[v[:,2] .> 0.499, :] .= 0.499
+    v
+end
+
 function sample_moons_(n)
     v = sample_moons(n)
     v = v * noise_level .+ [1.0 1.0]
@@ -124,10 +137,12 @@ function sample_observation(solver, sess, n, sampler)
     end
     v = sampler(n)
     sol = solve_batch_pde(solver, v, obs=true)
+    init(sess)
     run(sess, sol)
 end
 
 function generate_A_and_b(sess, c0)
     sol, A = solver(c0, jac=true, obs=true)
+    init(sess)
     sol, A = run(sess, [sol, A])
 end

@@ -142,11 +142,11 @@ end
 
 function bcnode_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
     nodes = Int64[]
-    if desc=="upper"
+    if desc=="upper" || desc=="top"
         for i = 1:m+1
             push!(nodes, i)
         end
-    elseif desc=="lower"
+    elseif desc=="lower" || desc == "bottom"
         for i = 1:m+1
             push!(nodes, i+n*(m+1))
         end
@@ -159,7 +159,7 @@ function bcnode_(desc::AbstractString, m::Int64, n::Int64, h::Float64)
             push!(nodes, m+1+(j-1)*(m+1))
         end
     else 
-        error("$desc is not a valid specification. Only `upper`, `lower`, `left`, `right`, `all` or their combination via `|`, is accepted.")
+        error("$desc is not a valid specification. Only `upper` (top), `lower` (bottom), `left`, `right`, `all` or their combination via `|`, is accepted.")
     end
     return nodes
 end
