@@ -55,8 +55,8 @@ end
 A differentiable kernel for computing the stiffness matrix. 
 Two possible shapes for `hmat` are supported: 
 
-- `4mn \times 2\times 2`
-- `2 \times 2`
+- $4mn \times 2\times 2$
+- $2 \times 2$
 """
 function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
     if !(length(size(hmat)) in [2,3])
