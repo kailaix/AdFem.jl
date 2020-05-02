@@ -13,7 +13,13 @@ m = 15
 h = 0.1
 
 σ0 = 0.1
-N = 5000
+N = 500
+
+if length(ARGS)==2
+    σ0 = parse(Float64, ARGS[1])
+    N = parse(Int64, ARGS[2])
+end
+
 DIR = "sigma$(σ0)-$N"
 if !isdir(DIR)
     mkdir(DIR)
@@ -107,9 +113,8 @@ function logfgrad(x)
     r, dr
 end
 sess = Session(); init(sess)
-N = 500
-burnin = 100
 sim = Chains(N, 2, names=["E", "mu"])
+burnin = div(N, 5)
 
 ε = 0.1
 L = 50
@@ -120,5 +125,4 @@ L = 50
     sample!(θ)
     sim[i, :, 1] = [ sigmoid(θ[1])*10; sigmoid(θ[2])*0.499]
 end
-
-# describe(sim)
+visualize(sim.value[burnin+1:end,:,1])

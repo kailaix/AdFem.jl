@@ -13,7 +13,12 @@ m = 15
 h = 0.1
 
 σ0 = 0.1
-N = 5000
+N = 500
+
+if length(ARGS)==2
+    σ0 = parse(Float64, ARGS[1])
+    N = parse(Int64, ARGS[2])
+end
 DIR = "sigma$(σ0)-$N"
 if !isdir(DIR)
     mkdir(DIR)
