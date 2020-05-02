@@ -247,9 +247,9 @@ l_5 & l_6 & l_3
 \end{matrix}$$
 and `A` (length=9) is also a vectorized form of $A$
 """
-function cholesky_outproduct(o::Union{Array{<:Real,2}, PyObject})
-    @assert size(o,2)==6
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build","cholesky_backward_op")
+function cholesky_outproduct(A::Union{Array{<:Real,2}, PyObject})
+    @assert size(A,2)==6
+    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build/libCholeskyOp","cholesky_backward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end
@@ -260,8 +260,8 @@ end
 Returns the cholesky factor of `A`. See [`cholesky_outproduct`](@ref) for details. 
 """
 function cholesky_factorize(A::Union{Array{<:Real,2}, PyObject})
-    @assert size(o,2)==9
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build","cholesky_forward_op")
+    @assert size(A,2)==9
+    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build/libCholeskyOp","cholesky_forward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end

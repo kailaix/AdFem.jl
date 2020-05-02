@@ -92,6 +92,16 @@ function solve_batch_pde(solver, c; jac = false, obs = false)
     end
 end
 
+function sample_mixture_gaussian_4(n)
+    d = MixtureModel(MvNormal[
+        MvNormal([2.0;2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([-2.0;2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([-2;-2.0], [0.5 0.0;0.0 0.5]),
+        MvNormal([2;-2.0], [0.5 0.0;0.0 0.5])])
+    v = Array(rand(d, n)')[:,1:2]
+    v = v * noise_level .+ [1.0 1.0]
+end
+
 function sample_poisson_mixture_model_(n)
     d = MixtureModel(MvNormal[
         MvNormal([0.0;2.0], [0.5 0.0;0.0 0.5]),
@@ -145,4 +155,27 @@ function generate_A_and_b(sess, c0)
     sol, A = solver(c0, jac=true, obs=true)
     init(sess)
     sol, A = run(sess, [sol, A])
+end
+
+
+function create_linear_transform(dim)
+    permutation = randperm(dim) .- 1
+    flow = [Permute(dim, permutation);LinearFlow(dim)]
+end
+
+function create_base_transform(dim, i, K=8; dropout_probability = 0.0, use_batch_norm = false)
+    n1 = dim÷2
+    n2 = dim - n1
+    r1 = x->Resnet1D(n1 * (3K-1), 256, dropout_probability=dropout_probability, use_batch_norm=use_batch_norm, name="resnet$i")(x)
+    r2 = x->Resnet1D(n2 * (3K-1), 256, dropout_probability=dropout_probability, use_batch_norm=use_batch_norm, name="resnet$i")(x)
+    NeuralCouplingFlow(dim, r1, r2)
+end
+
+function create_transform(dim, K=8; dropout_probability = 0.0, use_batch_norm = false)
+    flows = ADCME.FlowOp[]
+    for i = 1:5
+        push!(flows, create_linear_transform(dim)...)
+        push!(flows, create_base_transform(dim, i, K; dropout_probability = 0.0, use_batch_norm = false))
+    end
+    push!(flows, create_linear_transform(dim)...)
 end

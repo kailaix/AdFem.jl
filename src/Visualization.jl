@@ -429,7 +429,7 @@ Visualizes the scalar `u` using pcolormesh. Here `u` is a length $(m+1)(n+1)$ ve
 function visualize_scalar_on_fem_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
     close("all")
     x = Array((0:m)*h)
-    y = Array((0:m)*h)
+    y = Array((0:n)*h)
     z = reshape(u, m+1, n+1)
 
     vmin = mean(z) - 2std(z)
