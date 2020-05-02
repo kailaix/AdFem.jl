@@ -19,7 +19,8 @@ if length(ARGS)==1
     global σ0 = parse(Float64, ARGS[1])
 end
 
-DIR = "vae-sigma$(σ0)-$(randstring(10))"
+batch_size = 128
+DIR = "vae-sigma$(σ0)-$(batch_size)-$(randstring(10))"
 
 Random.seed!(233)
 obs_id = rand(interior_node("all", m, n, h), 10)
@@ -105,7 +106,6 @@ n_hidden = 500
 rate = 0.1
 dim_z = 20
 dim_img = 2
-batch_size = 32
 ADCME.options.training.training = placeholder(true)
 SOL = repeat(sol_', batch_size, 1)
 x = placeholder( SOL )

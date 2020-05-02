@@ -19,7 +19,7 @@ if length(ARGS)==2
     σ0 = parse(Float64, ARGS[1])
     N = parse(Int64, ARGS[2])
 end
-DIR = "sigma$(σ0)-$N"
+DIR = "sigma$(σ0)-$N-$(randstring(10))"
 if !isdir(DIR)
     mkdir(DIR)
 end
