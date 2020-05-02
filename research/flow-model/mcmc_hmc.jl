@@ -20,7 +20,7 @@ if length(ARGS)==2
     N = parse(Int64, ARGS[2])
 end
 
-DIR = "sigma$(σ0)-$N"
+DIR = "hmc-sigma$(σ0)-$N"
 if !isdir(DIR)
     mkdir(DIR)
 end
