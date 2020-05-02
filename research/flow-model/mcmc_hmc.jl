@@ -109,6 +109,7 @@ lfg = gradients(lf, c)
 function logfgrad(x)
     b0 = sigmoid(x[1])*10
     b1 = sigmoid(x[2])*0.499
+    @info b0,b1
     r, dr = run(sess, [lf,lfg], c=>[b0;b1])
     r, dr
 end
@@ -116,8 +117,8 @@ sess = Session(); init(sess)
 sim = Chains(N, 2, names=["E", "mu"])
 burnin = div(N, 5)
 
-ε = 0.1
-L = 50
+ε = 0.02
+L = 10
 θ = HMCVariate([invsigma(2.0/10),invsigma(0.35/0.499)], 
     ε, L, logfgrad)
 
