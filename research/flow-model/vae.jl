@@ -11,7 +11,7 @@ using DelimitedFiles
 reset_default_graph()
 
 n = 10
-m = 10
+m = 15
 h = 0.1
 
 σ0 = 0.1
@@ -19,7 +19,7 @@ if length(ARGS)==1
     global σ0 = parse(Float64, ARGS[1])
 end
 
-DIR = "vae-sigma$(σ0)"
+DIR = "vae-sigma$(σ0)-$(randstring(10))"
 
 Random.seed!(233)
 obs_id = rand(interior_node("all", m, n, h), 10)
