@@ -72,7 +72,7 @@ function visualize(sim)
     p = hist(sim[:,2], bins=50, density=true)
     PyPlot.plot(ones(100)*0.35, LinRange(0, maximum(p[1]), 100), "--")
     savefig("$DIR/hist.png")
-    writedlm("$DIR/data.png", sim)
+    writedlm("$DIR/data.txt", sim)
 end
 
 #------------------------------------------------------------------------------------------

@@ -148,7 +148,7 @@ function visualize(i)
     writedlm("$DIR/data$i.png", sim)
 end
 # BFGS!(sess, loss)
-for i = 1:1000
+for i = 1:10000
     run(sess, opt, x=> SOL + σ0 * randn(batch_size, length(sol_)))
     if mod(i,10)==1
         c_, loss_, ml_, kl_ = run(sess, [ c, loss, ml, KL_divergence], ADCME.options.training.training=>false)
