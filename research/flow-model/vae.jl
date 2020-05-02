@@ -6,12 +6,21 @@ using Random
 using PyPlot
 using Mamba
 using ProgressMeter
+using DelimitedFiles
 
 reset_default_graph()
 
 n = 10
-m = 10
+m = 15
 h = 0.1
+
+σ0 = 0.1
+if length(ARGS)==1
+    global σ0 = parse(Float64, ARGS[1])
+end
+
+DIR = "sigma$(σ0)"
+
 Random.seed!(233)
 obs_id = rand(interior_node("all", m, n, h), 10)
 obs_id = [obs_id; obs_id .+ (m+1)*(n+1)]
@@ -45,8 +54,6 @@ end
 
 # c = placeholder(rand(2))
 # sol = solve_elasticity(c)
-σ0 = 0.1
-DIR = "sigma$(σ0)"
 if !isdir(DIR)
     mkdir(DIR)
 end
