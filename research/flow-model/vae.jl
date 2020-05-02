@@ -16,11 +16,13 @@ m = 15
 h = 0.1
 
 σ0 = 0.1
-if length(ARGS)==1
+batch_size = 32
+if length(ARGS)==2
     global σ0 = parse(Float64, ARGS[1])
+    global batch_size = parse(Int64, ARGS[2])
 end
 
-batch_size = 32
+
 DIR = "vae-sigma$(σ0)-$(batch_size)-$(randstring(10))"
 
 Random.seed!(233)
@@ -156,6 +158,7 @@ function visualize(i)
     savefig("$DIR/loss$i.png")
 
     writedlm("$DIR/data$i.txt", sim)
+    writedlm("$DIR/loss$i.txt", [losses mls kls])
 end
 # BFGS!(sess, loss)
 for i = 1:10000
