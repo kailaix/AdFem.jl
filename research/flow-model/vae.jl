@@ -113,9 +113,8 @@ x = placeholder( SOL )
 xh = x
 c, loss, ml, KL_divergence = autoencoder(xh, x, dim_img, dim_z, n_hidden, rate)
 
-global_step = Variable(0, trainable=false)
-lr = tf.compat.v1.train.exponential_decay(1e-4, global_step, 100, 0.96, staircase=true)
-opt = AdamOptimizer(lr).minimize(loss, global_step = global_step)
+lr = placeholder(Float64, shape=[])
+opt = AdamOptimizer(lr).minimize(loss)
 
 sess = Session(); init(sess)
 
@@ -160,8 +159,14 @@ function visualize(i)
 end
 # BFGS!(sess, loss)
 for i = 1:10000
+    learning_rate = 1e-4
+    if 100<i<10000
+        learning_rate = 1e-5
+    elseif i>=10000
+        learning_rate = 1e-6
+    end
     run(sess, opt, 
-            feed_dict = Dict(x=> SOL)# + σ0 * randn(batch_size, length(sol_)))
+            feed_dict = Dict(x=> SOL, lr=>learning_rate)# + σ0 * randn(batch_size, length(sol_)))
     )
     if mod(i,10)==1
         c_, loss_, ml_, kl_ = run(sess, [ c, loss, ml, KL_divergence], ADCME.options.training.training=>false)
