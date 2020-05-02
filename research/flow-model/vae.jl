@@ -171,12 +171,12 @@ for i = 1:10000
     if mod(i,10)==1
         c_, loss_, ml_, kl_ = run(sess, [ c, loss, ml, KL_divergence], ADCME.options.training.training=>false)
         println("iter $i: L_tot = $(loss_), L_likelihood = $(ml_), L_KL = $(kl_), c = $(mean(c_, dims=1))")
-        if i>1 && loss_ < minimum(losses)
-            visualize(i)
-        end
         push!(losses, loss_)
         push!(mls, ml_)
         push!(kls, kl_)
+    end
+    if mod(i, 100)==1
+        visualize(i)
     end
 end
 
