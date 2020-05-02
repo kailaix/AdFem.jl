@@ -19,7 +19,7 @@ if length(ARGS)==1
     global σ0 = parse(Float64, ARGS[1])
 end
 
-batch_size = 128
+batch_size = 32
 DIR = "vae-sigma$(σ0)-$(batch_size)-$(randstring(10))"
 
 Random.seed!(233)
@@ -80,7 +80,7 @@ function decoder(z, n_hidden, n_output, rate)
         y = dropout(y, rate, ADCME.options.training.training)
         y = dense(y, n_hidden, activation="elu")
         y = dropout(y, rate, ADCME.options.training.training)
-        y = dense(y, n_output)
+        y = dense(y, n_output) + [invsigma(2.0/10.0) invsigma(0.35/0.499)]
         y = sigmoid(y) .* [10.0,0.499]
     end
     return y 
@@ -111,7 +111,7 @@ SOL = repeat(sol_', batch_size, 1)
 x = placeholder( SOL )
 xh = x
 c, loss, ml, KL_divergence = autoencoder(xh, x, dim_img, dim_z, n_hidden, rate)
-opt = AdamOptimizer(1e-5).minimize(loss)
+opt = AdamOptimizer(1e-4).minimize(loss)
 
 sess = Session(); init(sess)
 
@@ -145,7 +145,7 @@ function visualize(i)
     legend()
     savefig("$DIR/loss$i.png")
 
-    writedlm("$DIR/data$i.png", sim)
+    writedlm("$DIR/data$i.txt", sim)
 end
 # BFGS!(sess, loss)
 for i = 1:10000
