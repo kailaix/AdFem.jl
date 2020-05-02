@@ -7,6 +7,7 @@ using PyPlot
 using Mamba
 using ProgressMeter
 using DelimitedFiles
+using Statistics
 
 reset_default_graph()
 
@@ -111,7 +112,10 @@ SOL = repeat(sol_', batch_size, 1)
 x = placeholder( SOL )
 xh = x
 c, loss, ml, KL_divergence = autoencoder(xh, x, dim_img, dim_z, n_hidden, rate)
-opt = AdamOptimizer(1e-4).minimize(loss)
+
+global_step = Variable(0, trainable=false)
+lr = tf.compat.v1.train.exponential_decay(1e-4, global_step, 100, 0.96, staircase=true)
+opt = AdamOptimizer(lr).minimize(loss, global_step = global_step)
 
 sess = Session(); init(sess)
 
@@ -134,10 +138,17 @@ function visualize(i)
     p = hist(sim[:,1], bins=50, density=true)
     PyPlot.plot(ones(100)*2.0, LinRange(0, maximum(p[1]), 100), "--")
     subplot(122)
-    title("\$\\mu\$")
+    title("\$\\nu\$")
     p = hist(sim[:,2], bins=50, density=true)
     PyPlot.plot(ones(100)*0.35, LinRange(0, maximum(p[1]), 100), "--")
     savefig("$DIR/dist$i.png")
+
+    close("all")
+    scatter(sim[:,1], sim[:,2])
+    xlabel("E")
+    ylabel("\$\\nu\$")
+    savefig("$DIR/scatter$i.png")
+
     close("all")
     semilogy(losses, label="Total Loss")
     semilogy(mls, label="Negative Marginal Likelihood")
@@ -149,10 +160,12 @@ function visualize(i)
 end
 # BFGS!(sess, loss)
 for i = 1:10000
-    run(sess, opt, x=> SOL + σ0 * randn(batch_size, length(sol_)))
+    run(sess, opt, 
+            feed_dict = Dict(x=> SOL)# + σ0 * randn(batch_size, length(sol_)))
+    )
     if mod(i,10)==1
         c_, loss_, ml_, kl_ = run(sess, [ c, loss, ml, KL_divergence], ADCME.options.training.training=>false)
-        println("iter $i: L_tot = $(loss_), L_likelihood = $(ml_), L_KL = $(kl_), c = $(c_[1,:])")
+        println("iter $i: L_tot = $(loss_), L_likelihood = $(ml_), L_KL = $(kl_), c = $(mean(c_, dims=1))")
         if i>1 && loss_ < minimum(losses)
             visualize(i)
         end
