@@ -15,7 +15,7 @@ n = 10
 m = 15
 h = 0.1
 
-σ0 = 0.1
+σ0 = 0.01
 batch_size = 32
 if length(ARGS)==2
     global σ0 = parse(Float64, ARGS[1])
@@ -169,7 +169,7 @@ for i = 1:10000
         learning_rate = 1e-6
     end
     run(sess, opt, 
-            feed_dict = Dict(x=> SOL, lr=>learning_rate)# + σ0 * randn(batch_size, length(sol_)))
+            feed_dict = Dict(x=> SOL .* ( 1.0 .+ 0.1*randn(size(SOL))), lr=>learning_rate)# + σ0 * randn(batch_size, length(sol_)))
     )
     if mod(i,10)==1
         c_, loss_, ml_, kl_ = run(sess, [ c, loss, ml, KL_divergence], ADCME.options.training.training=>false)

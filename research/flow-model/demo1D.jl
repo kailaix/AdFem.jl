@@ -5,14 +5,15 @@ using PoreFlow
 using Distributions
 using ProgressMeter
 using DelimitedFiles
-
+reset_default_graph()
 
 #-----------------------------------------------------------------------------
 # hyperparameters
 
-σ0 = 0.001
+σ0 = 0.01
 dim_z = 10
 batch_size = 64
+model = "beta"
 
 if length(ARGS)==2
     global model = ARGS[1]
@@ -22,6 +23,8 @@ if length(ARGS)==2
 end
 
 # default distribution for the hidden parameter
+x0 = LinRange(0,1.,100)
+
 if model=="beta"
     global beta = Beta(5,2)
 elseif model=="arcsin"
@@ -32,18 +35,17 @@ elseif model == "mixture"
     global beta = MixtureModel(Normal[
         Normal(0.3, 0.1),
         Normal(0.7, 0.1)], [0.3, 0.7])
+    global x0 = LinRange(0, 100.,10000.)
 end 
 # beta = Arcsine(0,1)
 # beta = LogNormal() # use LinRange(0,100.,10000)
 
 
-
-y0 = pdf.(beta, LinRange(0,1.,100))
+y0 = pdf.(beta, x0)
 DIR = "demo1D-$(σ0)-$dim_z-$batch_size-$model"
 
-if !isdir(DIR)
-    mkdir(DIR)
-end
+rm(DIR, recursive=true, force=true)
+mkdir(DIR)
 
 
 #-----------------------------------------------------------------------------
@@ -72,6 +74,7 @@ end
 function poisson1ds(c)
     c = constant(c)
     s = map(poisson1d, c)
+    # c^2
 end
 
 #-----------------------------------------------------------------------------
@@ -83,7 +86,7 @@ end
 function decoder(s)
     σ, μ = s[:,1:dim_z], s[:, dim_z+1:end]
     out = tf.random_normal([size(s,1);dim_z], dtype=tf.float64) .* σ + μ 
-    out = ae(out, [20,20,20,1], "decoder")
+    out = ae(out, [20,20,20,1], "decoder") |> abs
     out, σ, μ
 end
 
@@ -113,7 +116,6 @@ sess = Session(); init(sess)
 
 losses = Float64[]
 for i = 1:10000
-    @info i
     l,_ = run(sess, [loss, opt], x=>generate_data())
     push!(losses, l)
     if mod(i, 10)==1
@@ -125,14 +127,14 @@ for i = 1:10000
         θ0 = Float64.(vcat(θ0...))
         close("all")
         hist(θ0, bins=20, density=true)
-        plot(LinRange(0,1.,100), y0, c="g", label="Reference")
-        xlim(0,1)
+        plot(x0, y0, c="g", label="Reference")
+        # xlim(0,1)
         savefig("$DIR/hist$i.png")
         writedlm("$DIR/theta$i.txt", θ0)
         writedlm("$DIR/loss$i.txt", losses)
-        close("all")
-        semilogy(losses)
-        savefig("$DIR/loss.png")
-        println("iteration $i, loss = $l")
+        # close("all")
+        # semilogy(losses)
+        # savefig("$DIR/loss.png")
     end
+    println("iteration $i, loss = $l")
 end

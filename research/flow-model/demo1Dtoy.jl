@@ -4,12 +4,12 @@ using PyPlot
 using Distributions
 reset_default_graph()
 
-# beta = Beta(5,2)
+beta = Beta(5,2)
 # beta = Arcsine(0,1)
 # beta = LogNormal() # use LinRange(0,100.,10000)
-beta = MixtureModel(Normal[
-    Normal(0.3, 0.1),
-    Normal(0.7, 0.1)], [0.3, 0.7])
+# beta = MixtureModel(Normal[
+#     Normal(0.3, 0.1),
+#     Normal(0.7, 0.1)], [0.3, 0.7])
 x0 = LinRange(0,1.,100)
 y0 = pdf.(beta, x0)
 plot(x0, y0)
