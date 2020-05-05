@@ -14,14 +14,30 @@ using DelimitedFiles
 dim_z = 10
 batch_size = 64
 
-if length(ARGS)==3
-    global σ0 = parse(Float64, ARGS[1])
-    global dim_z = parse(Int64, ARGS[2])
-    global batch_size = parse(Int64, ARGS[3])
+if length(ARGS)==2
+    global model = ARGS[1]
+    global σ0 = parse(Float64, ARGS[2])
+    # global dim_z = parse(Int64, ARGS[3])
+    # global batch_size = parse(Int64, ARGS[4])
 end
 
 # default distribution for the hidden parameter
-beta = Beta(5,2)
+if model=="beta"
+    global beta = Beta(5,2)
+elseif model=="arcsin"
+    global beta = Arcsine(0,1)
+elseif model == "lognormal"
+    global beta = LogNormal() 
+elseif model == "mixture"
+    global beta = MixtureModel(Normal[
+        Normal(0.3, 0.1),
+        Normal(0.7, 0.1)], [0.3, 0.7])
+end 
+# beta = Arcsine(0,1)
+# beta = LogNormal() # use LinRange(0,100.,10000)
+
+
+
 y0 = pdf.(beta, LinRange(0,1.,100))
 
 DIR = "demo1D-$(σ0)-$dim_z-$batch_size-beta"
@@ -96,7 +112,7 @@ opt = AdamOptimizer().minimize(loss)
 sess = Session(); init(sess)
 
 
-losses = []
+losses = Float64[]
 for i = 1:10000
     @info i
     l,_ = run(sess, [loss, opt], x=>generate_data())
@@ -113,8 +129,11 @@ for i = 1:10000
         plot(LinRange(0,1.,100), y0, c="g", label="Reference")
         xlim(0,1)
         savefig("$DIR/hist$i.png")
-        writedlm("$DIR/theta$i.png", θ0)
-        writedlm("$DIR/loss$i.png", losses)
+        writedlm("$DIR/theta$i.txt", θ0)
+        writedlm("$DIR/loss$i.txt", losses)
+        close("all")
+        semilogy(losses)
+        savefig("$DIR/loss.png")
         println("iteration $i, loss = $l")
     end
 end
