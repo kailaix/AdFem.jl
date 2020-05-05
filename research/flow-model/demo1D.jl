@@ -39,8 +39,7 @@ end
 
 
 y0 = pdf.(beta, LinRange(0,1.,100))
-
-DIR = "demo1D-$(σ0)-$dim_z-$batch_size-beta"
+DIR = "demo1D-$(σ0)-$dim_z-$batch_size-$model"
 
 if !isdir(DIR)
     mkdir(DIR)

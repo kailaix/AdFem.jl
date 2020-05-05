@@ -14,7 +14,7 @@ x0 = LinRange(0,1.,100)
 y0 = pdf.(beta, x0)
 plot(x0, y0)
 
-# σ0 = 0.01
+σ0 = 0.01
 dim_z = 10
 batch_size = 64
 function encoder(x)
