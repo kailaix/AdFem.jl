@@ -2,6 +2,7 @@ using Revise
 using ADCME
 using PyPlot
 using PoreFlow
+using MAT
 
 
 m = 20
@@ -14,6 +15,16 @@ xy_fem = fem_nodes(m, n, h)
 not_bdnode = ones(Bool, (m+1)*(n+1))
 not_bdnode[bdnode] .= false
 not_bdnode = findall(not_bdnode)
+
+
+σ0 = 0.0
+if length(ARGS)=1
+    global σ0 = parse(Float64, ARGS[1])
+end
+
+DIR = "uq_nn2-$σ0"
+rm(DIR, force=true, recursive=true)
+mkdir(DIR)
 
 
 function poisson1d(κ)
@@ -58,7 +69,7 @@ function poisson1d_nn(fn)
 end
 
 function jacobian(u, θ)
-    κ = fn(u, θ)
+    κ = κfc(u, θ)
     K = compute_space_varying_tangent_elasticity_matrix(κ, m, n, h)
     K = compute_fem_stiffness_matrix1(K, m, n, h)
     K, _ = fem_impose_Dirichlet_boundary_condition1(K, bdnode, m, n, h)
@@ -75,24 +86,19 @@ ADCME.options.newton_raphson.tol = 1e-4
 y, κ, _ = poisson1d_nn(param)
 
 sess = Session(); init(sess)
-SOL = run(sess, y)
+SOL = run(sess, y) 
 
 
 umax = maximum(SOL)
 xc = LinRange(0, umax, 100)|>Array
 u1 = @. 0.1 + 1/(1+xc^2) + 100xc^2
-close("all")
-plot(xc, u1)
-title("K(u)")
-savefig("nn2_ku_plot.png")
 
 y, κnn, θ  = poisson1d_nn(κfc)
-
 
 using Random; Random.seed!(233)
 idx = fem_randidx(50, m, n, h)
 obs = y[idx]
-OBS = SOL[idx]
+OBS = SOL[idx] + σ0*randn(length(idx))
 loss = sum((obs-OBS)^2)
 
 init(sess)
@@ -104,45 +110,73 @@ figure(figsize=(10,4))
 subplot(121)
 visualize_scalar_on_fem_points(SOL, m, n, h)
 subplot(122)
-visualize_scalar_on_fem_points(run(sess, y), m, n, h)
+Yvalue = run(sess, y)
+visualize_scalar_on_fem_points(Yvalue, m, n, h)
 plot(xy_fem[idx,1], xy_fem[idx,2], "o", c="red", label="Observation")
 legend()
-savefig("nn2_sol_compare.png")
+savefig("$DIR/sol_compare.png")
 
 
 close("all")
 figure(figsize=(10,4))
 subplot(121)
-visualize_scalar_on_gauss_points(run(sess, κ), m, n, h)
+κvalue = run(sess, κ)
+visualize_scalar_on_gauss_points(κvalue, m, n, h)
 title("Exact \$K(x, y)\$")
 subplot(122)
-visualize_scalar_on_gauss_points(run(sess, κnn), m, n, h)
+κnnvalue = run(sess, κnn)
+visualize_scalar_on_gauss_points(κnnvalue, m, n, h)
 title("Estimated \$K(x, y)\$")
-savefig("nn2_sol_compare.png")
+savefig("$DIR/K_compare.png")
 
 u0 = constant(LinRange(0,umax,100)|>Array )
-z = 1 + abs(squeeze(fc(reshape(u0, (-1,1)), [20,20,20,1], θ)))
+z = 0.1 + abs(squeeze(fc(reshape(u0, (-1,1)), [20,20,20,1], θ)))
+close("all")
 plot(run(sess, u0), run(sess, z), "--")
 plot(xc, u1, "-")
-savefig("nn2_ucurve.png")
+savefig("$DIR/ucurve.png")
 
 
+u_est = run(sess, y)
 H = jacobian(y, θ)
 H = run(sess, H)[idx,:]
-y = OBS 
+y_ = OBS 
 hs = run(sess, obs)
 s = run(sess, κnn)
 
 R = (1e-2)^2*diagm(0=>ones(length(obs)))
-Q = (1)^2*diagm(0=>ones(length(κnn)))
-μ, Σ = uqnlin(y, hs, H, R, s, Q)
-
-error()
+Q = (1e-2)^2*diagm(0=>ones(length(κnn)))
+μ, Σ = uqnlin(y_, hs, H, R, s, Q)
+# error()
 σ = diag(Σ)
-figure(figsize=(10,4))
-subplot(121)
-visualize_scalar_on_gauss_points(σ, m, n, h)
-title("Standard Deviation")
-subplot(122)
-visualize_scalar_on_gauss_points(abs.(run(sess, κnn)-κ), m, n, h)
-title("Absolute Error")
+
+close("all")
+u1 = fem_to_fvm(u_est, m, n, h)
+z1 = μ[1:4:end]
+σ1 = 2σ[1:4:end]
+Is = sortperm(u1)
+u1 = u1[Is]
+z1 = z1[Is]
+σ1 = σ1[Is]
+plot(run(sess, u0), run(sess, z), "-", linewidth=2, label="Referencee")
+plot(u1, z1, "--", linewidth=2, label="Estimated")
+fill_between(u1, z1-σ1, z1+σ1, alpha=0.3, color="orange", label="Uncertainty Region")
+xlim(minimum(u1), maximum(u1))
+legend()
+xlabel("\$u\$")
+ylabel("\$K(u)\$")
+savefig("$DIR/errorbar.png")
+
+matwrite("$DIR/data.mat", 
+    Dict(
+        "SOL"=>SOL,
+        "Yvalue"=>Yvalue,
+        "kappavalue"=>κvalue,
+        "u_est"=>u_est,
+        "H"=>H,
+        "yobs"=>y_, 
+        "hs"=>hs,
+        "s"=>s,
+        "sigma"=>σ,
+        "mu"=>μ
+    ))
