@@ -1,4 +1,3 @@
-using Revise
 using ADCME
 using PyPlot
 using PoreFlow
@@ -18,11 +17,13 @@ not_bdnode = findall(not_bdnode)
 
 
 σ0 = 0.0
-if length(ARGS)==1
+prior = 0.01
+if length(ARGS)==2
     global σ0 = parse(Float64, ARGS[1])
+    global prior = parse(Float64, ARGS[2])
 end
 
-DIR = "uq_nn2-$σ0"
+DIR = "uq_nn2-$σ0-$prior"
 rm(DIR, force=true, recursive=true)
 mkdir(DIR)
 
@@ -98,7 +99,7 @@ y, κnn, θ  = poisson1d_nn(κfc)
 using Random; Random.seed!(233)
 idx = fem_randidx(50, m, n, h)
 obs = y[idx]
-OBS = SOL[idx] + σ0*randn(length(idx))
+OBS = SOL[idx] .* ( 1. + σ0*randn(length(idx)))
 loss = sum((obs-OBS)^2)
 
 init(sess)
@@ -144,7 +145,7 @@ y_ = OBS
 hs = run(sess, obs)
 s = run(sess, κnn)
 
-R = (1e-2)^2*diagm(0=>ones(length(obs)))
+R = (prior)^2*diagm(0=>ones(length(obs)))
 Q = (1e-2)^2*diagm(0=>ones(length(κnn)))
 μ, Σ = uqnlin(y_, hs, H, R, s, Q)
 # error()
