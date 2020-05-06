@@ -18,7 +18,7 @@ not_bdnode = findall(not_bdnode)
 
 
 σ0 = 0.0
-if length(ARGS)=1
+if length(ARGS)==1
     global σ0 = parse(Float64, ARGS[1])
 end
 
