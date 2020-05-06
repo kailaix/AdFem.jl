@@ -1,6 +1,6 @@
 export femidx, fvmidx, get_edge_normal,
 plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, subdomain, interior_node,
-cholesky_outproduct, cholesky_factorize, cholesky_logdet
+cholesky_outproduct, cholesky_factorize, cholesky_logdet, fem_randidx, gauss_randidx, fem_to_fvm
 
 
 """
@@ -176,6 +176,27 @@ function interior_node(desc::String, m::Int64, n::Int64, h::Float64)
 end
 
 
+"""
+    fem_to_fvm(u::Union{PyObject, Array{Float64}}, m::Int64, n::Int64, h::Float64)
+
+Interpolates the nodal values of `u` to cell values. 
+"""
+function fem_to_fvm(u::Union{PyObject, Array{Float64}}, m::Int64, n::Int64, h::Float64)
+    idx1 = zeros(Int64, m*n)
+    idx2 = zeros(Int64, m*n)
+    idx3 = zeros(Int64, m*n)
+    idx4 = zeros(Int64, m*n)
+    for i = 1:m 
+        for j = 1:n 
+            idx1[(j-1)*m+i] = (j-1)*(m+1)+i
+            idx2[(j-1)*m+i] = (j-1)*(m+1)+i+1
+            idx3[(j-1)*m+i] = j*(m+1)+i
+            idx4[(j-1)*m+i] = j*(m+1)+i+1
+        end
+    end
+    (u[idx1] + u[idx2] + u[idx3] + u[idx4])/4
+end
+
 @doc raw"""
     gauss_nodes(m::Int64, n::Int64, h::Float64)
 
@@ -221,6 +242,28 @@ function fem_nodes(m::Int64, n::Int64, h::Float64)
         end
     end
     xs
+end
+
+@doc raw"""
+    fem_randidx(N::Int64, m::Int64, n::Int64, h::Float64)
+
+Returns $N$ random index 
+"""
+function fem_randidx(N::Int64, m::Int64, n::Int64, h::Float64)
+    idx = Set([])
+    for k = 1:N 
+        while true
+            i = rand(2:m)
+            j = rand(2:n)
+            if j*(m+1)+i in idx 
+                continue 
+            else
+                push!(idx, j*(m+1)+i)
+                break 
+            end
+        end
+    end
+    sort([k for k in idx])
 end
 
 """

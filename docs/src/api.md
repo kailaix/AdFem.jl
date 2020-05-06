@@ -80,4 +80,5 @@ gauss_nodes
 fem_nodes
 cholesky_factorize
 cholesky_outproduct
+fem_to_fvm
 ```

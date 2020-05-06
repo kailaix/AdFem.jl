@@ -380,7 +380,7 @@ end
 Visualizes the scalar `u` using pcolormesh. Here `u` is a length $4mn$ vector and the values are defined on the Gauss points
 """
 function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
-    close("all")
+    # close("all")
     z = zeros(2m, 2n)
     x = zeros(2m)
     y = zeros(2n)
@@ -427,7 +427,6 @@ end
 Visualizes the scalar `u` using pcolormesh. Here `u` is a length $(m+1)(n+1)$ vector and the values are defined on the FEM points
 """
 function visualize_scalar_on_fem_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
-    close("all")
     x = Array((0:m)*h)
     y = Array((0:n)*h)
     z = reshape(u, m+1, n+1)
