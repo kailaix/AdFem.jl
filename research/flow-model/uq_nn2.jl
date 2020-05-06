@@ -159,8 +159,10 @@ Is = sortperm(u1)
 u1 = u1[Is]
 z1 = z1[Is]
 σ1 = σ1[Is]
-plot(run(sess, u0), run(sess, z), "-", linewidth=2, label="Referencee")
-plot(u1, z1, "--", linewidth=2, label="Estimated")
+plot(xc, u1, "-", linewidth=2, label="Referencee")
+plot(run(sess, u0), run(sess, z), "--", linewidth=2, label="Estimated")
+plot(u1, z1, "--", linewidth=2, label="Posterior Mean")
+
 fill_between(u1, z1-σ1, z1+σ1, alpha=0.3, color="orange", label="Uncertainty Region")
 xlim(minimum(u1), maximum(u1))
 legend()
