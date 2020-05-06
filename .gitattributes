@@ -1,0 +1,5 @@
+research/flow-model/simdata/sigma0.01-100000.txt filter=lfs diff=lfs merge=lfs -text
+research/flow-model/simdata/sigma0.05-100000.txt filter=lfs diff=lfs merge=lfs -text
+research/flow-model/simdata/sigma0.1-100000.txt filter=lfs diff=lfs merge=lfs -text
+research/flow-model/simdata/sigma0.2-100000.txt filter=lfs diff=lfs merge=lfs -text
+research/flow-model/simdata/sigma0.5-100000.txt filter=lfs diff=lfs merge=lfs -text
