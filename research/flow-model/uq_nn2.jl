@@ -99,7 +99,7 @@ y, κnn, θ  = poisson1d_nn(κfc)
 using Random; Random.seed!(233)
 idx = fem_randidx(50, m, n, h)
 obs = y[idx]
-OBS = SOL[idx] .* ( 1. + σ0*randn(length(idx)))
+OBS = SOL[idx] .* ( 1. .+ σ0*randn(length(idx)))
 loss = sum((obs-OBS)^2)
 
 init(sess)
