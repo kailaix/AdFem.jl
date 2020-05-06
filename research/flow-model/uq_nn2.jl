@@ -159,7 +159,12 @@ Is = sortperm(u1)
 u1 = u1[Is]
 z1 = z1[Is]
 σ1 = σ1[Is]
-plot(xc, u1, "-", linewidth=2, label="Referencee")
+
+
+xc = LinRange(0, umax, 100)|>Array
+u2 = @. 0.1 + 1/(1+xc^2) + 100xc^2
+plot(xc, u2, "-", linewidth=2, label="Referencee")
+
 plot(run(sess, u0), run(sess, z), "--", linewidth=2, label="Estimated")
 plot(u1, z1, "--", linewidth=2, label="Posterior Mean")
 
