@@ -1,0 +1,30 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      '*'
+    tags: '*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: 1.4
+      - uses: actions/cache@v1
+        with:
+          path: ~/.julia/conda/3
+          key: conda3
+          restore-keys: |
+            conda3
+      - name: Install dependencies
+        run: julia --project=docs/ --color=yes -e 'using Pkg;  Pkg.add("Documenter"); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.build("ADCME")'
+      - name: Build and deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
+        run: julia --project=docs/ docs/make.jl

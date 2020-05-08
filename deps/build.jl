@@ -1,5 +1,6 @@
 using ADCME
 
+install_adept()
 rm("build", force=true, recursive=true)
 mkdir("$(@__DIR__)/build")
 cd("build")
