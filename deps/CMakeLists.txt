@@ -31,9 +31,8 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 include_directories(${TF_INC} ${HEADERS} ${EIGEN_INC})
-link_directories(${TF_LIB})
+link_directories(${TF_LIB} ${LIBDIR}/Adept-2/adept/.libs)
 include_directories(${LIBDIR}/Adept-2/include)
-link_directories(${LIBDIR}/Adept-2/adept/.libs)
 
 
 set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
