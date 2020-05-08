@@ -39,11 +39,11 @@ link_directories(${LIBDIR}/Adept-2/adept/.libs)
 set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
     FemStiffness FemStiffness1 SpatialFemStiffness
     SpatialVaryingTangentElastic Strain Strain1
-    StrainEnergy StrainEnergy1 CholeskyOp)
+    StrainEnergy StrainEnergy1 CholeskyOp TpfaOp)
 set(LIB_NAME VolumetricStrain ComputeVel DirichletBd
     FemStiffness UnivariateFemStiffness SpatialFemStiffness
     SpatialVaryingTangentElastic StrainOp StrainOpUnivariate
-    StrainEnergy StrainEnergyUnivariate CholeskyOp)
+    StrainEnergy StrainEnergyUnivariate CholeskyOp TpfaOp)
 
 list(LENGTH "LIBDIR_NAME" LIBLENGTH)
 message("Total number of libraries to make: ${LIBLENGTH}")

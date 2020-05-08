@@ -200,3 +200,40 @@ function compute_space_varying_tangent_elasticity_matrix(mu::Union{PyObject, Arr
     H = spatial_varying_tangent_elastic_(mu,m_,n_,h,type)
     set_shape(H, (4*m*n, 2, 2))
 end
+
+
+"""
+    compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::PyObject, m::Int64, n::Int64, h::Float64)
+    
+A differentiable kernel for [`compute_fvm_tpfa_matrix`](@ref). 
+"""
+function compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::PyObject, m::Int64, n::Int64, h::Float64)
+    tpfa_op_ = load_op_and_grad("$(@__DIR__)/../deps/TpfaOp/build/libTpfaOp","tpfa_op", multiple=true)
+    K,bc,pval,m_,n_,h = convert_to_tensor(Any[K,bc,pval,m,n,h], [Float64,Int64,Float64,Int64,Int64,Float64])
+    ii, jj, vv, rhs = tpfa_op_(K,bc,pval,m_,n_,h)
+    SparseTensor(ii + 1, jj + 1, vv, m*n, m*n), set_shape(rhs, m*n) 
+end
+
+compute_fvm_tpfa_matrix(K::Array{Float64,1}, bc::Array{Int64,2}, 
+                        pval::PyObject, m::Int64, n::Int64, h::Float64) =
+                                    compute_fvm_tpfa_matrix(constant(K), bc, pval, m, n, h)
+
+
+compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, 
+    pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64) =
+            compute_fvm_tpfa_matrix(K, bc, constant(pval), m, n, h)
+
+
+"""
+    compute_fvm_tpfa_matrix(K::PyObject, m::Int64, n::Int64, h::Float64) 
+
+A differentiable kernel for [`compute_fvm_tpfa_matrix`](@ref). 
+"""
+function compute_fvm_tpfa_matrix(K::PyObject, m::Int64, n::Int64, h::Float64) 
+    bc = zeros(Int64, 0, 2)
+    pval = zeros(Float64, 0)
+    A, _ = compute_fvm_tpfa_matrix(K, bc, pval, m, n, h)
+    A 
+end
+        
+        

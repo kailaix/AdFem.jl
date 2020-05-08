@@ -329,14 +329,18 @@ Computes the source term
 ```math
 \int_{A_i} f\mathrm{d}x
 ```
+Here $f$ has length $4mn$ or $mn$. In the first case, an average value of four quadrature nodal values of $f$ is used per cell.
 """
 function compute_fvm_source_term(f::Array{Float64}, m::Int64, n::Int64, h::Float64)
     out = zeros(m*n)
-    @assert length(f) == 4*m*n 
+    @assert length(f) == 4*m*n || length(f)==m*n 
+    if length(f)==4*m*n 
+        f = (f[1:4:end] + f[2:4:end] + f[3:4:end] + f[4:4:end])/4
+    end
     for i = 1:m 
         for j = 1:n 
             k = (j-1)*m + i 
-            out[k] = 0.25*h^2*sum(f[4*(k-1)+1:4*k])
+            out[k] = h^2*f[k]
         end
     end
     out
@@ -440,6 +444,7 @@ Computes the term with two-point flux approximation with distinct permeability a
 \int_{A_i} K_i \Delta p \mathrm{d}x = K_i\sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
 ```
 
+Note that $K$ is a length $mn$ vector, representing values per cell.
 """
 function compute_fvm_tpfa_matrix(K::Array{Float64}, m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
@@ -467,12 +472,20 @@ end
     compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
 
 Computes the term with two-point flux approximation with distinct permeability at each cell
+
 ```math
 \int_{A_i} K_i \Delta p \mathrm{d}x = K_i\sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
 ```
-Additionally, Dirichlet boundary conditions are imposed on the boundary edges `bc`.
 
-Returns both the sparse matrix `A` and the right hand side `rhs`
+$K$ is a length $mn$ vector, representing values per cell.
+
+Additionally, Dirichlet boundary conditions are imposed on the boundary edges `bc` (a $N\times 2$ integer matrix), 
+i.e., the $i$-th edge has value `pval`. The ghost node method is used for imposing the Dirichlet boundary condition. 
+The function outputs a length $mn$ vector and $mn\times mn$ matrix $M$. 
+
+$$\int_{A_i} K_i \Delta p \mathrm{d}x = f_i + M_{i,:}\mathbf{p}$$
+
+Returns both the sparse matrix `A` and the right hand side `rhs`.
 """
 function compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
     bval = Dict{Tuple{Int64, Int64}, Float64}()
@@ -494,9 +507,6 @@ function compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Ar
                     kp = (jj-1)*m + ii
                     add(k, kp, K[k])
                     add(k, k, -K[k])
-                    # if k==1
-                    #     @show k, k, K[k]
-                    # end
                 else  # boundary edges 
                     ed = (0, 0)
                     if ii<=0 # left 
@@ -510,7 +520,7 @@ function compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Ar
                     end
                     if haskey(bval, ed)
                         add(k, k, -2*K[k])
-                        rhs[k] = 2*K[k]*bval[ed]
+                        rhs[k] += 2*K[k]*bval[ed]
                     end
                 end
             end
