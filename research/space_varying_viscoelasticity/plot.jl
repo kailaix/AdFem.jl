@@ -14,7 +14,7 @@ out[1:div(n,3)] .= 1.0
 out *= 50 
 rg = 0:20:100
 err = zeros(4, length(rg))
-for (j,idx) in enumerate([1,2,3,5])
+for (j,idx) in enumerate([1])
     for (i,k) in enumerate(rg)
         eta = matread("$idx/eta$k.mat")["eta"]
         eta = eta[1:4m:end]
