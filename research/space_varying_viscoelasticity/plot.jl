@@ -12,7 +12,7 @@ out = 0.5 * ones(n)
 out[1:div(n,3)] .= 1.0
 
 out *= 50 
-rg = 0:20:100
+rg = 0:20:200
 err = zeros(4, length(rg))
 for (j,idx) in enumerate([1])
     for (i,k) in enumerate(rg)
@@ -24,15 +24,16 @@ for (j,idx) in enumerate([1])
 end
 
 close("all")
-tp = ["ro-", "g+-", "b*-", "k>-"]
-labels = []
-for k in [1,2,3,5]
-s = length(1:k:m+1)
-push!(labels, "$s Sensors")
-end 
-for i = 1:4
-    plot(rg .+ 1, err[i,:], tp[i], label=labels[i])
-end
+# tp = ["ro-", "g+-", "b*-", "k>-"]
+# labels = []
+# for k in [1,2,3,5]
+# s = length(1:k:m+1)
+# push!(labels, "$s Sensors")
+# end 
+# for i = 1:4
+#     plot(rg .+ 1, err[i,:], tp[i], label=labels[i])
+# end
+semilogy(rg .+ 1, err[1,:], tp[1])
 legend()
 xlabel("Iterations")
 ylabel("Error")
@@ -75,8 +76,8 @@ savefig("space0.pdf")
 
 eta  = matread("1/eta60.mat")["eta"]
 visualize_inv_eta(eta)
-savefig("space10.pdf")
+savefig("space60.pdf")
 
 eta  = matread("1/eta120.mat")["eta"]
 visualize_inv_eta(eta)
-savefig("space20.pdf")
+savefig("space120.pdf")
