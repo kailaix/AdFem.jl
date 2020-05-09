@@ -31,8 +31,10 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 include_directories(${TF_INC} ${HEADERS} ${EIGEN_INC})
-link_directories(${TF_LIB} ${LIBDIR}/Adept-2/adept/.libs)
+
 include_directories(${LIBDIR}/Adept-2/include)
+find_library(ADEPT_LIB_FILE adept HINTS ${LIBDIR})
+message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 
 
 set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
@@ -58,4 +60,4 @@ foreach(IDX RANGE 0 ${LIBLENGTH})
   target_link_libraries(${_LIB_NAME} ${TF_LIB_FILE})
 endforeach(IDX)
 
-target_link_libraries(CholeskyOp adept)
+target_link_libraries(CholeskyOp ${ADEPT_LIB_FILE})
