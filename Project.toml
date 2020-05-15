@@ -16,6 +16,10 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 ADCME = "0.5"
+ADCMEKit = "0.2"
+Parameters = "0.12"
+PyCall = "1.91"
+Reexport = "0.2"
 julia = "1"
 
 [extras]
