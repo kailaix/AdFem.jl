@@ -67,13 +67,13 @@ function advection_jl(m, n, h, v, u)
 end
 
 
-@testset "compute_fvm_advetion_term" begin 
+@testset "compute_fvm_advection_term" begin 
     m = 10
     n = 10
     h = 0.1
     v = rand(m*n,2)
     u = rand(m*n)
     jl_u = advection_jl(m, n, h, v, u)
-    u = compute_fvm_advetion_term(v,u,m,n,h)
+    u = compute_fvm_advection_term(v,u,m,n,h)
     @show run(sess, u)≈jl_u
 end

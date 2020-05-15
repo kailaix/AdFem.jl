@@ -240,7 +240,7 @@ end
         
 
 @doc raw"""
-    compute_fvm_advetion_term(v::Union{PyObject, Array{Float64, 2}},
+    compute_fvm_advection_term(v::Union{PyObject, Array{Float64, 2}},
     u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
 
 Computes the advection term using upwind schemes
