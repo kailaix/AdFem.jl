@@ -1,4 +1,5 @@
-export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix
+export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
+    compute_fvm_advetion_term
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBd/build/libDirichletBd", "dirichlet_bd", multiple=true)
@@ -237,3 +238,20 @@ function compute_fvm_tpfa_matrix(K::PyObject, m::Int64, n::Int64, h::Float64)
 end
         
         
+
+@doc raw"""
+    compute_fvm_advetion_term(v::Union{PyObject, Array{Float64, 2}},
+    u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
+
+Computes the advection term using upwind schemes
+```math
+\int_A \mathbf{v} \cdot \nabla u dx 
+```
+$v$ is a $mn\times 2$ matrix and $u$ is a length $mn$ vector. 
+"""
+function compute_fvm_advetion_term(v::Union{PyObject, Array{Float64, 2}},
+    u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
+    advection_ = load_op_and_grad("./build/libAdvection","advection")
+    v,u,m,n,h = convert_to_tensor(Any[v,u,m,n,h], [Float64,Float64,Int64,Int64,Float64])
+    advection_(v,u,m,n,h)
+end

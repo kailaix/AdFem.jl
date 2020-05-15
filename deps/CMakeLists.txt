@@ -40,11 +40,11 @@ message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
     FemStiffness FemStiffness1 SpatialFemStiffness
     SpatialVaryingTangentElastic Strain Strain1
-    StrainEnergy StrainEnergy1 CholeskyOp TpfaOp)
+    StrainEnergy StrainEnergy1 CholeskyOp TpfaOp Advection)
 set(LIB_NAME VolumetricStrain ComputeVel DirichletBd
     FemStiffness UnivariateFemStiffness SpatialFemStiffness
     SpatialVaryingTangentElastic StrainOp StrainOpUnivariate
-    StrainEnergy StrainEnergyUnivariate CholeskyOp TpfaOp)
+    StrainEnergy StrainEnergyUnivariate CholeskyOp TpfaOp Advection)
 
 list(LENGTH "LIBDIR_NAME" LIBLENGTH)
 message("Total number of libraries to make: ${LIBLENGTH}")

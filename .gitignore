@@ -8,7 +8,6 @@ src/tests.jl
 src/*.png
 *.DS_Store
 docs/build
-*.png
 test/*.png
 test/*.gif
 .vscode/*
@@ -53,7 +52,6 @@ test/U_surface/*.png
 test/U_total/*.png
 test/U_total/*.png
 *.pdf
-*.txt
 !*custom_op.txt 
 !*CMakeLists.txt 
 *.tex
