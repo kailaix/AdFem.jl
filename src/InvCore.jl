@@ -204,7 +204,7 @@ end
 
 
 """
-    compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::PyObject, m::Int64, n::Int64, h::Float64)
+    compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::Union{Array{Float64},PyObject}, m::Int64, n::Int64, h::Float64)
     
 A differentiable kernel for [`compute_fvm_tpfa_matrix`](@ref). 
 """
@@ -251,7 +251,7 @@ $v$ is a $mn\times 2$ matrix and $u$ is a length $mn$ vector.
 """
 function compute_fvm_advetion_term(v::Union{PyObject, Array{Float64, 2}},
     u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
-    advection_ = load_op_and_grad("./build/libAdvection","advection")
+    advection_ = load_op_and_grad("$(@__DIR__)/../deps/Advection/build/libAdvection","advection")
     v,u,m,n,h = convert_to_tensor(Any[v,u,m,n,h], [Float64,Float64,Int64,Int64,Float64])
     advection_(v,u,m,n,h)
 end
