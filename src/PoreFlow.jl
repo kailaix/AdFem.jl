@@ -26,6 +26,7 @@ module PoreFlow
     include("Viscoelasticity.jl")
     include("Visualization.jl")
     include("Constitutive.jl")
+    include("Solver.jl")
     
 
 end

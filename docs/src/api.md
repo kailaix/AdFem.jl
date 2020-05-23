@@ -29,6 +29,7 @@ compute_fem_flux_term1
 compute_strain_energy_term
 compute_strain_energy_term1
 compute_fem_viscoelasticity_strain_energy_term
+compute_fvm_advection_term
 ```
 
 ## Evaluation Functions
@@ -54,6 +55,7 @@ visualize_displacement
 visualize_stress
 visualize_von_mises_stress
 visualize_scalar_on_gauss_points
+visualize_scalar_on_fem_points
 ```
 
 ## Modeling Tools
@@ -71,6 +73,13 @@ trim_coupled
 coupled_impose_pressure
 bcnode
 bcedge
+interior_node
 femidx
 fvmidx
+subdomain
+gauss_nodes
+fem_nodes
+cholesky_factorize
+cholesky_outproduct
+fem_to_fvm
 ```

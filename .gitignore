@@ -32,6 +32,7 @@ research/visco_inverse_fixed_pressure/space_k
 *.jld2
 research/*.png
 *.mat
+!research/space_varying_viscoelasticity/viscoelasticity.mat
 *build.log
 *Exp*
 research/plasticity/nn*
@@ -51,8 +52,8 @@ test/U_surface/*.png
 test/U_total/*.png
 test/U_total/*.png
 *.pdf
-*.txt
 !*custom_op.txt 
 !*CMakeLists.txt 
 *.tex
 .vscode/
+!research/viscoelasticity_experimental_data

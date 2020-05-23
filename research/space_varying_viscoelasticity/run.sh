@@ -1,4 +1,5 @@
-for stepsize in 1 2 3 5
+for stepsize in  1 
 do 
     srun julia viscoelasticity.jl $stepsize &
 done 
+wait

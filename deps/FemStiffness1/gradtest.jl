@@ -3,6 +3,7 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using PoreFlow
 Random.seed!(233)
 
 function univariate_fem_stiffness(hmat,m,n,h)
@@ -25,6 +26,12 @@ sess = Session(); init(sess)
 @show run(sess, u)
 
 # uncomment it for testing gradients
+H = rand(2,2)
+H = H+ H' 
+K = compute_fem_stiffness_matrix1(H, m, n, h)
+u = univariate_fem_stiffness(H,m,n,h)
+A = SparseTensor(u..., (m+1)*(n+1), (m+1)*(n+1))
+@show maximum(abs.(run(sess, A)-K))
 # error() 
 
 
@@ -36,8 +43,11 @@ function scalar_function(hmat)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(4*m*n, 2, 2))
-v_ = rand(4*m*n, 2, 2)
+# m_ = constant(rand(4*m*n, 2, 2))
+# v_ = rand(4*m*n, 2, 2)
+
+m_ = constant(rand( 2, 2))
+v_ = rand( 2, 2)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)

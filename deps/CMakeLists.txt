@@ -31,17 +31,20 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 include_directories(${TF_INC} ${HEADERS} ${EIGEN_INC})
-link_directories(${TF_LIB})
+
+include_directories(${LIBDIR}/Adept-2/include)
+find_library(ADEPT_LIB_FILE adept HINTS ${LIBDIR})
+message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 
 
 set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
     FemStiffness FemStiffness1 SpatialFemStiffness
     SpatialVaryingTangentElastic Strain Strain1
-    StrainEnergy StrainEnergy1)
+    StrainEnergy StrainEnergy1 CholeskyOp TpfaOp Advection)
 set(LIB_NAME VolumetricStrain ComputeVel DirichletBd
     FemStiffness UnivariateFemStiffness SpatialFemStiffness
     SpatialVaryingTangentElastic StrainOp StrainOpUnivariate
-    StrainEnergy StrainEnergyUnivariate)
+    StrainEnergy StrainEnergyUnivariate CholeskyOp TpfaOp Advection)
 
 list(LENGTH "LIBDIR_NAME" LIBLENGTH)
 message("Total number of libraries to make: ${LIBLENGTH}")
@@ -56,3 +59,5 @@ foreach(IDX RANGE 0 ${LIBLENGTH})
   set_target_properties(${_LIB_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/${_LIB_DIR}/build)
   target_link_libraries(${_LIB_NAME} ${TF_LIB_FILE})
 endforeach(IDX)
+
+target_link_libraries(CholeskyOp ${ADEPT_LIB_FILE})

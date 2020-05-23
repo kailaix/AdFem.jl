@@ -1,0 +1,14 @@
+DirichletBd
+int64 ii(?)
+int64 jj(?)
+double vv(?)
+int32 bd(?)
+int32 m()
+int32 n()
+double h()
+int64 ii1(?) -> output
+int64 jj1(?) -> output
+double vv1(?) -> output
+int64 ii2(?) -> output
+int64 jj2(?) -> output
+double vv2(?) -> output

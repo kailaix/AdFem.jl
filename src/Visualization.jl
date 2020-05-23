@@ -1,7 +1,8 @@
 export visualize_pressure, visualize_displacement, 
     visualize_stress, visualize_scattered_displacement, 
     visualize_von_mises_stress, visualize_saturation,
-    visualize_potential, visualize_scalar_on_gauss_points
+    visualize_potential, visualize_scalar_on_gauss_points,
+    visualize_scalar_on_fem_points
 
 """ 
     visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
@@ -379,7 +380,7 @@ end
 Visualizes the scalar `u` using pcolormesh. Here `u` is a length $4mn$ vector and the values are defined on the Gauss points
 """
 function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
-    close("all")
+    # close("all")
     z = zeros(2m, 2n)
     x = zeros(2m)
     y = zeros(2n)
@@ -406,6 +407,29 @@ function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int6
             z[2(i-1)+2, 2(j-1)+2] = u[4*(idx-1)+4]
         end
     end
+
+    vmin = mean(z) - 2std(z)
+    vmax = mean(z) + 2std(z)
+    pcolormesh(x, y, z', vmin=vmin, vmax=vmax,rasterized=true, args...; kwargs...)
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    levels = LinRange(vmin, vmax, 10) |> Array
+    c = contour(x, y, z', levels, cmap="jet", vmin=vmin, vmax=vmax)
+    gca().invert_yaxis()
+    return x, y, z 
+end
+
+@doc raw"""
+    visualize_scalar_on_fem_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+
+Visualizes the scalar `u` using pcolormesh. Here `u` is a length $(m+1)(n+1)$ vector and the values are defined on the FEM points
+"""
+function visualize_scalar_on_fem_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+    x = Array((0:m)*h)
+    y = Array((0:n)*h)
+    z = reshape(u, m+1, n+1)
 
     vmin = mean(z) - 2std(z)
     vmax = mean(z) + 2std(z)

@@ -1,7 +1,8 @@
-export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix
+export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
+    compute_fvm_advection_term, compute_fvm_tpfa_matrix
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
-    op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBD/build/libDirichletBd", "dirichlet_bd", multiple=true)
+    op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBd/build/libDirichletBd", "dirichlet_bd", multiple=true)
     ii, jj, vv = find(A)
     ii,jj,vv,bd,m_,n_,h = convert_to_tensor([ii,jj,vv,bd,m,n,h], [Int64,Int64,Float64,Int32,Int32,Int32,Float64])
     ii1,jj1,vv1, ii2,jj2,vv2 = op(ii,jj,vv,bd,m_,n_,h)
@@ -12,7 +13,7 @@ export fem_impose_Dirichlet_boundary_condition_experimental
 function fem_impose_Dirichlet_boundary_condition_experimental(A::Union{SparseMatrixCSC,SparseTensor}, 
         bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
     isa(A, SparseMatrixCSC) && (A = constant(A))
-    op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBD/build/libDirichletBd", "dirichlet_bd", multiple=true)
+    op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBd/build/libDirichletBd", "dirichlet_bd", multiple=true)
     ii, jj, vv = find(A)
     ii,jj,vv,bd,m_,n_,h = convert_to_tensor([ii,jj,vv,bdnode,m,n,h], [Int64,Int64,Float64,Int32,Int32,Int32,Float64])
     ii1,jj1,vv1, ii2,jj2,vv2 = op(ii,jj,vv,bd,m_,n_,h)
@@ -53,10 +54,14 @@ end
     compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
 
 A differentiable kernel for computing the stiffness matrix. 
+Two possible shapes for `hmat` are supported: 
+
+- $4mn \times 2\times 2$
+- $2 \times 2$
 """
 function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Float64)
-    if length(size(hmat))!=3
-        error("Only 4mn x 2 x 2 matrix `hmat` is supported.")
+    if !(length(size(hmat)) in [2,3])
+        error("Only 4mn x 2 x 2 or 2 x 2 `hmat` is supported.")
     end
     univariate_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/FemStiffness1/build/libUnivariateFemStiffness","univariate_fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
@@ -195,4 +200,58 @@ function compute_space_varying_tangent_elasticity_matrix(mu::Union{PyObject, Arr
     mu,m_,n_,h,type = convert_to_tensor([mu,m,n,h,type], [Float64,Int64,Int64,Float64,Int64])
     H = spatial_varying_tangent_elastic_(mu,m_,n_,h,type)
     set_shape(H, (4*m*n, 2, 2))
+end
+
+
+"""
+    compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::Union{Array{Float64},PyObject}, m::Int64, n::Int64, h::Float64)
+    
+A differentiable kernel for [`compute_fvm_tpfa_matrix`](@ref). 
+"""
+function compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::PyObject, m::Int64, n::Int64, h::Float64)
+    tpfa_op_ = load_op_and_grad("$(@__DIR__)/../deps/TpfaOp/build/libTpfaOp","tpfa_op", multiple=true)
+    K,bc,pval,m_,n_,h = convert_to_tensor(Any[K,bc,pval,m,n,h], [Float64,Int64,Float64,Int64,Int64,Float64])
+    ii, jj, vv, rhs = tpfa_op_(K,bc,pval,m_,n_,h)
+    SparseTensor(ii + 1, jj + 1, vv, m*n, m*n), set_shape(rhs, m*n) 
+end
+
+compute_fvm_tpfa_matrix(K::Array{Float64,1}, bc::Array{Int64,2}, 
+                        pval::PyObject, m::Int64, n::Int64, h::Float64) =
+                                    compute_fvm_tpfa_matrix(constant(K), bc, pval, m, n, h)
+
+
+compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, 
+    pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64) =
+            compute_fvm_tpfa_matrix(K, bc, constant(pval), m, n, h)
+
+
+"""
+    compute_fvm_tpfa_matrix(K::PyObject, m::Int64, n::Int64, h::Float64) 
+
+A differentiable kernel for [`compute_fvm_tpfa_matrix`](@ref). 
+"""
+function compute_fvm_tpfa_matrix(K::PyObject, m::Int64, n::Int64, h::Float64) 
+    bc = zeros(Int64, 0, 2)
+    pval = zeros(Float64, 0)
+    A, _ = compute_fvm_tpfa_matrix(K, bc, pval, m, n, h)
+    A 
+end
+        
+        
+
+@doc raw"""
+    compute_fvm_advection_term(v::Union{PyObject, Array{Float64, 2}},
+    u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
+
+Computes the advection term using upwind schemes
+```math
+\int_A \mathbf{v} \cdot \nabla u dx 
+```
+$v$ is a $mn\times 2$ matrix and $u$ is a length $mn$ vector. 
+"""
+function compute_fvm_advection_term(v::Union{PyObject, Array{Float64, 2}},
+    u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
+    advection_ = load_op_and_grad("$(@__DIR__)/../deps/Advection/build/libAdvection","advection")
+    v,u,m,n,h = convert_to_tensor(Any[v,u,m,n,h], [Float64,Float64,Int64,Int64,Float64])
+    advection_(v,u,m,n,h)
 end

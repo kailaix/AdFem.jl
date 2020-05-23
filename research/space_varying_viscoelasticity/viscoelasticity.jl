@@ -18,7 +18,7 @@ mode = "training"
 
 ## alpha-scheme
 β = 1/4; γ = 1/2
-a = b = 0.1
+a = b = 0.1    # damping 
 
 n = 10
 m = 2n 
@@ -43,11 +43,12 @@ function eta_model(idx)
     out[1:div(n,3)] .= ηmax
     out
   elseif idx==2
-    out = ηmin * ones(4, m, n)
-    out[:, :, 1:div(n,3)] .= ηmax
-    out[:, :, 2div(n,3):end] .= ηmax
-    out[:]
+    out = ηmin * ones(n)
+    out[1:div(n,3)] .= ηmax
+    out[2div(n,3):end] .= ηmax
+    out
   end
+
 end
 
 function visualize_inv_eta(X, k)
@@ -82,7 +83,7 @@ end
 λ = constant(2.0)
 μ = constant(0.2)
 if mode=="data"
-  global invη_var = constant(eta_model(1))
+  global invη_var = constant(eta_model(2))
   invη = reshape(repeat(invη_var, 1, 4m), (-1,))
   global invη *= 50.0
 else
@@ -115,7 +116,7 @@ K = compute_fem_stiffness_matrix(H, m, n, h)
 C = a*M + b*K # damping matrix 
 L = M + γ*Δt*C + β*Δt^2*K
 L, Lbd = fem_impose_Dirichlet_boundary_condition_experimental(L, bdnode, m, n, h)
-
+L = factorize(L)
 
 a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|>constant)
 v = TensorArray(NT+1); v = write(v, 1, zeros(2(m+1)*(n+1))|>constant)
@@ -230,4 +231,5 @@ i_ = []
 l_ = []
 
 @info run(sess, loss)
-loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
+loss_ = BFGS!(sess, loss*1e10, vars=[invη], 
+    callback=cb, var_to_bounds=Dict(invη_var=>(0.1,2.0)))
