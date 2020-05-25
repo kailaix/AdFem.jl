@@ -2,6 +2,7 @@ using Revise
 using NNFEM
 using Statistics 
 using PyPlot
+using ADCME
 using ADCMEKit
 
 nodes, elements = meshread("crack.msh")
@@ -23,6 +24,7 @@ adic = Dict{Int64, Int64}()
 id1 = Set{Int64}([])
 id2 = Set{Int64}([])
 id3 = Set{Int64}([])
+id4 = Set{Int64}([])
 
 for i = 1:size(elements, 1)
     e = elements[i,:]
@@ -43,9 +45,8 @@ for i = 1:size(elements, 1)
         continue
     end
 
-    for j = 1:4
+    for j = 1:4 ##?
         if e[j] in ids 
-            push!(id2, e[j])
             if haskey(adic,e[j])
                 elements[i,j] = adic[e[j]]
             else
@@ -53,6 +54,7 @@ for i = 1:size(elements, 1)
                 elements[i,j] = size(new_nodes,1) + size(nodes,1)
                 adic[e[j]] = size(new_nodes,1) + size(nodes,1)
             end
+            push!(id2, adic[e[j]])
         end
     end
         
@@ -68,14 +70,14 @@ visualize_mesh(nodes, elements)
 gca().invert_yaxis()
 
 id1 = collect(id1) # moving 
-id2 = collect(id2) # fixed 
+id2 = collect(id2) # moving opposite 
 
 for j = 1:size(elements, 1)
     e = elements[j,:]
     for i in e 
         x, y = nodes[i, :]
         if x<0.01 || x>2-0.01 || y>=1-0.01
-            push!(id2, i)
+            push!(id4, i)
         end
         if y<0.01 && x>=0.01 && x<=2-0.01
             push!(id3, i)
@@ -85,11 +87,12 @@ for j = 1:size(elements, 1)
 end
 
 id3 = collect(id3) # free traction
-
+id4 = collect(id4) # fixed
 
 plot(nodes[id1, 1] .+0.01, nodes[id1, 2] .+ 0.005, ".", label="Shifted")
-plot(nodes[id2, 1], nodes[id2, 2], "+", label="Fixed")
+plot(nodes[id2, 1] .-0.01, nodes[id2, 2] .- 0.005, ".", label="Shifted opposite")
 plot(nodes[id3, 1], nodes[id3, 2], "x", label="Traction free")
+plot(nodes[id4, 1], nodes[id4, 2], "+", label="Fixed")
 legend()
 
 savefig("mesh.png")
@@ -110,10 +113,11 @@ FBC = zeros(Int64, size(nodes, 1), 2)
 g = zeros(size(nodes, 1), 2)
 f = zeros(size(nodes, 1), 2)
 
-EBC[id1,:] .= -1
+EBC[id1,:] .= -1 ## ??
 EBC[id2,:] .= -1
-g[id1,:] .= [0.01 0.005]
-
+EBC[id4,:] .= -1
+# g[id1,:] .= [0.01 0.005]
+g[id2,:] .= [-0.1 -0.05]
 
 ndims = 2
 domain = Domain(nodes, elems, ndims, EBC, g, FBC, f)
