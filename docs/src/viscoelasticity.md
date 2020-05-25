@@ -3,13 +3,13 @@
 
 ## Viscoelasticity Theory
 
-To describe the viscoelasticity, we need to relate both the viscosity strain $\varepsilon^{vp}$ and the elasticity strain $\varepsilon^e$ to the stress $\sigma$. The latter is given by 
+To describe the viscoelasticity, we need to relate both the viscosity strain $\epsilon^{vp}$ and the elasticity strain $\epsilon^e$ to the stress $\sigma$. The latter is given by 
 
-$$\boxed{\varepsilon^e= \frac{\sigma}{E}}$$
+$$\boxed{\epsilon^e= \frac{\sigma}{E}}$$
 
-The constitutive relation of $\varepsilon^{vp}$ is given by 
+The constitutive relation of $\epsilon^{vp}$ is given by 
 
-$$\boxed{\dot \varepsilon^{vp} = \frac{\sigma}{\eta}}$$
+$$\boxed{\dot \epsilon^{vp} = \frac{\sigma}{\eta}}$$
 
 We can consider the elasticity strain associated with a spring while the viscoelasticity associated with a dashed pot. Then based on how we combine the spring or the dashed pot, we can have many cases [^linearvisco]
 
@@ -18,14 +18,14 @@ We can consider the elasticity strain associated with a spring while the viscoel
 | Maxwell Model                                                | Kevin Model                                                  | Standard Linear Model                                        |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | ![image-20200128113844890](./assets/kevin.png)               | ![image-20200128113802583](./assets/maxwell.png)             | ![image-20200128113907786](./assets/linear.png)              |
-| $$\begin{aligned}\varepsilon &= \varepsilon_1 + \varepsilon_2\\\varepsilon_1 &= \frac{\sigma}{E}\\\dot\varepsilon_2 &= \frac{\sigma}{\eta}\end{aligned}$$ | $$\begin{aligned}\sigma &= \sigma_1 + \sigma_2\\\varepsilon_1 &= \frac{\sigma}{E}\\\dot\varepsilon_2 &= \frac{\sigma}{\eta}\end{aligned}$$ | $$\begin{aligned}\sigma &= \sigma_1 + \sigma_2\\\varepsilon &= \varepsilon_1 + \varepsilon_2\\\sigma &= E_1 \varepsilon_1\\\sigma_1 &= E_2\varepsilon_2\\\sigma_2 &= \eta\dot\varepsilon_2\\\end{aligned}$$ |
+| $$\begin{aligned}\epsilon &= \epsilon_1 + \epsilon_2\\\epsilon_1 &= \frac{\sigma}{E}\\\dot\epsilon_2 &= \frac{\sigma}{\eta}\end{aligned}$$ | $$\begin{aligned}\sigma &= \sigma_1 + \sigma_2\\\epsilon_1 &= \frac{\sigma}{E}\\\dot\epsilon_2 &= \frac{\sigma}{\eta}\end{aligned}$$ | $$\begin{aligned}\sigma &= \sigma_1 + \sigma_2\\\epsilon &= \epsilon_1 + \epsilon_2\\\sigma &= E_1 \epsilon_1\\\sigma_1 &= E_2\epsilon_2\\\sigma_2 &= \eta\dot\epsilon_2\\\end{aligned}$$ |
 
 
 
 The most general constitutive equation has the following form 
 
 ```math
-p_0\sigma + p_1\sigma' + p_2 \sigma'' + p_3  \sigma''' + \cdots = q_0\varepsilon + q_1\varepsilon' + q_2 \varepsilon'' + q_3  \varepsilon''' + \cdots
+p_0\sigma + p_1\sigma' + p_2 \sigma'' + p_3  \sigma''' + \cdots = q_0\epsilon + q_1\epsilon' + q_2 \epsilon'' + q_3  \epsilon''' + \cdots
 ```
 
 For high dimensional case, assume that the bulk modulus is $K$, then we have [^linearvisco2]
@@ -33,7 +33,7 @@ For high dimensional case, assume that the bulk modulus is $K$, then we have [^l
 [^linearvisco2]: http://solidmechanics.org/text/Chapter3_6/Chapter3_6.htm
 
 ```math
-\begin{aligned}& e_{ij} = \varepsilon_{ij} - \varepsilon_{kk} \delta_{ij} \qquad \sigma_{ij} = s_{ij} + K\varepsilon_{kk}\delta_{ij}\\
+\begin{aligned}& e_{ij} = \epsilon_{ij} - \epsilon_{kk} \delta_{ij} \qquad \sigma_{ij} = s_{ij} + K\epsilon_{kk}\delta_{ij}\\
 & ks_{ij} + \eta \dot s_{ij} = k\eta\dot e_{ij} && \mathrm{Maxwell}\\
 & s_{ij} = ke_{ij} + \eta \dot e_{ij} && \mathrm{Kevin}\\
 & k_1s_{ij} + \eta\dot s_{ij} = k_1k_2e_{ij} + (k_1+k_2) \eta\dot e_{ij} && \mathrm{Standard}\ \mathrm{Linear}
@@ -46,11 +46,38 @@ For high dimensional case, assume that the bulk modulus is $K$, then we have [^l
 
 We consider the two dimensional Maxwell material
 
-$$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}\tag{1}$$
+$$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \epsilon_{ij} + \lambda \dot\epsilon_{kk}\delta_{ij}\tag{1}$$
 
 along with the balance of linear momentum equation
 
 $$\mathrm{div}\ \sigma_{ij,j} + \rho f_i = \rho \ddot u_i$$
+
+
+In the matrix format, the constitutive relation has the form
+
+$$\begin{bmatrix}
+\dot\sigma_{xx}\\ 
+\dot\sigma_{yy}\\ 
+\dot\sigma_{xy}
+\end{bmatrix} + \frac{\mu}{\eta}\begin{bmatrix}
+2/3 & 1/3 & 0 \\ 
+1/3 & 2/3 & 0 \\ 
+0 & 0 & 1 
+\end{bmatrix}\begin{bmatrix}
+\sigma_{xx}\\ 
+\sigma_{yy}\\ 
+\sigma_{xy}\end{bmatrix} = 
+\begin{bmatrix}
+2\mu + \lambda & \lambda & 0 \\ 
+\lambda & 2\mu + \lambda & 0 \\ 
+0 & 0 & \mu 
+\end{bmatrix}\begin{bmatrix}
+\dot\epsilon_{xx}\\ 
+\dot\epsilon_{yy}\\ 
+\dot\gamma_{xy}
+\end{bmatrix}$$
+
+Here $\gamma_{xy}=2\epsilon_{xy}$, where $\epsilon_{xy}$ is the shear modulus. Note that when $\eta=\infty$, this constitutive relation is exactly the plain strain linear elasticity.  
 
 
 We use the implicit discretization for Eq. (1) 
@@ -75,20 +102,20 @@ $$\begin{bmatrix}
 	\lambda & 2\mu+\lambda & 0\\
 	0 & 0 & \mu 
 \end{bmatrix}\left(\begin{bmatrix}
-	\varepsilon_{xx}^{n+1}\\
-	\varepsilon_{yy}^{n+1}\\
-	\varepsilon_{xy}^{n+1}
+	\epsilon_{xx}^{n+1}\\
+	\epsilon_{yy}^{n+1}\\
+	\gamma_{xy}^{n+1}
 \end{bmatrix}-\begin{bmatrix}
-	\varepsilon_{xx}^{n}\\
-	\varepsilon_{yy}^{n}\\
-	\varepsilon_{xy}^{n}
+	\epsilon_{xx}^{n}\\
+	\epsilon_{yy}^{n}\\
+	\gamma_{xy}^{n}
 \end{bmatrix}\right)$$
 
 
 
 or in a simpler form
 
-$$\sigma^{n+1} = H \varepsilon^{n+1} + S \sigma^n  - H\varepsilon^n$$
+$$\sigma^{n+1} = H \epsilon^{n+1} + S \sigma^n  - H\epsilon^n$$
 
 Here $S$ and $H$ are defined as 
 
@@ -335,7 +362,7 @@ subplot(1,3,3)
 idx = 4*(div(n,2)*m + m)
 plot((0:NT)*Δt, Varepsilon[:,idx,1])
 xlabel("time")
-ylabel("\$\\varepsilon_{xx}\$")
+ylabel("\$\\epsilon_{xx}\$")
 savefig("visco.png")
 
 ```

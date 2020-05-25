@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 project(TF_CUSTOM_OP)
 set (CMAKE_CXX_STANDARD 11)
 
-execute_process(COMMAND julia -e "import ADCME; print(ADCME.__STR__)" OUTPUT_VARIABLE JL_OUT)
+
+execute_process(COMMAND ${JULIA} -e "import ADCME; print(ADCME.__STR__)" OUTPUT_VARIABLE JL_OUT)
 list(GET JL_OUT 0 BINDIR)
 list(GET JL_OUT 1 LIBDIR)
 list(GET JL_OUT 2 TF_INC)
@@ -28,13 +29,30 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0 OR CMAKE_CXX_COMPILER_VERSION
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
+if(MSVC)
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG")
+else()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+endif()
+
+if(MSVC)
+  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+    string(REGEX REPLACE "/W[0-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W0")
+  endif()
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  add_definitions(-DNOMINMAX)
+endif()
+
 
 include_directories(${TF_INC} ${HEADERS} ${EIGEN_INC})
 
 include_directories(${LIBDIR}/Adept-2/include)
 find_library(ADEPT_LIB_FILE adept HINTS ${LIBDIR})
 message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
+find_library(LIBOPENBLAS openblas HINTS ${LIBDIR})
+
 
 
 set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
@@ -60,4 +78,4 @@ foreach(IDX RANGE 0 ${LIBLENGTH})
   target_link_libraries(${_LIB_NAME} ${TF_LIB_FILE})
 endforeach(IDX)
 
-target_link_libraries(CholeskyOp ${ADEPT_LIB_FILE})
+target_link_libraries(CholeskyOp ${ADEPT_LIB_FILE} ${LIBOPENBLAS})
