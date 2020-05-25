@@ -152,7 +152,12 @@ Hs = zeros(getNGauss(domain), 3, 3)
 for i = 1:size(Hs,1)
     Hs[i,:,:] = H 
 end
-@eval d, v, a = $Solver(globdat, domain, d0, v0, a0, Δt, NT, Hs)
+# TODO
+Cs = zeros(getNGauss(domain),3,3)
+for i = 1:size(Hs,1)
+    Cs[i,:,:] = C 
+end
+d, v, a = GeneralizedAlphaSolver(globdat, domain, d0, v0, a0, Δt, NT, Cs, Hs)
 
 sess = Session(); init(sess)
 
