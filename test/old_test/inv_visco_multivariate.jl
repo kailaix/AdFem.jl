@@ -188,7 +188,7 @@ function body(i, tas...)
   # Sigma * (invG/Δt) Sigma 800x3, invG/Δt: 800x3x3
   res = squeeze(tf.matmul(tf.reshape(Sigma, (size(Sigma,1), 1, 3)),(invG/Δt)))
   F = compute_strain_energy_term(res, m, n, h) - K * U
-  rhs = Forces[i] - Δt^2 * F
+  rhs = Forces[i] - F
 
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
   tv = v + (1-γ)*Δt*a 

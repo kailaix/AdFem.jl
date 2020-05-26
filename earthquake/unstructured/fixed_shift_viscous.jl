@@ -132,36 +132,66 @@ velo = zeros(domain.neqs)
 acce = zeros(domain.neqs)
 gt = nothing
 ft = nothing
-globdat = GlobalData(state, Dstate, velo, acce, domain.neqs, gt, ft)
-assembleMassMatrix!(globdat, domain)
+globaldata = GlobalData(state, Dstate, velo, acce, domain.neqs, gt, ft)
 
-
-#===========
-Simulation 
-===========#
 NT = 100
 Δt = 30.0/NT
-Solver = GeneralizedAlphaSolver
-SolverTime = Symbol(Solver, "Time")
-@eval  ts = $SolverTime(Δt, NT)
-ubd, abd = compute_boundary_info(domain, globdat, ts)
-d0, v0, a0 = SolverInitial(Δt, globdat, domain)
+# assembleMassMatrix!(globdat, domain)
+# #===========
+# Simulation 
+# ===========#
+# NT = 100
+# Δt = 30.0/NT
+# Solver = GeneralizedAlphaSolver
+# SolverTime = Symbol(Solver, "Time")
+# @eval  ts = $SolverTime(Δt, NT)
+# ubd, abd = compute_boundary_info(domain, globdat, ts)
+# d0, v0, a0 = SolverInitial(Δt, globdat, domain)
 
-H = elems[1].mat[1].H
-Hs = zeros(getNGauss(domain), 3, 3)
-for i = 1:size(Hs,1)
-    Hs[i,:,:] = H 
+# H = elems[1].mat[1].H
+# Hs = zeros(getNGauss(domain), 3, 3)
+# for i = 1:size(Hs,1)
+#     Hs[i,:,:] = H 
+# end
+# # TODO
+# Cs = zeros(getNGauss(domain),3,3)
+# for i = 1:size(Hs,1)
+#     Cs[i,:,:] = C 
+# end
+
+# d, v, a = GeneralizedAlphaSolver(globdat, domain, d0, v0, a0, Δt, NT, Cs, Hs)
+
+ts = GeneralizedAlphaSolverTime(Δt, NT)
+ubd, abd = compute_boundary_info(domain, globaldata, ts)
+Fext = compute_external_force(domain, globaldata, ts)
+d0 = zeros(2domain.nnodes)
+v0 = zeros(2domain.nnodes)
+a0  = zeros(2domain.nnodes)
+σ0 = zeros(getNGauss(domain),3)
+ϵ0 = zeros(getNGauss(domain),3)
+
+μ = zeros(getNGauss(domain))
+λ = zeros(getNGauss(domain))
+η = zeros(getNGauss(domain))
+k = 0
+for i = 1:domain.neles
+  e = domain.elements[i]
+  for mat in e.mat
+    global k += 1 
+    μ[k] = mat.μ
+    λ[k] = mat.λ
+    η[k] = mat.η 
+  end
 end
-# TODO
-Cs = zeros(getNGauss(domain),3,3)
-for i = 1:size(Hs,1)
-    Cs[i,:,:] = C 
-end
-d, v, a = GeneralizedAlphaSolver(globdat, domain, d0, v0, a0, Δt, NT, Cs, Hs)
+
+d, v, a, σ, ϵ = ViscoelasticitySolver(
+  globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
+)
 
 sess = Session(); init(sess)
 
-d_ = run(sess, d)
+# d_ = run(sess, d)
+d_, σ_ = run(sess, [d, σ])
 # error()
 
 surface_x = []

@@ -1,51 +1,39 @@
 using Revise
-using PoreFlow
-using PyCall
-using LinearAlgebra
+using ADCME
+using ADCMEKit
+using NNFEM 
 using PyPlot
+using ProgressMeter 
+using PoreFlow
 using SparseArrays
-using MAT
-using Statistics
-np = pyimport("numpy")
-
-model_id = 2
-if length(ARGS)==1
-  global model_id = parse(Int64, ARGS[1])
-end
+#----------------------------------------------------------------------------
+# step 1: create a computational domain 
+# fixed on the bottom and push from right 
 
 
-n = 15
-m = 2n 
-h = 0.01
-NT = 20
-Δt = 2/NT
+m = 40
+n = 20
+h = 1/n
+NT = 50
+Δt = 0.01/NT
 
 bdedge = bcedge("right", m, n, h)
 bdnode = bcnode("lower", m, n, h)
 
-λ = constant(2.0)
-μ = constant(0.2)
+λ = constant(8.641975308641973e9)
+μ = constant(3.7037037037037034e9)
+invη = 1/1e5*constant(ones(4*m*n))
 
 
-M = compute_fem_mass_matrix1(m, n, h)
+M = 2000*compute_fem_mass_matrix1(m, n, h)
 Zero = spzeros((m+1)*(n+1), (m+1)*(n+1))
 M = SparseTensor([M Zero;Zero M])
 
 ## alpha-scheme
 β = 1/4; γ = 1/2
 
-function eta_fun(σ)
-  if model_id==1
-    return constant(10*ones(4*m*n)) + 5.0/(1+1000*sum(σ[:,1:2]^2, dims=2))
-  else
-    return constant(10*ones(4*m*n)) + relu(50.0/(1+1000*sum(σ[:,1:2]^2, dims=2)) - 2.0)
-  end
-end
-
-
 # invη is a 4*m*n array 
 function make_matrix(invη)
-  a = b = 0.1
   fn_G = invη->begin 
     G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
       -μ/3*invη 1/Δt+2/3*μ*invη 0.0
@@ -59,15 +47,14 @@ function make_matrix(invη)
 
   H = invG*S
   K = compute_fem_stiffness_matrix(H, m, n, h)
-  C = a*M + b*K # damping matrix 
-  L = M + γ*Δt*C + β*Δt^2*K
+  L = M + β*Δt^2*K
   # L = pl[1]*L
   L, Lbd = fem_impose_Dirichlet_boundary_condition_experimental(L, bdnode, m, n, h)
 
-  return C, K, L, S, invG
+  return K, L, S, invG
 end
 
-function simulate(FORCE_SCALE)
+function simulate()
 
 
   a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|>constant)
@@ -80,14 +67,18 @@ function simulate(FORCE_SCALE)
 
   Forces = zeros(NT, 2(m+1)*(n+1))
   for i = 1:NT
-    T = eval_f_on_boundary_edge((x,y)->0.1*FORCE_SCALE, bdedge, m, n, h)
+    T = eval_f_on_boundary_edge((x,y)->1e6, bdedge, m, n, h)
 
-    T = [-T T]
+    T = [-T zeros(size(T)...)]
     rhs = compute_fem_traction_term(T, bdedge, m, n, h)
 
     Forces[i, :] = rhs
   end
   Forces = constant(Forces)
+
+  K, L, S, invG = make_matrix(invη)
+
+  L = factorize(L)
 
   function condition(i, tas...)
     i <= NT
@@ -102,16 +93,15 @@ function simulate(FORCE_SCALE)
     Sigma = read(Sigma_, i)
     Varepsilon = read(Varepsilon_, i)
 
-    invη = eta_fun(Sigma)
-    C, K, L, S, invG = make_matrix(invη)
+    
 
     res = batch_matmul(invG/Δt, Sigma)
     F = compute_strain_energy_term(res, m, n, h) - K * U
-    rhs = Forces[i] - F
+    rhs = Forces[i] -  F
 
     td = d + Δt*v + Δt^2/2*(1-2β)*a 
     tv = v + (1-γ)*Δt*a 
-    rhs = rhs - C*tv - K*td
+    rhs = rhs - K*td
     rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
 
 
@@ -146,40 +136,66 @@ function simulate(FORCE_SCALE)
   return U, Sigma
 end
 
-function visualize(U0, U_, Sigma0, Sigma_)
-  close("all")
-  figure(figsize=(13,4))
-  subplot(121)
-  plot(LinRange(0, 20, NT+1), U0[:,1], "r--")  # reference
-  plot(LinRange(0, 20, NT+1), U_[:,1], "r")
-  plot(LinRange(0, 20, NT+1), U0[:,1+(n+1)*(m+1)], "g--")
-  plot(LinRange(0, 20, NT+1), U_[:,1+(n+1)*(m+1)], "g")
-  xlabel("Time")
-  ylabel("Displacement")
-  subplot(122)
-  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,1], dims=2)[:],"r--", label="\$\\sigma_{xx}\$")
-  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,2], dims=2)[:],"b--", label="\$\\sigma_{yy}\$")
-  plot(LinRange(0, 20, NT+1), mean(Sigma0[:,1:4,3], dims=2)[:],"g--", label="\$\\sigma_{xy}\$")
-  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,1], dims=2)[:],"r-")
-  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,2], dims=2)[:],"b-")
-  plot(LinRange(0, 20, NT+1), mean(Sigma_[:,1:4,3], dims=2)[:],"g-")
-  legend()
-  legend()
-  xlabel("Time")
-  ylabel("Stress")
-  savefig("disp$i.png")
-  matwrite("nn$i.mat", Dict("U"=>U_, "S"=>Sigma_))
-end
-
-
-U = Array{PyObject}(undef, 4)
-Sigma = Array{PyObject}(undef, 4)
-
-for (k,FORCE_SCALE) in enumerate([0.5, 0.8, 1.5, 1.0])
-  U[k], Sigma[k] = simulate(FORCE_SCALE)
-end
+U, sigma = simulate()
 sess = Session(); init(sess)
+U, sigma = run(sess, [U, sigma])
 
-Uval = run(sess, U)
-Sigmaval = run(sess, Sigma)
-matwrite("data$model_id.mat", Dict("U"=>Uval, "S"=>Sigmaval))
+
+##
+
+elements = []
+# prop = Dict("name"=> "PlaneStrain", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35)
+prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e7)
+
+coords = zeros((m+1)*(n+1), 2)
+for j = 1:n
+    for i = 1:m
+        idx = (m+1)*(j-1)+i 
+        elnodes = [idx; idx+1; idx+1+m+1; idx+m+1]
+        ngp = 2
+        nodes = [
+        (i-1)*h (j-1)*h
+        i*h (j-1)*h
+        i*h j*h
+        (i-1)*h j*h
+        ]
+        coords[elnodes, :] = nodes
+        push!(elements, SmallStrainContinuum(nodes, elnodes, prop, ngp))
+    end
+end
+
+# fixed on the bottom, push on the right
+EBC = zeros(Int64, (m+1)*(n+1), 2)
+FBC = zeros(Int64, (m+1)*(n+1), 2)
+g = zeros((m+1)*(n+1), 2)
+f = zeros((m+1)*(n+1), 2)
+
+for i = 1:m+1
+    EBC[i+n*(m+1),:] .= -1
+end
+
+Edge_Traction_Data = Array{Int64}[]
+for i = 1:n
+  elem = elements[(i-1)*m + m]
+  for k = 1:4
+    if elem.coords[k,1]>2-0.001 && elem.coords[k+1>4 ? 1 : k+1,1]>2-0.001
+      push!(Edge_Traction_Data, [(i-1)*m + m, k, 1])
+    end
+  end
+end
+Edge_Traction_Data = hcat(Edge_Traction_Data...)'|>Array
+
+ndims = 2
+domain = Domain(coords, elements, ndims, EBC, g, FBC, f, Edge_Traction_Data)
+######
+
+domain.history["state"] = []
+domain.history["stress"] = []
+for i = 1:NT+1
+  push!(domain.history["state"], U[i,:])
+  push!(domain.history["stress"], sigma[i,:,:])
+end
+# visualize_von_mises_stress_on_scoped_body(d_, domain, scale_factor=10.0)
+p = visualize_total_deformation_on_scoped_body(U, domain, scale_factor=10.0)
+saveanim(p, "poreflow.gif")
+close("all")

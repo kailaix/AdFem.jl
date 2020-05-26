@@ -103,7 +103,7 @@ function body(i, tas...)
   Varepsilon = read(Varepsilon_, i)
 
   F = compute_strain_energy_term(Sigma*invG/Δt, m, n, h) - K * U
-  rhs = Forces[i] - Δt^2 * F
+  rhs = Forces[i] - F
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
   tv = v + (1-γ)*Δt*a 
   rhs = rhs - C*tv - K*td

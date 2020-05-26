@@ -114,7 +114,7 @@ function simulate(FORCE_SCALE)
 
     res = batch_matmul(invG/Δt, Sigma)
     F = compute_strain_energy_term(res, m, n, h) - K * U
-    rhs = Forces[i] - Δt^2 * F
+    rhs = Forces[i] - F
 
     td = d + Δt*v + Δt^2/2*(1-2β)*a 
     tv = v + (1-γ)*Δt*a 
