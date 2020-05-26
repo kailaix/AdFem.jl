@@ -12,7 +12,7 @@ NT = 100
 domain = load_crack_domain()
 globaldata = example_global_data(domain)
 assembleMassMatrix!(globaldata, domain)
-updateDomainStateBoundary!(domain, globdat)
+updateDomainStateBoundary!(domain, globaldata)
 Hs = domain.elements[1].mat[1].H
 d0 = globaldata.state[:]
 
