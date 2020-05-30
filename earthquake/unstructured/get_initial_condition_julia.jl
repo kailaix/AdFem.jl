@@ -22,7 +22,10 @@ body_func = nothing
 globaldata = GlobalData(missing, missing, missing, missing, domain.neqs, EBC_func, FBC_func, body_func)
 # globaldata, domain = LinearStaticSolver(globaldata, domain)
 Fext = compute_external_force(globaldata, domain)
-state = LinearStaticSolver(globaldata, domain, domain.state, H, Fext)
+d = LinearStaticSolver(globaldata, domain, domain.state, H, Fext)
+
+sess = Session(); init(sess)
+domain.state = run(sess, d)
 
 
 figure()
@@ -53,6 +56,7 @@ p = 1
 for i = 1:domain.neles
   for k = 1:length(domain.elements[i].weights)
     domain.elements[i].mat[k].σ0 = stress[p,:]
+    domain.elements[i].mat[k].ε0 = strain[p,:]
     global p += 1
   end
 end
@@ -67,7 +71,7 @@ Dstate = state
 globaldata = GlobalData(d0[domain.dof_to_eq], Dstate[domain.dof_to_eq], v0[domain.dof_to_eq], a0[domain.dof_to_eq], domain.neqs, EBC_func, FBC_func,nothing)
 assembleMassMatrix!(globaldata, domain)
 @showprogress for i = 1:NT
-    global globaldata, domain = GeneralizedAlphaSolverStep(globaldata, domain, Δt, ε=1e-3, ε0=1e-3)
+    global globaldata, domain = GeneralizedAlphaSolverStep(globaldata, domain, Δt)
 end
 
 
