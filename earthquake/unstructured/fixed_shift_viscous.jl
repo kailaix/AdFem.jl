@@ -102,7 +102,8 @@ legend()
 savefig("mesh.png")
 
 elems = []
-prop = Dict("name"=> "PlaneStrain", "rho"=> 2700, "E"=> 3.4e10, "nu"=> 0.2339)
+# prop = Dict("name"=> "PlaneStrain", "rho"=> 2700, "E"=> 3.4e10, "nu"=> 0.2339)
+prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e5)
 for j = 1:size(elements,1)
     elnodes = elements[j,:]
     nodes_ = nodes[elnodes, :]

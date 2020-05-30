@@ -1,16 +1,18 @@
 
 using NNFEM 
-function load_crack_domain()
-    nodes, elements = meshread("crack.msh")
 
-    scale_factor = 10000
+
+function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(3.5, 0.0), c2=(4.0,0.5))
+    nodes, elements = meshread("crack_wider.msh")
+    slope = (c2[2]-c1[2])/(c2[1]-c1[1])
+    scale_factor = 1000
     nodes *= scale_factor
 
     # visualize_mesh(nodes, elements)
     ids = Int64[]
     for i = 1:size(nodes, 1)
         x, y = nodes[i,:]
-        if  abs(y-0.5*(x-0.5*scale_factor))<0.01*scale_factor && (0.5*scale_factor < x <= 1.55*scale_factor)
+        if  abs(y-slope*(x-c1[1]*scale_factor))<0.05*scale_factor && (c1[1]*0.99*scale_factor < x <= c2[1]*1.01*scale_factor)
             push!(ids, i)
             # @info x, y
             # plot([x], [y], ".g")
@@ -33,7 +35,7 @@ function load_crack_domain()
 
         @info i 
         x, y = mean(nodes[e,:], dims=1)[:]
-        if y-0.5*(x-0.5*scale_factor)<0
+        if y-slope*(x-c1[1]*scale_factor)<0
             # plot([x], [y], ".r")
         else
             for j = 1:4
@@ -73,10 +75,10 @@ function load_crack_domain()
         e = elements[j,:]
         for i in e 
             x, y = nodes[i, :]
-            if x<0.01*scale_factor || x>2*scale_factor-0.01*scale_factor || y>=1*scale_factor-0.01*scale_factor
+            if x<0.001*scale_factor || x>xmax*scale_factor-0.001*scale_factor || y>=ymax*scale_factor-0.001*scale_factor
                 push!(id4, i)
             end
-            if y<0.01*scale_factor && x>=0.01*scale_factor && x<=2*scale_factor-0.01*scale_factor
+            if y<0.001*scale_factor && x>=0.001*scale_factor && x<=xmax*scale_factor-0.001*scale_factor
                 push!(id3, i)
             end
         end
@@ -87,11 +89,23 @@ function load_crack_domain()
     id4 = collect(id4)
 
     elems = []
-    prop = Dict("name"=> "PlaneStrain", "rho"=> 2700, "E"=> 3.4e10, "nu"=> 0.2339)
+    # prop = Dict("name"=> "PlaneStrain", "rho"=> 2700, "E"=> 3.4e10, "nu"=> 0.2339)
+    if option=="viscoelasticity"
+        prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10)
+    elseif option=="elasticity"
+        prop = Dict("name"=> "PlaneStrain", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35)
+    end
     for j = 1:size(elements,1)
         elnodes = elements[j,:]
         nodes_ = nodes[elnodes, :]
         ngp = 3
+        if option=="mixed"
+            if mean(nodes[:,2])<c2[2]*scale_factor
+                prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
+            else
+                prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10)
+            end
+        end
         push!(elems, SmallStrainContinuum(nodes_, elnodes, prop, ngp))
     end
 
