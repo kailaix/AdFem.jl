@@ -4,6 +4,9 @@ using ADCMEKit
 using NNFEM 
 using PyPlot
 using ProgressMeter 
+using MAT
+using ADCMEKit
+
 
 
 close("all")
@@ -12,7 +15,7 @@ include("load_domain_function.jl")
 NT = 100
 Δt = 30/NT
 domain = load_crack_domain()
-
+# domain = load_crack_domain(option="viscoelasticity")
 
 # visualize_mesh(domain)
 H = domain.elements[1].mat[1].H
@@ -23,17 +26,16 @@ globaldata = GlobalData(missing, missing, missing, missing, domain.neqs, EBC_fun
 # globaldata, domain = LinearStaticSolver(globaldata, domain)
 Fext = compute_external_force(globaldata, domain)
 d = LinearStaticSolver(globaldata, domain, domain.state, H, Fext)
-
 sess = Session(); init(sess)
 domain.state = run(sess, d)
 
-
+#=
 figure()
 subplot(211)
 visualize_scalar_on_scoped_body(domain.state[1:domain.nnodes], zeros(size(domain.state)...), domain)
 subplot(212)
 visualize_scalar_on_scoped_body(domain.state[domain.nnodes+1:end], zeros(size(domain.state)...), domain)
-
+=#
 
 strain = getStrain(domain)
 stress = getStress(domain)
@@ -42,54 +44,84 @@ state = domain.state
 # error()
 
 domain = load_crack_domain(option="mixed")
-# domain = load_crack_domain()
 
-d0 = state[:]
+ts = GeneralizedAlphaSolverTime(Δt, NT)
+ubd, abd = compute_boundary_info(domain, globaldata, ts)
+Fext = compute_external_force(domain, globaldata, ts)
+
+d0 = state
 v0 = zeros(2domain.nnodes)
 a0  = zeros(2domain.nnodes)
 # σ0 = zeros(getNGauss(domain),3)
 # ϵ0 = zeros(getNGauss(domain),3)
 σ0 = stress
 ϵ0 = strain
-domain.state = state[:]
-p = 1
+
+
+
+μ = zeros(getNGauss(domain))
+λ = zeros(getNGauss(domain))
+η = zeros(getNGauss(domain))
+k = 0
 for i = 1:domain.neles
-  for k = 1:length(domain.elements[i].weights)
-    domain.elements[i].mat[k].σ0 = stress[p,:]
-    domain.elements[i].mat[k].ε0 = strain[p,:]
-    # @info stress[p,:] - H * strain[p,:]
-    global p += 1
+  e = domain.elements[i]
+  for mat in e.mat
+    global k += 1 
+    μ[k] = mat.μ
+    λ[k] = mat.λ
+    η[k] = mat.η 
   end
 end
 
 
-# d, v, a, σ, ϵ = ViscoelasticitySolver(
-#   globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
-# )
 
-Dstate = state[:]
-globaldata = GlobalData(d0[domain.dof_to_eq], Dstate[domain.dof_to_eq], v0[domain.dof_to_eq], a0[domain.dof_to_eq], domain.neqs, EBC_func, FBC_func, nothing)
-assembleMassMatrix!(globaldata, domain)
-@showprogress for i = 1:NT
-    global globaldata, domain = GeneralizedAlphaSolverStep(globaldata, domain, Δt, maxiterstep=1)
+mask = ones(getNGauss(domain))
+mask[viscoelasticity_idx] .= 0.0
+
+μ1 = 1e9 * constant(3.7037037037037034)
+λ1 = 1e9 * constant(8.641975308641973)
+# η1 = exp(Variable(1.0))
+# η1 = 1e20
+η1 = exp(Variable(50.0))
+
+μ2 = 1e9 * constant(3.7037037037037034)
+λ2 = 1e9 * constant(8.641975308641973)
+# η2 = exp(Variable(20.0))
+
+# pl = placeholder(ones(1))
+η2 = exp(Variable(20.0))
+# η2 = exp(pl[1])
+
+# η2 = 1e10
+
+μ = μ1 * mask + μ2 * (1 .- mask)
+λ = λ1 * mask + λ2 * (1 .- mask)
+η = η1 * mask + η2 * (1 .- mask)
+
+d, v, a, σ, ϵ = ViscoelasticitySolver(
+  globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
+)
+
+d_ = matread("data/viscoelasticity_inversion.mat")["d"]
+
+loss = sum((d-d_)^2)
+sess = Session(); init(sess)
+
+@info run(sess, loss)
+BFGS!(sess, loss)
+# lineview(sess, pl, loss, [20.0], [log(1e10)])
+
+
+#=
+d_, σ_ = run(sess, [d, σ])
+domain.history["state"] = []
+domain.history["stress"] = []
+for i = 1:NT+1
+  push!(domain.history["state"], d_[i,:])
+  push!(domain.history["stress"], σ_[i,:,:])
 end
 
-# d_, σ_ = run(sess, [d, σ])
-# domain.history["state"] = []
-# domain.history["stress"] = []
-# for i = 1:NT+1
-#   push!(domain.history["state"], d_[i,:])
-#   push!(domain.history["stress"], σ_[i,:,:])
-# end
 
-d_ = hcat(domain.history["state"]...)'|>Array
-σ_ = vcat([reshape(x, 1, size(x,1), size(x,2)) for x in domain.history["stress"]]...)
-# figure()
-# p = visualize_scalar_on_scoped_body(σ_[:, 1:domain.nnodes, 2], d_, domain, scale_factor=1.0)
-# # p = visualize_von_mises_stress_on_scoped_body(d_, domain, scale_factor=10.0)
-# # p = visualize_total_deformation_on_scoped_body(d_, domain, scale_factor=10.0)
-# saveanim(p, "ad_solver.gif")
-# close("all")
 
 
 ###################### check surface ########################
@@ -110,7 +142,7 @@ for e in domain.elements
 end
 ii = sortperm(xcoord)
 xcoord = xcoord[ii]
-idx = idx[ii]
+idx = idx[ii]s
 
 σ_surface = σ_[:, idx, :]
 s = zeros(size(σ_surface, 1), size(σ_surface, 2))
@@ -122,7 +154,7 @@ end
 
 figure(figsize=(8,3))
 semilogy(s[1, :], "-", label="x0")
-semilogy(s[NT, :], "--", label="x")
+semilogy(s[NT+1, :], "--", label="x")
 legend()
 title("Stress")
 savefig("Stress_test.png")
@@ -131,8 +163,6 @@ figure(figsize=(8,3))
 semilogy(s[:, 13], "-")
 title("Stress")
 
-
-# visualize_total_deformation_on_scoped_body(Array(d_), domain; scale_factor=100)
 
 slip_idx = findall(domain.nodes[:,2] .≈ 0.0)
 coords = domain.nodes[slip_idx,1]
@@ -144,7 +174,6 @@ y_ = d_[:, slip_idx[ii] .+ domain.nnodes]
 
 x0 = d0[slip_idx[ii]]
 y0 = d0[slip_idx[ii] .+ domain.nnodes]
-
 
 figure(figsize=(8,3))
 subplot(211)
@@ -181,4 +210,5 @@ plot(y_[:, 10])
 # plot(y_[NT+1, :] .- y0, "--", label="x")
 # plot(y0, ":", label="static")
 legend()
+=#
 

@@ -2,6 +2,9 @@
 using NNFEM 
 
 
+viscoelasticity_idx = []
+
+
 # function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(4.0, 0.0), c2=(4.0,0.5))
 #     nodes, elements = meshread("crack_vertical.msh")
 function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(3.5, 0.0), c2=(4.0,0.5))
@@ -99,23 +102,35 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     elseif option=="elasticity"
         prop = Dict("name"=> "PlaneStrain", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35)
     end
+    global viscoelasticity_idx = []
+    g_idx = 0
     for j = 1:size(elements,1)
         elnodes = elements[j,:]
         nodes_ = nodes[elnodes, :]
         ngp = 3
-        # error()
         if option=="mixed"
             if mean(nodes_[:,2])<c2[2]*scale_factor
-                # error()
                 prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
-            else
-                # error()
+            else 
                 prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10)
+                # prop = Dict("name"=> "PlaneStrainViscoelasticityProny", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10, "c"=>0.99, "tau"=>1e-3)
+                # prop = Dict("name"=> "PlaneStrainViscoelasticityProny", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20, "c"=>0.99, "tau"=>10.0)
                 # prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
-                
+                # prop = Dict("name"=> "PlaneStrain", "rho"=> 2000, "E"=> 1e8, "nu"=> 0.35)
+
             end
         end
         push!(elems, SmallStrainContinuum(nodes_, elnodes, prop, ngp))
+
+        if option=="mixed"
+            if mean(nodes_[:,2])<c2[2]*scale_factor
+            else 
+                for k = 1:length(elems[end].weights)
+                    push!(viscoelasticity_idx, g_idx + k)
+                end
+            end
+        end
+        g_idx += length(elems[end].weights)
     end
 
 
@@ -135,4 +150,8 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
 
     ndims = 2
     domain = Domain(nodes, elems, ndims, EBC, g, FBC, f)
+end
+
+
+function make_patch()
 end
