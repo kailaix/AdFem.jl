@@ -12,6 +12,7 @@ include("load_domain_function.jl")
 NT = 100
 Δt = 30/NT
 domain = load_crack_domain()
+# domain = load_crack_domain(option="viscoelasticity")
 
 # visualize_mesh(domain)
 H = domain.elements[1].mat[1].H
@@ -159,6 +160,10 @@ end
 legend()
 
 subplot(212)
+S = 1:20:NT
+for i = 1:length(S)
+  plot(-y_'[:,S[i]],"C$i",  label="$i")
+end
 plot(-y0, label="y")
 # plot(y_[1, :] .- y0, "-", label="x0")
 # plot(y_[NT+1, :] .- y0, "--", label="x")

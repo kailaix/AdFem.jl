@@ -62,18 +62,16 @@ for i = 1:domain.neles
 end
 
 
-
 # d, v, a, σ, ϵ = ViscoelasticitySolver(
 #   globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
 # )
 
 Dstate = state
-globaldata = GlobalData(d0[domain.dof_to_eq], Dstate[domain.dof_to_eq], v0[domain.dof_to_eq], a0[domain.dof_to_eq], domain.neqs, EBC_func, FBC_func,nothing)
+globaldata = GlobalData(d0[domain.dof_to_eq], Dstate[domain.dof_to_eq], v0[domain.dof_to_eq], a0[domain.dof_to_eq], domain.neqs, EBC_func, FBC_func, nothing)
 assembleMassMatrix!(globaldata, domain)
 @showprogress for i = 1:NT
     global globaldata, domain = GeneralizedAlphaSolverStep(globaldata, domain, Δt)
 end
-
 
 # d_, σ_ = run(sess, [d, σ])
 # domain.history["state"] = []
@@ -146,6 +144,7 @@ y_ = d_[:, slip_idx[ii] .+ domain.nnodes]
 x0 = d0[slip_idx[ii]]
 y0 = d0[slip_idx[ii] .+ domain.nnodes]
 
+
 figure(figsize=(8,3))
 subplot(211)
 plot((x_' .- x0)[:,1:10:end])
@@ -164,12 +163,16 @@ end
 legend()
 
 subplot(212)
+S = 1:20:NT
+for i = 1:length(S)
+  plot(-y_'[:,S[i]],"C$i",  label="$i")
+end
 plot(-y0, label="y")
 # plot(y_[1, :] .- y0, "-", label="x0")
 # plot(y_[NT+1, :] .- y0, "--", label="x")
 # plot(y0, ":", label="static")
 legend()
-savefig("disp_juli.png")
+savefig("disp.png")
 
 figure()
 plot(y_[:, 10])
@@ -177,5 +180,4 @@ plot(y_[:, 10])
 # plot(y_[NT+1, :] .- y0, "--", label="x")
 # plot(y0, ":", label="static")
 legend()
-
 

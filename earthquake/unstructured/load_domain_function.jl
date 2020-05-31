@@ -2,9 +2,12 @@
 using NNFEM 
 
 
+# function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(4.0, 0.0), c2=(4.0,0.5))
+#     nodes, elements = meshread("crack_vertical.msh")
 function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(3.5, 0.0), c2=(4.0,0.5))
     nodes, elements = meshread("crack_wider.msh")
     slope = (c2[2]-c1[2])/(c2[1]-c1[1])
+    # slope = 0
     scale_factor = 1000
     nodes *= scale_factor
 
@@ -13,6 +16,7 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     for i = 1:size(nodes, 1)
         x, y = nodes[i,:]
         if  abs(y-slope*(x-c1[1]*scale_factor))<0.05*scale_factor && (c1[1]*0.99*scale_factor < x <= c2[1]*1.01*scale_factor)
+        # if  abs(c1[2]*scale_factor <= y <= c2[2]*scale_factor) && abs(x-c1[1]*scale_factor)<0.05*scale_factor
             push!(ids, i)
             # @info x, y
             # plot([x], [y], ".g")
@@ -91,7 +95,7 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     elems = []
     # prop = Dict("name"=> "PlaneStrain", "rho"=> 2700, "E"=> 3.4e10, "nu"=> 0.2339)
     if option=="viscoelasticity"
-        prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10)
+        prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
     elseif option=="elasticity"
         prop = Dict("name"=> "PlaneStrain", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35)
     end
@@ -99,11 +103,15 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
         elnodes = elements[j,:]
         nodes_ = nodes[elnodes, :]
         ngp = 3
+        # error()
         if option=="mixed"
-            if mean(nodes[:,2])<c2[2]*scale_factor
+            if mean(nodes_[:,2])<c2[2]*scale_factor
+                # error()
                 prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
             else
+                # error()
                 prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10)
+                # prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
             end
         end
         push!(elems, SmallStrainContinuum(nodes_, elnodes, prop, ngp))
@@ -119,8 +127,10 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     EBC[id1,:] .= -1
     EBC[id2,:] .= -1
     EBC[id4,:] .= -1
-    g[id1,:] .= [10 5] # m
-    g[id2,:] .= [-10 -5] # m
+    g[id1,:] .= [5 5] # m
+    g[id2,:] .= [-5 -5] # m
+    # g[id1,:] .= [0. 0.5] # m
+    # g[id2,:] .= [0. -0.5] # m
 
     ndims = 2
     domain = Domain(nodes, elems, ndims, EBC, g, FBC, f)
