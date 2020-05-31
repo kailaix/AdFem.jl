@@ -112,6 +112,7 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
                 # error()
                 prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e10)
                 # prop = Dict("name"=> "ViscoelasticityMaxwell", "rho"=> 2000, "E"=> 1e10, "nu"=> 0.35, "eta"=>1e20)
+                
             end
         end
         push!(elems, SmallStrainContinuum(nodes_, elnodes, prop, ngp))

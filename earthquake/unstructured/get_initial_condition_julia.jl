@@ -44,14 +44,14 @@ state = domain.state
 domain = load_crack_domain(option="mixed")
 # domain = load_crack_domain()
 
-d0 = state
+d0 = state[:]
 v0 = zeros(2domain.nnodes)
 a0  = zeros(2domain.nnodes)
 # σ0 = zeros(getNGauss(domain),3)
 # ϵ0 = zeros(getNGauss(domain),3)
 σ0 = stress
 ϵ0 = strain
-domain.state = state
+domain.state = state[:]
 p = 1
 for i = 1:domain.neles
   for k = 1:length(domain.elements[i].weights)
@@ -66,7 +66,7 @@ end
 #   globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
 # )
 
-Dstate = state
+Dstate = state[:]
 globaldata = GlobalData(d0[domain.dof_to_eq], Dstate[domain.dof_to_eq], v0[domain.dof_to_eq], a0[domain.dof_to_eq], domain.neqs, EBC_func, FBC_func, nothing)
 assembleMassMatrix!(globaldata, domain)
 @showprogress for i = 1:NT
