@@ -1,14 +1,10 @@
 
 using NNFEM 
 
-
 viscoelasticity_idx = []
 
-
-# function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(4.0, 0.0), c2=(4.0,0.5))
-#     nodes, elements = meshread("crack_vertical.msh")
-function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(3.5, 0.0), c2=(4.0,0.5))
-    nodes, elements = meshread("crack_wider.msh")
+function load_crack_domain(;mesh="dipping_fault.msh", option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(3.13, 0.0), c2=(4.0,0.5))
+    nodes, elements = meshread(mesh)
     slope = (c2[2]-c1[2])/(c2[1]-c1[1])
     # slope = 0
     scale_factor = 1000
@@ -18,7 +14,7 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     ids = Int64[]
     for i = 1:size(nodes, 1)
         x, y = nodes[i,:]
-        if  abs(y-slope*(x-c1[1]*scale_factor))<0.05*scale_factor && (c1[1]*0.99*scale_factor < x <= c2[1]*1.01*scale_factor)
+        if  abs(y-slope*(x-c1[1]*scale_factor))<0.02*scale_factor && (c1[1]*0.99*scale_factor < x <= c2[1]*1.01*scale_factor)
         # if  abs(c1[2]*scale_factor <= y <= c2[2]*scale_factor) && abs(x-c1[1]*scale_factor)<0.05*scale_factor
             push!(ids, i)
             # @info x, y
@@ -70,10 +66,8 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     end
 
     # savefig("marker.png")
-
     new_nodes = hcat(new_nodes...)
     nodes = [nodes;new_nodes']
-
 
     id1 = collect(id1)
     id2 = collect(id2) 
@@ -143,15 +137,9 @@ function load_crack_domain(;option::String = "elasticity", xmax::Float64 = 8.0, 
     EBC[id1,:] .= -1
     EBC[id2,:] .= -1
     EBC[id4,:] .= -1
-    g[id1,:] .= [5 5] # m
-    g[id2,:] .= [-5 -5] # m
-    # g[id1,:] .= [0. 0.5] # m
-    # g[id2,:] .= [0. -0.5] # m
+    g[id1,:] .= [1 slope]./sqrt(1^2 + slope^2) # m
+    g[id2,:] .= -[1 slope]./sqrt(1^2 + slope^2) # m
 
     ndims = 2
     domain = Domain(nodes, elems, ndims, EBC, g, FBC, f)
-end
-
-
-function make_patch()
 end
