@@ -6,7 +6,6 @@ using PyPlot
 using ProgressMeter 
 using MAT
 using ADCMEKit
-using Clustering
 
 
 
@@ -60,23 +59,6 @@ a0  = zeros(2domain.nnodes)
 
 gnodes = getGaussPoints(domain)
 
-kr = kmeans(gnodes', 20)
-A = kr.assignments
-# for i = 1:20
-#   scatter(gnodes[A .== i,1], gnodes[A .== i,2])
-# end
-# gca().invert_yaxis()
-
-vs = Variable(1.5*ones(20))
-
-ETA = constant(zeros(getNGauss(domain)))
-for i = 1:20
-  mask = zeros(getNGauss(domain)) 
-  mask[A.==i] .= 1.0
-  global ETA += vs[i] * mask 
-end 
-ETA *= 1e10
-
 μ = zeros(getNGauss(domain))
 λ = zeros(getNGauss(domain))
 η = zeros(getNGauss(domain))
@@ -98,8 +80,8 @@ end
 
 # η = 1e10 *Variable( 1.5 ) * ones(getNGauss(domain))
 
-# η = 1e10 *( Variable(1.5) + Variable(1.5) * (gnodes[:,2])/maximum(gnodes[:,2]))
-η = ETA 
+η = 1e10 *( Variable(1.5) + Variable(1.5) * (gnodes[:,2])/maximum(gnodes[:,2]))
+
 
 d, v, a, σ, ϵ = ViscoelasticitySolver(
   globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
@@ -112,22 +94,24 @@ sess = Session(); init(sess)
 
 
 @info run(sess, loss)
-BFGS!(sess, loss, 30)
+BFGS!(sess, loss)
 # lineview(sess, pl, loss, [20.0], [log(1e10)])
 
 
+kr = kmeans(gnodes', 20)
+A = kr.assignments
+
+for i = 1:20
+  scatter(gnodes[A .== i,1], gnodes[A .== i,2])
+end
+gca().invert_yaxis()
 
 
 # d_ = run(sess, d)
 # matwrite("data/viscoelasticity_linear.mat", Dict("d"=>d_))
 
-η_ = run(sess, η[1:9:end])
-visualize_scalar_on_scoped_body(η_, zeros(domain.nnodes*2), domain)
-
-
-η2 = 1e10 *( 2 .- (gnodes[:,2])/maximum(gnodes[:,2]))
-η2 = η2[1:9:end]
-visualize_scalar_on_scoped_body(η2, zeros(domain.nnodes*2), domain)
+# η_ = η[1:9:end]
+# visualize_scalar_on_scoped_body(η_, zeros(domain.nnodes*2), domain)
 
 #=
 d_, σ_ = run(sess, [d, σ])
