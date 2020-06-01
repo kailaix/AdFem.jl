@@ -15,7 +15,8 @@ include("load_domain_function.jl")
 
 NT = 100
 Δt = 30/NT
-domain = load_crack_domain()
+# domain = load_crack_domain()
+domain = load_crack_domain(mesh="crack_wider.msh", c1=(3.5, 0.0), c2=(4.0,0.5))
 # domain = load_crack_domain(option="viscoelasticity")
 
 # visualize_mesh(domain)
@@ -30,6 +31,9 @@ d = LinearStaticSolver(globaldata, domain, domain.state, H, Fext)
 sess = Session(); init(sess)
 domain.state = run(sess, d)
 
+matwrite("data/dippingfault_viscosity_inversion.mat", Dict(
+  "d" => domain.state
+)) 
 #=
 figure()
 subplot(211)
@@ -44,7 +48,7 @@ state = domain.state
 
 # error()
 
-domain = load_crack_domain(option="mixed")
+domain = load_crack_domain(mesh="crack_wider.msh", option="mixed", c1=(3.5, 0.0), c2=(4.0,0.5))
 
 ts = GeneralizedAlphaSolverTime(Δt, NT)
 ubd, abd = compute_boundary_info(domain, globaldata, ts)
@@ -94,10 +98,7 @@ end
 # η = 1e10 + X2 * gnodes[:,1] + X3 * gnodes[:,2]
 # η = @. 1e10 *( 2 + abs(gnodes[:,1] - maximum(gnodes[:,1])/2)/maximum(gnodes[:,1]) - (gnodes[:,2])/maximum(gnodes[:,2]))
 # η = 1e10 *( 2 .- (gnodes[:,2])/maximum(gnodes[:,2]))
-
-
 # η = 1e10 *Variable( 1.5 ) * ones(getNGauss(domain))
-
 # η = 1e10 *( Variable(1.5) + Variable(1.5) * (gnodes[:,2])/maximum(gnodes[:,2]))
 η = ETA 
 
@@ -110,21 +111,18 @@ d_ = matread("data/viscoelasticity_linear.mat")["d"]
 loss = sum((d-d_)^2)
 sess = Session(); init(sess)
 
-
 @info run(sess, loss)
 BFGS!(sess, loss, 30)
 # lineview(sess, pl, loss, [20.0], [log(1e10)])
 
-
-
-
 # d_ = run(sess, d)
 # matwrite("data/viscoelasticity_linear.mat", Dict("d"=>d_))
 
+figure()
 η_ = run(sess, η[1:9:end])
 visualize_scalar_on_scoped_body(η_, zeros(domain.nnodes*2), domain)
 
-
+figure()
 η2 = 1e10 *( 2 .- (gnodes[:,2])/maximum(gnodes[:,2]))
 η2 = η2[1:9:end]
 visualize_scalar_on_scoped_body(η2, zeros(domain.nnodes*2), domain)
