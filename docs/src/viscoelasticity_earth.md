@@ -69,7 +69,7 @@ where $f$ is the body force and $\rho$ is the density.
 
 
 
-### Numerical example
+### Numerical result
 
 |displacement $u$                                 |velocity $\dot u$                              | strain rate   $\partial \dot u / \partial x$     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
@@ -80,19 +80,14 @@ where $f$ is the body force and $\rho$ is the density.
 The constitutive relation of a dip-slip fault can be described by a plane strain viscoelasticity model
 
 
-
-<!-- ```@raw html
-<center>
-<img src="../assets/visco-earth/dipslip-model.png">
-</center>
-``` -->
-
-|Finite element model                     |Elastic response              | 
+|Finite element model                             |Elastic response                               | 
 |:------------------------------------------------|:----------------------------------------------|
-|![](./assets/visco-earth/dipslip-model.png)   |![](./assets/visco-earth/dipslip-elastic.png)   |
+|![](./assets/visco-earth/dipslip-model.png)      |![](./assets/visco-earth/dipslip-elastic.png)  |
 
 
-|horizontal slip $u_x$                                 |vertical slip $u_y$                               | von Mises stress     |
+### Numerical result
+
+|horizontal slip $u_x$                            |vertical slip $u_y$                             | von Mises stress     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
 |![](./assets/visco-earth/dipslip-ux.png)   |![](./assets/visco-earth/dipslip-uy.png)    |![](./assets/visco-earth/dipslip-vonMises.png)     |
 
