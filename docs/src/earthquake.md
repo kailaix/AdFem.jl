@@ -1,6 +1,6 @@
 # Earthquake Simulation with Rate-and-State Friction
 
-![](./assets/research/earthquake/earthquake-antiplane.png)
+![](./assets/earthquake/earthquake-antiplane.png)
 
 Here we study a case of earthquake simulation on strike-slip fault.
 
@@ -29,7 +29,7 @@ where $\eta V$ is the radiation damping term, $\sigma_n$ is the effective normal
 
 ## Earthquake simulation
 
-![](./assets/research/earthquake/earthquake-simulation.png)
+![](./assets/earthquake/earthquake-simulation.png)
 
 
 ## Gradients 
