@@ -142,4 +142,5 @@ function load_crack_domain(;mesh="dipping_fault.msh", option::String = "elastici
 
     ndims = 2
     domain = Domain(nodes, elems, ndims, EBC, g, FBC, f)
+
 end

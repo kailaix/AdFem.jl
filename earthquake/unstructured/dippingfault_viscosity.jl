@@ -23,11 +23,6 @@ d = LinearStaticSolver(globaldata, domain, domain.state, H, Fext)
 sess = Session(); init(sess)
 domain.state = run(sess, d)
 
-figure()
-# visualize_boundary(domain)
-visualize_mesh(domain)
-autoscale(enable=true, axis="both", tight=true)
-savefig("figures/dippingfault_mesh.png")
 
 figure()
 subplot(211)
@@ -184,6 +179,19 @@ figure(figsize=(8,3))
 plot(s[1:20:end, :]')
 title("von Mises stress")
 savefig("figures/dippingfault_vonMises_stress.png")
+
+figure()
+visualize_boundary(domain)
+# visualize_mesh(domain)
+visualize_scalar_on_scoped_body(η[1:9:end], zeros(domain.nnodes*2), domain)
+gca().invert_yaxis()
+# autoscale(enable=true, axis="both", tight=true)
+scatter(domain.nodes[slip_idx,1], domain.nodes[slip_idx,2], color="m", marker=".", label="Tractrion Free")
+legend()
+title(L"Viscosity ($\eta$) model")
+savefig("figures/dippingfault_mesh.png")
+
+
 
 # figure()
 # p = visualize_scalar_on_scoped_body(σ_[:, 1:domain.nnodes, 2], d_, domain, scale_factor=1.0)
