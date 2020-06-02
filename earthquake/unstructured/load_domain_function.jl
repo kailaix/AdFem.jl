@@ -3,7 +3,14 @@ using NNFEM
 
 viscoelasticity_idx = []
 
-function load_crack_domain(;mesh="dipping_fault.msh", option::String = "elasticity", xmax::Float64 = 8.0, ymax::Float64 = 4.0, c1=(3.13, 0.0), c2=(4.0,0.5))
+function load_crack_domain(;mesh="dipping_fault.msh", 
+    option::String = "elasticity", 
+    xmax::Float64 = 8.0, 
+    ymax::Float64 = 4.0, 
+    c1=(3.13, 0.0), 
+    c2=(4.0,0.5), 
+    slip_scale=1.0)
+    
     nodes, elements = meshread(mesh)
     slope = (c2[2]-c1[2])/(c2[1]-c1[1])
     # slope = 0
@@ -14,7 +21,7 @@ function load_crack_domain(;mesh="dipping_fault.msh", option::String = "elastici
     ids = Int64[]
     for i = 1:size(nodes, 1)
         x, y = nodes[i,:]
-        if  abs(y-slope*(x-c1[1]*scale_factor))<0.02*scale_factor && (c1[1]*0.99*scale_factor < x <= c2[1]*1.01*scale_factor)
+        if  abs(y-slope*(x-c1[1]*scale_factor))<0.05*scale_factor && (c1[1]*0.99*scale_factor < x <= c2[1]*1.01*scale_factor)
         # if  abs(c1[2]*scale_factor <= y <= c2[2]*scale_factor) && abs(x-c1[1]*scale_factor)<0.05*scale_factor
             push!(ids, i)
             # @info x, y
@@ -137,8 +144,8 @@ function load_crack_domain(;mesh="dipping_fault.msh", option::String = "elastici
     EBC[id1,:] .= -1
     EBC[id2,:] .= -1
     EBC[id4,:] .= -1
-    g[id1,:] .= [1 slope]./sqrt(1^2 + slope^2) # m
-    g[id2,:] .= -[1 slope]./sqrt(1^2 + slope^2) # m
+    g[id1,:] .= [1 slope]./sqrt(1^2 + slope^2) * slip_scale# m
+    g[id2,:] .= -[1 slope]./sqrt(1^2 + slope^2) * slip_scale# m
 
     ndims = 2
     domain = Domain(nodes, elems, ndims, EBC, g, FBC, f)

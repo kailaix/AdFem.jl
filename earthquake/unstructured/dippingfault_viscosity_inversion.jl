@@ -93,7 +93,7 @@ sess = Session(); init(sess)
 figure()
 cb = (vs, iter, loss)->begin 
     η_est = vs[1]
-    if mod(iter, 5) == 0
+    if mod(iter, 10) == 0
         clf()
         visualize_scalar_on_scoped_body(η_est, zeros(domain.nnodes*2), domain, vmin=minimum(η_), vmax=maximum(η_))
         title("Iter = $iter")
