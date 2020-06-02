@@ -10,7 +10,7 @@ using Clustering
 using JLD2 
 
 close("all")
-include("load_domain_function_old.jl")
+include("load_domain_function.jl")
 
 NT = 100
 Δt = 30/NT
