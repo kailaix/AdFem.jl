@@ -21,6 +21,9 @@ We also show the inversion results in each iteration:
 </center>
 ```
 
+
+Code: 
+
 ## Dip-slip Fault 
 
 | True model                   | Inverted result                  |
@@ -35,3 +38,5 @@ We also show the inversion results in each iteration:
 <img src="../assets/visco-earth/dipslip-inv_visco.gif" width=60%>
 </center>
 ```
+
+Code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_inversion.jl), [load_domain_function.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/load_domain_function.jl).

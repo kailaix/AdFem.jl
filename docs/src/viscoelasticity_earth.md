@@ -103,4 +103,4 @@ The constitutive relation of a dip-slip fault can be described by a plane strain
 ```
 
 
-Example code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_inversion.jl).
+Example code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_forward.jl).
