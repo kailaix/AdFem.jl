@@ -70,7 +70,7 @@ for i = 1:domain.neles
 end
   
 gnodes = getGaussPoints(domain)
-η = 1e10 *( constant(1.5) + constant(1.5) * (gnodes[:,2])/maximum(gnodes[:,2]))
+η = 1e10 *( constant(3.0) - constant(1.5) * (gnodes[:,2])/maximum(gnodes[:,2]))
 
 d, v, a, σ, ϵ = ViscoelasticitySolver(
   globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
