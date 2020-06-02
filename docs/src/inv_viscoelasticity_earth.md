@@ -35,7 +35,7 @@ We also show the inversion results in each iteration:
 
 ```@raw html
 <center>
-<img src="../assets/visco-earth/dipslip-inv_visco.gif" width=60%>
+<img src="../assets/visco-earth/dipslip-inv_visco.gif" width=80%>
 </center>
 ```
 
