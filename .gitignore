@@ -31,7 +31,7 @@ research/visco_inverse_fixed_pressure/param
 research/visco_inverse_fixed_pressure/space_k
 *.jld2
 research/*.png
-*.mat
+# *.mat
 !research/space_varying_viscoelasticity/viscoelasticity.mat
 *build.log
 *Exp*
