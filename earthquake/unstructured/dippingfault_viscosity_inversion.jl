@@ -11,7 +11,6 @@ using JLD2
 
 close("all")
 
-
 dat = matread("data/dippingfault_viscosity_inversion.mat")
 σ_ = dat["sigma"]
 d_ = dat["d"]
@@ -37,7 +36,7 @@ coords = coords[ii]
 ########################### Inversion ###########################
 # create Variable eta 
 gnodes = getGaussPoints(domain)
-using Random; Random.seed!(23333)
+using Random; Random.seed!(0)
 kr = kmeans(gnodes', 20)
 A = kr.assignments
 
@@ -46,6 +45,11 @@ for i = 1:20
   scatter(gnodes[A .== i,1], gnodes[A .== i,2])
 end
 gca().invert_yaxis()
+autoscale(enable=true, axis="both", tight=true)
+title("Patch division for inversion")
+ylabel("y")
+xlabel("x")
+savefig("figures/dipslip-patch.png")
 
 
 vs = Variable(1.5*ones(20))
@@ -70,6 +74,11 @@ for i = 1:domain.neles
   end
 end
 
+globaldata = GlobalData(missing, missing, missing, missing, domain.neqs, nothing, nothing, nothing)
+ts = GeneralizedAlphaSolverTime(Δt, NT)
+ubd, abd = compute_boundary_info(domain, globaldata, ts)
+Fext = compute_external_force(domain, globaldata, ts)
+
 d, v, a, σ, ϵ = ViscoelasticitySolver(
   globaldata, domain, d0, v0, a0, σ0, ϵ0, Δt, NT, μ, λ, η, Fext, ubd, abd
 )
@@ -78,10 +87,11 @@ dat = matread("data/dippingfault_viscosity_inversion.mat")
 d_ = dat["d"]
 y_id = [sorted_slip_idx; sorted_slip_idx .+ domain.nnodes]
 loss = sum((d[:, y_id]-d_[:, y_id])^2)
+# loss = sum((d - d_)^2)
 sess = Session(); init(sess)
 
 @show run(sess, loss)
-BFGS!(sess, loss, 500)
+BFGS!(sess, loss, 30, callback=)
 
 figure(figsize=(8,3))
 subplot(121)

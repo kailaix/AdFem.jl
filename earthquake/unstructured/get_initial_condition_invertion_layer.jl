@@ -6,45 +6,37 @@ using PyPlot
 using ProgressMeter 
 using MAT
 using ADCMEKit
-
-
-
 close("all")
 include("load_domain_function.jl")
 
-NT = 100
-Δt = 30/NT
-domain = load_crack_domain()
-# domain = load_crack_domain(option="viscoelasticity")
+NT = 200
+Δt = 20/NT
 
-# visualize_mesh(domain)
+## solve static elastic response
+domain = load_crack_domain()
 H = domain.elements[1].mat[1].H
 EBC_func = nothing
 FBC_func = nothing
 body_func = nothing
 globaldata = GlobalData(missing, missing, missing, missing, domain.neqs, EBC_func, FBC_func, body_func)
-# globaldata, domain = LinearStaticSolver(globaldata, domain)
 Fext = compute_external_force(globaldata, domain)
 d = LinearStaticSolver(globaldata, domain, domain.state, H, Fext)
 sess = Session(); init(sess)
 domain.state = run(sess, d)
+# figure()
+# visualize_mesh(domain)
+# figure()
+# subplot(211)
+# visualize_scalar_on_scoped_body(domain.state[1:domain.nnodes], zeros(size(domain.state)...), domain)
+# subplot(212)
+# visualize_scalar_on_scoped_body(domain.state[domain.nnodes+1:end], zeros(size(domain.state)...), domain)
 
-#=
-figure()
-subplot(211)
-visualize_scalar_on_scoped_body(domain.state[1:domain.nnodes], zeros(size(domain.state)...), domain)
-subplot(212)
-visualize_scalar_on_scoped_body(domain.state[domain.nnodes+1:end], zeros(size(domain.state)...), domain)
-=#
-
+## solve viscoelastic relaxation
 strain = getStrain(domain)
 stress = getStress(domain)
 state = domain.state
 
-# error()
-
 domain = load_crack_domain(option="mixed")
-
 ts = GeneralizedAlphaSolverTime(Δt, NT)
 ubd, abd = compute_boundary_info(domain, globaldata, ts)
 Fext = compute_external_force(domain, globaldata, ts)
@@ -52,12 +44,8 @@ Fext = compute_external_force(domain, globaldata, ts)
 d0 = state
 v0 = zeros(2domain.nnodes)
 a0  = zeros(2domain.nnodes)
-# σ0 = zeros(getNGauss(domain),3)
-# ϵ0 = zeros(getNGauss(domain),3)
 σ0 = stress
 ϵ0 = strain
-
-
 
 μ = zeros(getNGauss(domain))
 λ = zeros(getNGauss(domain))
@@ -73,15 +61,11 @@ for i = 1:domain.neles
   end
 end
 
-
-
 mask = ones(getNGauss(domain))
 mask[viscoelasticity_idx] .= 0.0
 
 μ1 = 1e9 * constant(3.7037037037037034)
 λ1 = 1e9 * constant(8.641975308641973)
-# η1 = exp(Variable(1.0))
-# η1 = 1e20
 η1 = exp(Variable(50.0))
 
 μ2 = 1e9 * constant(3.7037037037037034)
