@@ -77,11 +77,11 @@ d, v, a, σ, ϵ = ViscoelasticitySolver(
 dat = matread("data/dippingfault_viscosity_inversion.mat")
 d_ = dat["d"]
 y_id = [sorted_slip_idx; sorted_slip_idx .+ domain.nnodes]
-loss = sum((d-d_)^2)
+loss = sum((d[:, y_id]-d_[:, y_id])^2)
 sess = Session(); init(sess)
 
 @show run(sess, loss)
-BFGS!(sess, loss, 30)
+BFGS!(sess, loss, 500)
 
 figure(figsize=(8,3))
 subplot(121)
