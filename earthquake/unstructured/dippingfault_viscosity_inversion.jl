@@ -90,35 +90,32 @@ loss = sum((d[:, y_id]-d_[:, y_id])^2)
 # loss = sum((d - d_)^2)
 sess = Session(); init(sess)
 
+figure()
 cb = (vs, iter, loss)->begin 
-    if mod(iter, 10) == 0 || iter < 10
-        # clf()
-        # plot(vs[1])
-        x_tmp, y_tmp, z_tmp = visualize_scalar_on_gauss_points(vs[2], m, n, h)
+    η_est = vs[1]
+    if mod(iter, 5) == 0
         clf()
-        pcolormesh(x_tmp, y_tmp, z_tmp', vmax=3, vmin = 0, rasterized=true)
-        colorbar(shrink=0.2)
-        axis("scaled")
-        xlabel("x")
-        ylabel("y")
-        gca().invert_yaxis()
+        visualize_scalar_on_scoped_body(η_est, zeros(domain.nnodes*2), domain, vmin=minimum(η_), vmax=maximum(η_))
         title("Iter = $iter")
-        savefig("figures2/inv_$(lpad(iter,5,"0")).png", bbox_size="tight")
-        matwrite("results2/inv_$(lpad(iter,5,"0")).mat", Dict("var" => vs[1], "eta" => vs[2]))
+        autoscale(enable=true, axis="both", tight=true)
+        savefig("figures_tmp/dippingfault_viscosity_inversion_$(lpad(iter,5,"0")).png",bbox_size="tight")
     end
-    printstyled("[#iter $iter] eta = $(vs[1])\n", color = :green)
+    printstyled("[#iter $iter] loss = $loss\n", color = :green)
 end
 
 @show run(sess, loss)
-BFGS!(sess, loss, 30, callback=cb)
+BFGS!(sess, loss, 200, callback=cb, vars=[η[1:9:end]])
 
-figure(figsize=(8,3))
-subplot(121)
+figure()
 η_est = run(sess, η[1:9:end])
-visualize_scalar_on_scoped_body(η_est, zeros(domain.nnodes*2), domain)
-title("Estimate")
-subplot(122)
+visualize_scalar_on_scoped_body(η_est, zeros(domain.nnodes*2), domain, vmin=minimum(η_), vmax=maximum(η_))
+autoscale(enable=true, axis="both", tight=true)
+title("Inverted viscosity result")
+savefig("figures/dipslip-inv-linear-visco-model.png")
+
+figure()
 η_ref = η_[1:9:end]
 visualize_scalar_on_scoped_body(η_ref, zeros(domain.nnodes*2), domain)
-title("Reference")
-
+autoscale(enable=true, axis="both", tight=true)
+title(L"True viscosity ($\eta$) model")
+savefig("figures/dipslip-linear-visco-model.png")

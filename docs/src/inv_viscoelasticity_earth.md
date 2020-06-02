@@ -1,9 +1,12 @@
-# Inversion of viscoelasticity of the Earth
+# Viscoelasticity Model for the Earth 
 
-In [previous section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity_earth/)
+In [previous section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity_earth/), we show how to conduct forward computation of viscoelasticity models for the earth. In this section, we use a gradient-based optimization approach for calibrating the spatial-varying viscoelasticity parameters for the viscoelasticity model. The major function we use is [`ViscoelasticitySolver`](@ref) in [NNFEM](https://github.com/kailaix/NNFEM.jl/) in the NNFEM package.  
 
 
-## Viscosity Inversion under Strike-slip Fault Setting
+
+In the following examples, we calibrate the viscoelasticity parameters $\eta$ from displacement data on the surface. 
+
+## Strike-slip Fault
 
 | True model                   | Inverted result                  |
 | ---------------------------- | -------------------------------- |
@@ -18,7 +21,7 @@ We also show the inversion results in each iteration:
 </center>
 ```
 
-## Viscosity Inversion under Dip-slip Fault Setting
+## Dip-slip Fault 
 
 | True model                   | Inverted result                  |
 | ---------------------------- | -------------------------------- |

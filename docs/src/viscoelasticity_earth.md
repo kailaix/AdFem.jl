@@ -1,4 +1,4 @@
-# Viscoelasticity of the Earth
+# Modeling the Earth using Viscoelasticity 
 
 In a [previous section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/), we consider the viscoelasticity constitutive relation. In this section, we consider an application case: the viscoelasticity of the Earth. We show the viscoelasticity effect related with postseismic relaxation under two settings: strike-slip fault and dip-slip fault. The background of these problems can be found in Chapter 6 of Segall, P. (2010)'s book *"[Earthquake and volcano deformation](https://press.princeton.edu/books/hardcover/9780691133027/earthquake-and-volcano-deformation)"*.
 
@@ -12,7 +12,7 @@ In geology, a [fault](https://en.wikipedia.org/wiki/Fault_(geology)) is a planar
 </center>
 ```
 
-We use a viscoelasticity model to describe the fault evolution. The mathematical equations are discretized on an unstructure quadrilateral mesh using the finite element method. We estimate the viscoelasticity parameter from surface displacement data using a gradient-based optimization (L-BFGS-B) technique.  We utilize the AD-capable [`ViscoelasticitySolver`](@ref) in [NNFEM](https://github.com/kailaix/NNFEM.jl/) for forward computational and automatic differentiation. 
+We use a viscoelasticity model to describe the fault evolution. The mathematical equations are discretized on an unstructure quadrilateral mesh using the finite element method. In [another section](https://kailaix.github.io/PoreFlow.jl/dev/inv_viscoelasticity_earth/), we estimate the viscoelasticity parameter from surface displacement data using a gradient-based optimization (L-BFGS-B) technique.  We utilize the AD-capable [`ViscoelasticitySolver`](@ref) in [NNFEM](https://github.com/kailaix/NNFEM.jl/) for forward computational and automatic differentiation. 
 
 ## Strike-slip Fault Setting
 
