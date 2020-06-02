@@ -10,7 +10,7 @@ using Clustering
 using JLD2 
 
 close("all")
-include("load_domain_function_old.jl")
+include("load_domain_function.jl")
 
 NT = 100
 Δt = 30/NT
@@ -22,8 +22,8 @@ c2 = (4.0, 0.5)
 slip_scale = 5.0 * sqrt(2)
 
 #################### solve static elastic response  ####################
-# domain = load_crack_domain(mesh=mesh, c1=c1, c2=c2, slip_scale=slip_scale)
-domain = load_crack_domain()
+domain = load_crack_domain(mesh=mesh, c1=c1, c2=c2, slip_scale=slip_scale)
+# domain = load_crack_domain()
 
 H = domain.elements[1].mat[1].H
 EBC_func = nothing
@@ -40,8 +40,8 @@ strain = getStrain(domain)
 stress = getStress(domain)
 state = domain.state
 
-# domain = load_crack_domain(mesh=mesh, c1=c1, c2=c2, slip_scale=slip_scale, option="mixed")
-domain = load_crack_domain(option="mixed")
+domain = load_crack_domain(mesh=mesh, c1=c1, c2=c2, slip_scale=slip_scale, option="mixed")
+# domain = load_crack_domain(option="mixed")
 
 ts = GeneralizedAlphaSolverTime(Δt, NT)
 ubd, abd = compute_boundary_info(domain, globaldata, ts)
