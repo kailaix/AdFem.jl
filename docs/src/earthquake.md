@@ -1,4 +1,4 @@
-# Earthquake Simulation - Strike Slip Fault
+# Earthquake Simulation with Rate-and-State Friction
 
 ![](./assets/earthquake/earthquake-antiplane.png)
 
@@ -16,7 +16,7 @@ where $V$ is the fault slip velocity, $\Psi$ is a state variable controlling the
 
 !!! note 
 
-    $a < b$:  steady state velocity weakening.
+    $a < b$: steady state velocity weakening.
     
     $a > b$: steady state velocity strengthening.  
 

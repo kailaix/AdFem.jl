@@ -66,7 +66,10 @@ where $f$ is the body force and $\rho$ is the density.
     
     $$\sigma^{n+1} = \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n+1}- \frac{2\mu\eta}{\eta + \mu\Delta t}\epsilon^{n} + \frac{\eta}{\eta+\mu\Delta t}\sigma^n$$
 
-## Numerical example
+
+
+
+### Numerical example
 
 |displacement $u$                                 |velocity $\dot u$                              | strain rate   $\partial \dot u / \partial x$     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
@@ -93,3 +96,6 @@ The constitutive relation of a dip-slip fault can be described by a plane strain
 <img src="../assets/visco-earth/dipslip-disp.gif" width="50%">
 </center>
 ```
+
+
+Example code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/earthquake/unstructured/dippingfault_viscosity_inversion.jl).
