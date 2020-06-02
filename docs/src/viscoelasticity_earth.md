@@ -81,11 +81,16 @@ The constitutive relation of a dip-slip fault can be described by a plane strain
 
 
 
-```@raw html
+<!-- ```@raw html
 <center>
 <img src="../assets/visco-earth/dipslip-model.png">
 </center>
-```
+``` -->
+
+|Finite element model                     |Elastic response              | 
+|:------------------------------------------------|:----------------------------------------------|
+|![](./assets/visco-earth/dipslip-model.png)   |![](./assets/visco-earth/dipslip-elastic.png)   |
+
 
 |horizontal slip $u_x$                                 |vertical slip $u_y$                               | von Mises stress     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
