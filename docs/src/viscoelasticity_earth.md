@@ -1,4 +1,4 @@
-# Modeling the Earth using Viscoelasticity 
+# Modeling Viscoelasticity of the Earth  
 
 In a [previous section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/), we consider the viscoelasticity constitutive relation. In this section, we consider an application case: the viscoelasticity of the Earth. We show the viscoelasticity effect related with postseismic relaxation under two settings: strike-slip fault and dip-slip fault. The background of these problems can be found in Chapter 6 of Segall, P. (2010)'s book *"[Earthquake and volcano deformation](https://press.princeton.edu/books/hardcover/9780691133027/earthquake-and-volcano-deformation)"*.
 
