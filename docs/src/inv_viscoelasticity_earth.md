@@ -25,7 +25,7 @@ We also show the inversion results in each iteration:
 
 | True model                   | Inverted result                  |
 | ---------------------------- | -------------------------------- |
-| ![](./assets/visco-earth/dipslip-visco-model.png) | ![](./assets/visco-earth/dipslip-inv_visco.png) |
+| ![](./assets/visco-earth/dipslip-linear_model.png) | ![](./assets/visco-earth/dipslip-inv_visco.png) |
 
 
 We also show the inversion results in each iteration:
