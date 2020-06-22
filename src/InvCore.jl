@@ -40,12 +40,13 @@ end
 
 A differentiable kernel for imposing the Dirichlet boundary of a vector-valued function. 
 """
-function fem_impose_Dirichlet_boundary_condition(L, bdnode, m, n, h)
+function fem_impose_Dirichlet_boundary_condition(L::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    M, N = size(L)
     idx = [bdnode; bdnode .+ (m+1)*(n+1)]
     Lbd = L[:, idx]
     Lbd = scatter_update(Lbd, idx, :, spzero(length(idx), length(idx)))
-    L = scatter_update(L, :, idx, spzero(2*(m+1)*(n+1), length(idx)))
-    L = scatter_update(L, idx, :,  spzero(length(idx), 2*(m+1)*(n+1)))
+    L = scatter_update(L, :, idx, spzero(M, length(idx)))
+    L = scatter_update(L, idx, :,  spzero(length(idx), N))
     L = scatter_update(L, idx, idx, spdiag(length(idx)))
     L, Lbd
 end
@@ -63,6 +64,7 @@ function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Fl
     if !(length(size(hmat)) in [2,3])
         error("Only 4mn x 2 x 2 or 2 x 2 `hmat` is supported.")
     end
+    @assert size(hmat,2)==2
     univariate_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","univariate_fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
     ii, jj, vv = univariate_fem_stiffness_(hmat,m_,n_,h)
@@ -78,8 +80,10 @@ A differentiable kernel. `hmat` has one of the following sizes
 """
 function compute_fem_stiffness_matrix(hmat::PyObject, m::Int64, n::Int64, h::Float64)
     if length(size(hmat))==2
+        @assert size(hmat,1)==size(hmat,2)==3
         compute_fem_stiffness_matrix2(hmat, m, n, h)
     elseif length(size(hmat))==3
+        @assert size(hmat,2)==size(hmat,3)==3
         compute_fem_stiffness_matrix3(hmat, m, n, h)
     else 
         error("size hmat not valid")
@@ -284,6 +288,7 @@ function compute_fvm_advection_matrix(v::Union{PyObject, Array{Float64, 1}},
     uv,bc,bcval,m_,n_,h = convert_to_tensor(Any[v,bc,bcval,m,n,h], [Float64,Int64,Float64,Int64,Int64,Float64])
     ii, jj, vv, rhs = implicit_advection_(uv,bc,bcval,m_,n_,h)
     M = SparseTensor(ii+1, jj+1, vv, m*n, m*n)
+    rhs = set_shape(rhs, m*n)
     return M, rhs 
 end
 
@@ -296,8 +301,9 @@ A differentiable kernel.
 """
 function compute_fem_source_term1(f::PyObject, m::Int64, n::Int64, h::Float64)
     fem_source_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_source")
-    f,m,n,h = convert_to_tensor(Any[f,m,n,h], [Float64,Int64,Int64,Float64])
-    fem_source_(f,m,n,h)
+    f,m_,n_,h = convert_to_tensor(Any[f,m,n,h], [Float64,Int64,Int64,Float64])
+    rhs = fem_source_(f,m_,n_,h)
+    set_shape(rhs, ((m+1)*(n+1),))
 end
 
 
@@ -308,5 +314,5 @@ end
 A differentiable kernel.
 """
 function compute_fem_source_term(f1::PyObject, f2::PyObject, m::Int64, n::Int64, h::Float64)
-    [compute_fem_source_term(f1, m, n, h); compute_fem_source_term(f2, m, n, h)]
+    [compute_fem_source_term1(f1, m, n, h); compute_fem_source_term1(f2, m, n, h)]
 end

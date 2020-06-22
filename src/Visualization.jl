@@ -293,6 +293,14 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int6
     anim = animate(update, 1:size(φ,1))
 end
 
+function visualize_scalar_on_fvm_points(φ::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+    R = zeros(size(φ,1), n, m)
+    for i = 1:size(φ,1)
+        R[i,:,:] = reshape(φ[i,:], m, n)'
+    end
+    visualize_scalar_on_fvm_points(R, m, n, h)
+end
+
 visualize_potential = visualize_scalar_on_fvm_points
 
 
