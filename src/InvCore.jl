@@ -286,3 +286,27 @@ function compute_fvm_advection_matrix(v::Union{PyObject, Array{Float64, 1}},
     M = SparseTensor(ii+1, jj+1, vv, m*n, m*n)
     return M, rhs 
 end
+
+
+@doc raw"""
+    compute_fem_source_term1(f::PyObject,
+    m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel.
+"""
+function compute_fem_source_term1(f::PyObject, m::Int64, n::Int64, h::Float64)
+    fem_source_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_source")
+    f,m,n,h = convert_to_tensor(Any[f,m,n,h], [Float64,Int64,Int64,Float64])
+    fem_source_(f,m,n,h)
+end
+
+
+@doc raw"""
+    compute_fem_source_term(f1::PyObject, f2::PyObject,
+    m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel.
+"""
+function compute_fem_source_term(f1::PyObject, f2::PyObject, m::Int64, n::Int64, h::Float64)
+    [compute_fem_source_term(f1, m, n, h); compute_fem_source_term(f2, m, n, h)]
+end
