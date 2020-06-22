@@ -131,7 +131,7 @@ sess = Session(); init(sess)
 
 function visualize(i)
     visualize_von_mises_stress(Sigma_, m, n, h, name="_nn$i")
-    visualize_scattered_displacement(Array(U_'), m, n, h, name="_nn0$i", 
+    visualize_displacement(Array(U_'), m, n, h, name="_nn0$i", 
                     xlim_=[-3h, m*h+2h], ylim_=[-2h, n*h+2h])
     close("all")
     figure(figsize=(13,4))

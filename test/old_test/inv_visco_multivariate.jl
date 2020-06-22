@@ -251,7 +251,7 @@ end
 if mode=="data"
     Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
   matwrite("U.mat", Dict("U"=>Uval, "Sigma"=>Sigmaval, "Varepsilon"=>Varepsilonval))
-  # visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
+  # visualize_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
     # # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
     # # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 

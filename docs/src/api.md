@@ -66,6 +66,8 @@ layer_model
 compute_vel
 compute_plane_strain_matrix
 compute_space_varying_tangent_elasticity_matrix
+mantle_viscosity
+antiplane_viscosity
 ```
 
 ## Misc

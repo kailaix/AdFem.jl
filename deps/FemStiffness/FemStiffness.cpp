@@ -99,7 +99,7 @@ public:
     // implement your forward function here 
 
     // TODO:
-    Forward fwd(hmat_tensor, *m_tensor, *n_tensor, *h_tensor);
+    Forward_FS fwd(hmat_tensor, *m_tensor, *n_tensor, *h_tensor);
     fwd.fill(context);
 
   }

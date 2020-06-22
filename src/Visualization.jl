@@ -1,5 +1,5 @@
 export visualize_pressure, visualize_displacement, 
-    visualize_stress, visualize_scattered_displacement, 
+    visualize_stress, 
     visualize_von_mises_stress, visualize_saturation,
     visualize_potential, visualize_scalar_on_gauss_points,
     visualize_scalar_on_fem_points, visualize_scalar_on_fvm_points

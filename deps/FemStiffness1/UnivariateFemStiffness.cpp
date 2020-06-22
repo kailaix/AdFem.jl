@@ -98,7 +98,7 @@ public:
       fwd.fill(context);
     }
     else if(hmat_shape.dims()==3){
-      Forward fwd(hmat_tensor, *m_tensor, *n_tensor, *h_tensor);
+      Forward_UFS fwd(hmat_tensor, *m_tensor, *n_tensor, *h_tensor);
       fwd.fill(context);
     }
     

@@ -4,12 +4,12 @@
 using std::vector;
 static const double pts[] = {(-1/sqrt(3)+1.0)/2.0, (1/sqrt(3)+1.0)/2.0};
 
-class Forward{
+class Forward_UFS{
   private:
     vector<int> ii, jj;
     vector<double> vv;
   public:
-    Forward(const double *hmat, int m, int n, double h){
+    Forward_UFS(const double *hmat, int m, int n, double h){
       // printf("m=%d, n=%d\n", m, n); 
       Eigen::Matrix<double,4,4> Omega;
       Eigen::Matrix<double,2,4> Bs[4];

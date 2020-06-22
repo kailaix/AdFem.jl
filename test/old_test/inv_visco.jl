@@ -183,7 +183,7 @@ loss_ = BFGS!(sess, loss, vars=[λ, μ, invη], callback=cb)
 
 
 
-# visualize_scattered_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
+# visualize_displacement(U, m, n, h; name = "_eta$η", xlim_=[-0.01,0.5], ylim_=[-0.05,0.22])
 # # visualize_displacement(U, m, n, h;  name = "_viscoelasticity")
 # # visualize_stress(H, U, m, n, h;  name = "_viscoelasticity")
 

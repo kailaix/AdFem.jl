@@ -219,11 +219,12 @@ A_{IB}
 """
 function fem_impose_Dirichlet_boundary_condition(A::SparseMatrixCSC{Float64,Int64}, 
     bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    M, N = size(A)
     bd = [bd; bd .+ (m+1)*(n+1)]
     rhs = zeros(2*(m+1)*(n+1))
     Q = A[:, bd]; Q[bd,:] = spzeros(length(bd), length(bd))
-    A[bd,:] = spzeros(length(bd), 2(m+1)*(n+1)) 
-    A[:,bd] = spzeros(2(m+1)*(n+1), length(bd))
+    A[bd,:] = spzeros(length(bd), N) 
+    A[:,bd] = spzeros(M, length(bd))
     A[bd,bd] = spdiagm(0=>ones(length(bd)))
     return A, Q  
 end
