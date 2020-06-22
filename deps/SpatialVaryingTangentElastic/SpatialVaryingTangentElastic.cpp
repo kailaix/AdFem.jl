@@ -113,13 +113,13 @@ public:
 
     // TODO:
     if (*type_tensor==1){
-      forward(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+      SVT_forward(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
     }
     else if(*type_tensor==2){
-      forward2(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+      SVT_forward2(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
     }
     else if (*type_tensor==3){
-      forward3(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
+      SVT_forward3(hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
     }
 
   }
@@ -206,17 +206,17 @@ public:
     // TODO:
 
     if (*type_tensor==1){
-      backward(
+      SVT_backward(
         grad_mu_tensor, grad_hmat_tensor, 
         hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
     }
     else if (*type_tensor==2){
-      backward2(
+      SVT_backward2(
         grad_mu_tensor, grad_hmat_tensor, 
         hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
     }
     else if(*type_tensor==3){
-      backward3(
+      SVT_backward3(
         grad_mu_tensor, grad_hmat_tensor, 
         hmat_tensor, mu_tensor, *m_tensor, *n_tensor, *h_tensor);
     }

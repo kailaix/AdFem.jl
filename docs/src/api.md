@@ -14,6 +14,7 @@ compute_fem_mass_matrix
 compute_fvm_mass_matrix
 compute_fem_mass_matrix1
 compute_fem_stiffness_matrix1
+compute_fvm_advection_matrix
 ```
 
 ## Vector Assembling Functions
@@ -56,6 +57,7 @@ visualize_stress
 visualize_von_mises_stress
 visualize_scalar_on_gauss_points
 visualize_scalar_on_fem_points
+visualize_scalar_on_fvm_points
 ```
 
 ## Modeling Tools
@@ -79,6 +81,7 @@ fvmidx
 subdomain
 gauss_nodes
 fem_nodes
+fvm_nodes
 cholesky_factorize
 cholesky_outproduct
 fem_to_fvm

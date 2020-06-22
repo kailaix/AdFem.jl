@@ -107,7 +107,7 @@ public:
     auto out_tensor = out->flat<double>().data();   
 
     // implement your forward function here 
-    forward(out_tensor, sigma_tensor, m_, n_, *h_tensor);
+    SE1_forward(out_tensor, sigma_tensor, m_, n_, *h_tensor);
 
     // TODO:
 
@@ -191,7 +191,7 @@ public:
     int m_ = *m_tensor, n_ = *n_tensor;
 
 
-    backward(grad_sigma_tensor, grad_out_tensor, out_tensor, sigma_tensor, m_, n_, *h_tensor);
+    SE1_backward(grad_sigma_tensor, grad_out_tensor, out_tensor, sigma_tensor, m_, n_, *h_tensor);
     
   }
 };

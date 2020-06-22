@@ -3,7 +3,7 @@
 using std::vector;
 static const double pts[] = {(-1/sqrt(3)+1.0)/2.0, (1/sqrt(3)+1.0)/2.0};
 
-void forward(double *out, const double *stress, int m, int n ,double h){
+void SE1_forward(double *out, const double *stress, int m, int n ,double h){
 
     Eigen::MatrixXd stress_(1,2);
     Eigen::Matrix<double,2,4> Bs[4];
@@ -37,7 +37,7 @@ void forward(double *out, const double *stress, int m, int n ,double h){
     }
 }
 
-void backward(double *grad_stress, const double * grad_out,
+void SE1_backward(double *grad_stress, const double * grad_out,
   const double *out, const double *stress, int m, int n ,double h){
     Eigen::Matrix<double,2,4> Bs[4];
     Eigen::VectorXi idx(4);

@@ -1,8 +1,8 @@
 export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
-    compute_fvm_advection_term, compute_fvm_tpfa_matrix
+    compute_fvm_advection_term, compute_fvm_tpfa_matrix, compute_fvm_advection_matrix
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
-    op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBd/build/libDirichletBd", "dirichlet_bd", multiple=true)
+    op = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow", "dirichlet_bd", multiple=true)
     ii, jj, vv = find(A)
     ii,jj,vv,bd,m_,n_,h = convert_to_tensor([ii,jj,vv,bd,m,n,h], [Int64,Int64,Float64,Int32,Int32,Int32,Float64])
     ii1,jj1,vv1, ii2,jj2,vv2 = op(ii,jj,vv,bd,m_,n_,h)
@@ -13,7 +13,7 @@ export fem_impose_Dirichlet_boundary_condition_experimental
 function fem_impose_Dirichlet_boundary_condition_experimental(A::Union{SparseMatrixCSC,SparseTensor}, 
         bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
     isa(A, SparseMatrixCSC) && (A = constant(A))
-    op = load_op_and_grad("$(@__DIR__)/../deps/DirichletBd/build/libDirichletBd", "dirichlet_bd", multiple=true)
+    op = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow", "dirichlet_bd", multiple=true)
     ii, jj, vv = find(A)
     ii,jj,vv,bd,m_,n_,h = convert_to_tensor([ii,jj,vv,bdnode,m,n,h], [Int64,Int64,Float64,Int32,Int32,Int32,Float64])
     ii1,jj1,vv1, ii2,jj2,vv2 = op(ii,jj,vv,bd,m_,n_,h)
@@ -63,7 +63,7 @@ function compute_fem_stiffness_matrix1(hmat::PyObject, m::Int64, n::Int64, h::Fl
     if !(length(size(hmat)) in [2,3])
         error("Only 4mn x 2 x 2 or 2 x 2 `hmat` is supported.")
     end
-    univariate_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/FemStiffness1/build/libUnivariateFemStiffness","univariate_fem_stiffness", multiple=true)
+    univariate_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","univariate_fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
     ii, jj, vv = univariate_fem_stiffness_(hmat,m_,n_,h)
     SparseTensor(ii, jj, vv, (m+1)*(n+1), (m+1)*(n+1))
@@ -87,7 +87,7 @@ function compute_fem_stiffness_matrix(hmat::PyObject, m::Int64, n::Int64, h::Flo
 end
 
 function compute_fem_stiffness_matrix2(hmat::PyObject, m::Int64, n::Int64, h::Float64)
-    fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/FemStiffness/build/libFemStiffness","fem_stiffness", multiple=true)
+    fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
     ii, jj, vv = fem_stiffness_(hmat,m_,n_,h)
     SparseTensor(ii, jj, vv, 2(m+1)*(n+1), 2(m+1)*(n+1))
@@ -95,7 +95,7 @@ function compute_fem_stiffness_matrix2(hmat::PyObject, m::Int64, n::Int64, h::Fl
 end
 
 function compute_fem_stiffness_matrix3(hmat::PyObject,m::Int64, n::Int64, h::Float64)
-    spatial_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/SpatialFemStiffness/build/libSpatialFemStiffness",
+    spatial_fem_stiffness_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow",
                                     "spatial_fem_stiffness", multiple=true)
     hmat,m_,n_,h = convert_to_tensor([hmat,m,n,h], [Float64,Int32,Int32,Float64])
     ii, jj, vv = spatial_fem_stiffness_(hmat,m_,n_,h)
@@ -108,7 +108,7 @@ end
 A differentiable kernel. 
 """
 function compute_strain_energy_term(S::PyObject,m::Int64, n::Int64, h::Float64)
-    strain_energy_ = load_op_and_grad("$(@__DIR__)/../deps/StrainEnergy/build/libStrainEnergy","strain_energy")
+    strain_energy_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","strain_energy")
     sigma,m_,n_,h = convert_to_tensor([S,m,n,h], [Float64,Int32,Int32,Float64])
     out = strain_energy_(sigma,m_,n_,h)
     out.set_shape((2*(m+1)*(n+1),))
@@ -121,7 +121,7 @@ end
 A differentiable  operator.
 """
 function compute_strain_energy_term1(sigma::PyObject, m::Int64, n::Int64, h::Float64)
-    strain_energy_univariate_ = load_op_and_grad("$(@__DIR__)/../deps/StrainEnergy1/build/libStrainEnergyUnivariate","strain_energy_univariate")
+    strain_energy_univariate_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","strain_energy_univariate")
     sigma,m_,n_,h = convert_to_tensor([sigma,m,n,h], [Float64,Int32,Int32,Float64])
     out = strain_energy_univariate_(sigma,m_,n_,h)
     set_shape(out, ((m+1)*(n+1),))
@@ -133,7 +133,7 @@ end
 A differentiable kernel.
 """
 function eval_strain_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
-    strain_op_ = load_op_and_grad("$(@__DIR__)/../deps/Strain/build/libStrainOp","strain_op")
+    strain_op_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","strain_op")
     u,m_,n_,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
     out = strain_op_(u,m_,n_,h)
     out.set_shape((4*m*n, 3))
@@ -149,7 +149,7 @@ export eval_strain_on_gauss_pts1
 A differentiable kernel.
 """
 function eval_strain_on_gauss_pts1(u::PyObject, m::Int64, n::Int64, h::Float64)
-    strain_op_univariate_ = load_op_and_grad("$(@__DIR__)/../deps/Strain1/build/libStrainOpUnivariate","strain_op_univariate")
+    strain_op_univariate_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","strain_op_univariate")
     u,m_,n_,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
     out = strain_op_univariate_(u,m_,n_,h)
     out.set_shape((4*m*n, 2))
@@ -173,7 +173,7 @@ function compute_vel(a::Union{PyObject, Array{Float64, 1}},
     v0::Union{PyObject, Float64},psi::Union{PyObject, Array{Float64, 1}},
     sigma::Union{PyObject, Array{Float64, 1}},
     tau::Union{PyObject, Array{Float64, 1}},eta::Union{PyObject, Float64})
-    compute_vel_ = load_op_and_grad("$(@__DIR__)/../deps/ComputeVel/build/libComputeVel","compute_vel")
+    compute_vel_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","compute_vel")
     a,v0,psi,sigma,tau,eta = convert_to_tensor([a,v0,psi,sigma,tau,eta], [Float64,Float64,Float64,Float64,Float64,Float64])
     compute_vel_(a,v0,psi,sigma,tau,eta)
 end
@@ -196,7 +196,7 @@ $$\begin{bmatrix}\mu_i & 0 \\ 0 & \mu_{i+4mn} \end{bmatrix}$$
 $$\begin{bmatrix}\mu_i & \mu_{i+8mn} \\ \mu_{i+8mn} & \mu_{i+4mn}\end{bmatrix}$$
 """
 function compute_space_varying_tangent_elasticity_matrix(mu::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64,type::Int64=1)
-    spatial_varying_tangent_elastic_ = load_op_and_grad("$(@__DIR__)/../deps/SpatialVaryingTangentElastic/build/libSpatialVaryingTangentElastic","spatial_varying_tangent_elastic")
+    spatial_varying_tangent_elastic_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","spatial_varying_tangent_elastic")
     mu,m_,n_,h,type = convert_to_tensor([mu,m,n,h,type], [Float64,Int64,Int64,Float64,Int64])
     H = spatial_varying_tangent_elastic_(mu,m_,n_,h,type)
     set_shape(H, (4*m*n, 2, 2))
@@ -209,7 +209,7 @@ end
 A differentiable kernel for [`compute_fvm_tpfa_matrix`](@ref). 
 """
 function compute_fvm_tpfa_matrix(K::PyObject, bc::Array{Int64,2}, pval::PyObject, m::Int64, n::Int64, h::Float64)
-    tpfa_op_ = load_op_and_grad("$(@__DIR__)/../deps/TpfaOp/build/libTpfaOp","tpfa_op", multiple=true)
+    tpfa_op_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","tpfa_op", multiple=true)
     K,bc,pval,m_,n_,h = convert_to_tensor(Any[K,bc,pval,m,n,h], [Float64,Int64,Float64,Int64,Int64,Float64])
     ii, jj, vv, rhs = tpfa_op_(K,bc,pval,m_,n_,h)
     SparseTensor(ii + 1, jj + 1, vv, m*n, m*n), set_shape(rhs, m*n) 
@@ -247,11 +247,42 @@ Computes the advection term using upwind schemes
 ```math
 \int_A \mathbf{v} \cdot \nabla u dx 
 ```
-$v$ is a $mn\times 2$ matrix and $u$ is a length $mn$ vector. 
+Here $\mathbf{v}$ is a $mn\times 2$ matrix and $u$ is a length $mn$ vector. Zero boundary conditions are assumed. 
 """
 function compute_fvm_advection_term(v::Union{PyObject, Array{Float64, 2}},
     u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
-    advection_ = load_op_and_grad("$(@__DIR__)/../deps/Advection/build/libAdvection","advection")
+    advection_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","advection")
     v,u,m,n,h = convert_to_tensor(Any[v,u,m,n,h], [Float64,Float64,Int64,Int64,Float64])
     advection_(v,u,m,n,h)
+end
+
+
+@doc raw"""
+    compute_fvm_advection_matrix(v::Union{PyObject, Array{Float64, 2}},
+        bc::Array{Int64, 2},bcval::Union{PyObject, Array{Float64}},m::Int64,n::Int64,h::Float64)
+
+Computes the advection matrix for use in the implicit scheme 
+    
+```math 
+\int_A \mathbf{v} \cdot \nabla u dx 
+```
+Here `v` is a $2mn$ vector, where the first $mn$ entries corresponds to the first dimension of   $\mathbf{v}$
+and the remaining $mn$ entries corresponds to the second dimension. 
+
+It returns the matrix $K$ and an auxilliary term $\mathbf{f}$ due to boundary conditions.
+
+```math 
+\int_\Omega \mathbf{v} \cdot \nabla u dx = K \mathbf{u} + \mathbf{f}
+```
+"""
+function compute_fvm_advection_matrix(v::Union{PyObject, Array{Float64, 1}},
+    bc::Array{Int64, 2},bcval::Union{PyObject, Array{Float64}},m::Int64,n::Int64,h::Float64)
+    @assert length(v)==m*n*2
+    @assert length(bcval)==size(bc,1)
+    bc = sort(bc, dims = 2)
+    implicit_advection_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","implicit_advection", multiple=true)
+    uv,bc,bcval,m_,n_,h = convert_to_tensor(Any[v,bc,bcval,m,n,h], [Float64,Int64,Float64,Int64,Int64,Float64])
+    ii, jj, vv, rhs = implicit_advection_(uv,bc,bcval,m_,n_,h)
+    M = SparseTensor(ii+1, jj+1, vv, m*n, m*n)
+    return M, rhs 
 end

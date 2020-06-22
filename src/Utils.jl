@@ -1,5 +1,5 @@
 export femidx, fvmidx, get_edge_normal,
-plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, subdomain, interior_node,
+plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, fvm_nodes, subdomain, interior_node,
 cholesky_outproduct, cholesky_factorize, cholesky_logdet, fem_randidx, gauss_randidx, fem_to_fvm
 
 
@@ -237,7 +237,27 @@ function fem_nodes(m::Int64, n::Int64, h::Float64)
             idx = (j-1)*(m+1) + i 
             x1 = (i-1)*h 
             y1 = (j-1)*h
-            xs[k,:] = [x1;y1]
+            xs[idx,:] = [x1;y1]
+            k += 1
+        end
+    end
+    xs
+end
+
+@doc raw"""
+    fvm_nodes(m::Int64, n::Int64, h::Float64)
+
+Returns the FVM node matrix of size $(m+1)(n+1)\times 2$
+"""
+function fvm_nodes(m::Int64, n::Int64, h::Float64)
+    xs = zeros(m*n, 2)
+    k = 1
+    for i = 1:m
+        for j = 1:n
+            idx = (j-1)*m + i 
+            x1 = (i-1/2)*h 
+            y1 = (j-1/2)*h
+            xs[idx,:] = [x1;y1]
             k += 1
         end
     end
@@ -292,7 +312,7 @@ and `A` (length=9) is also a vectorized form of $A$
 """
 function cholesky_outproduct(A::Union{Array{<:Real,2}, PyObject})
     @assert size(A,2)==6
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build/libCholeskyOp","cholesky_backward_op")
+    op_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","cholesky_backward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end
@@ -304,7 +324,7 @@ Returns the cholesky factor of `A`. See [`cholesky_outproduct`](@ref) for detail
 """
 function cholesky_factorize(A::Union{Array{<:Real,2}, PyObject})
     @assert size(A,2)==9
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/CholeskyOp/build/libCholeskyOp","cholesky_forward_op")
+    op_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","cholesky_forward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end

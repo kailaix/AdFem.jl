@@ -395,7 +395,7 @@ end
     compute_fvm_mechanics_term(u::PyObject, m::Int64, n::Int64, h::Float64)
 """
 function compute_fvm_mechanics_term(u::PyObject, m::Int64, n::Int64, h::Float64)
-    volumetric_strain_ = load_op_and_grad("$(@__DIR__)/../deps/VolumetricStrain/build/libVolumetricStrain","volumetric_strain")
+    volumetric_strain_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","volumetric_strain")
     u,m_,n_,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
     strain = volumetric_strain_(u,m_,n_,h)
     set_shape(strain, (m*n,))
@@ -477,17 +477,21 @@ Computes the term with two-point flux approximation with distinct permeability a
 \int_{A_i} K_i \Delta p \mathrm{d}x = K_i\sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
 ```
 
-$K$ is a length $mn$ vector, representing values per cell.
+Here $K$ is a length $mn$ vector, representing values per cell.
 
 Additionally, Dirichlet boundary conditions are imposed on the boundary edges `bc` (a $N\times 2$ integer matrix), 
 i.e., the $i$-th edge has value `pval`. The ghost node method is used for imposing the Dirichlet boundary condition. 
+The other boundaries are no-blow boundaries, i.e., $\frac{\partial T}{\partial n} = 0$. 
 The function outputs a length $mn$ vector and $mn\times mn$ matrix $M$. 
 
 $$\int_{A_i} K_i \Delta p \mathrm{d}x = f_i + M_{i,:}\mathbf{p}$$
 
 Returns both the sparse matrix `A` and the right hand side `rhs`.
+
+!!! info 
+    `K` can also be missing, in which case `K` is treated as a all-one vector. 
 """
-function compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+function compute_fvm_tpfa_matrix(K::Union{Array{Float64}, Missing}, bc::Array{Int64,2}, pval::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
     bval = Dict{Tuple{Int64, Int64}, Float64}()
     for i = 1:size(bc, 1)
         bval[(minimum(bc[i,:]), maximum(bc[i,:]))] = pval[i] 
@@ -498,6 +502,8 @@ function compute_fvm_tpfa_matrix(K::Array{Float64}, bc::Array{Int64,2}, pval::Ar
         push!(J, j)
         push!(V, v)
     end
+    K = coalesce(K, ones(m*n))
+    @assert length(K) == m*n # in case users input a 4mn vector. 
     rhs = zeros(m*n)
     for i = 1:m 
         for j = 1:n 

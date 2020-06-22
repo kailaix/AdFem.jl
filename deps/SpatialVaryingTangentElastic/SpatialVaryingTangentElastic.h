@@ -1,4 +1,4 @@
-void forward(double *hmat, const double *mu, int m, int n, double h){
+void SVT_forward(double *hmat, const double *mu, int m, int n, double h){
     int k = 0;
     for(int i=0;i<4*m*n;i++){
       hmat[k++] = mu[i];
@@ -8,7 +8,7 @@ void forward(double *hmat, const double *mu, int m, int n, double h){
     }
 }
 
-void forward2(double *hmat, const double *mu, int m, int n, double h){
+void SVT_forward2(double *hmat, const double *mu, int m, int n, double h){
     int k = 0;
     int offset = 4*m*n;
     for(int i=0;i<4*m*n;i++){
@@ -19,7 +19,7 @@ void forward2(double *hmat, const double *mu, int m, int n, double h){
     }
 }
 
-void forward3(double *hmat, const double *mu, int m, int n, double h){
+void SVT_forward3(double *hmat, const double *mu, int m, int n, double h){
     int k = 0;
     int offset = 4*m*n;
     for(int i=0;i<4*m*n;i++){
@@ -32,7 +32,7 @@ void forward3(double *hmat, const double *mu, int m, int n, double h){
 
 
 
-void backward(
+void SVT_backward(
   double *grad_mu, 
   const double *grad_hmat,
   const double *hmat, const double *mu, int m, int n, double h){
@@ -43,7 +43,7 @@ void backward(
     }
 }
 
-void backward2(
+void SVT_backward2(
   double *grad_mu, 
   const double *grad_hmat,
   const double *hmat, const double *mu, int m, int n, double h){
@@ -56,7 +56,7 @@ void backward2(
     }
 }
 
-void backward3(
+void SVT_backward3(
   double *grad_mu, 
   const double *grad_hmat,
   const double *hmat, const double *mu, int m, int n, double h){

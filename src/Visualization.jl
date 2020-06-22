@@ -2,7 +2,7 @@ export visualize_pressure, visualize_displacement,
     visualize_stress, visualize_scattered_displacement, 
     visualize_von_mises_stress, visualize_saturation,
     visualize_potential, visualize_scalar_on_gauss_points,
-    visualize_scalar_on_fem_points
+    visualize_scalar_on_fem_points, visualize_scalar_on_fvm_points
 
 """ 
     visualize_pressure(U::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
@@ -258,19 +258,18 @@ function visualize_saturation(s2::Array{Float64,2}, m::Int64, n::Int64, h::Float
 end
 
 
-
 @doc raw"""
     visualize_potential(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
 
 Generates scattered potential animation for the potential $\phi\in \mathbb{R}^{(NT+1)\times n \times m}$.
 """
-function visualize_potential(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
+function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
     m_ = mean(φ)
     s = std(φ)
     close("all")
     vmin, vmax = m_ - 2s, m_ + 2s
-    x = (1:m)*h
-    y = (1:n)*h
+    x = (1:m)*h .- 0.5h
+    y = (1:n)*h .- 0.5h
     ln = pcolormesh(x, y, φ[1,:,:], vmin= vmin, vmax=vmax)
     colorbar()
     # c = contour(φ[1,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
@@ -293,6 +292,9 @@ function visualize_potential(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float
     end
     anim = animate(update, 1:size(φ,1))
 end
+
+visualize_potential = visualize_scalar_on_fvm_points
+
 
 @doc raw"""
     visualize_displacement(u::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)

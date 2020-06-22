@@ -5,7 +5,7 @@ using std::vector;
 static const double pts[] = {(-1/sqrt(3)+1.0)/2.0, (1/sqrt(3)+1.0)/2.0};
 
 
-void forward(double *strain, const double *u, int m, int n, double h){
+void SO_forward(double *strain, const double *u, int m, int n, double h){
       Eigen::Matrix<double,3,8> Bs[4];
       Eigen::Vector<int,8> dof;
       Eigen::Vector<double,8> uA;
@@ -40,7 +40,7 @@ void forward(double *strain, const double *u, int m, int n, double h){
 
 }
 
-void backward(
+void SO_backward(
   double * grad_u, const double * grad_strain, 
   const double *strain, const double *u, int m, int n, double h
 ){

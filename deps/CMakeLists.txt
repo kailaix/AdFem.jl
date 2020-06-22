@@ -54,28 +54,8 @@ message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 find_library(LIBOPENBLAS openblas HINTS ${LIBDIR})
 
 
+add_library(poreflow SHARED Advection/Advection.cpp CholeskyOp/CholeskyOp.cpp ComputeVel/ComputeVel.cpp DirichletBd/DirichletBd.cpp FemStiffness/FemStiffness.cpp FemStiffness1/UnivariateFemStiffness.cpp SpatialFemStiffness/SpatialFemStiffness.cpp SpatialVaryingTangentElastic/SpatialVaryingTangentElastic.cpp Strain/StrainOp.cpp Strain1/StrainOpUnivariate.cpp StrainEnergy/StrainEnergy.cpp StrainEnergy1/StrainEnergyUnivariate.cpp TpfaOp/TpfaOp.cpp VolumetricStrain/VolumetricStrain.cpp ImplicitAdvection/ImplicitAdvection.cpp)
+set_property(TARGET poreflow PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-set(LIBDIR_NAME VolumetricStrain ComputeVel DirichletBd
-    FemStiffness FemStiffness1 SpatialFemStiffness
-    SpatialVaryingTangentElastic Strain Strain1
-    StrainEnergy StrainEnergy1 CholeskyOp TpfaOp Advection)
-set(LIB_NAME VolumetricStrain ComputeVel DirichletBd
-    FemStiffness UnivariateFemStiffness SpatialFemStiffness
-    SpatialVaryingTangentElastic StrainOp StrainOpUnivariate
-    StrainEnergy StrainEnergyUnivariate CholeskyOp TpfaOp Advection)
-
-list(LENGTH "LIBDIR_NAME" LIBLENGTH)
-message("Total number of libraries to make: ${LIBLENGTH}")
-MATH(EXPR LIBLENGTH "${LIBLENGTH}-1")
-foreach(IDX RANGE 0 ${LIBLENGTH})
-  list(GET LIBDIR_NAME ${IDX} _LIB_DIR)
-  list(GET LIB_NAME ${IDX} _LIB_NAME)
-  message("Compiling ${IDX}th library: ${_LIB_DIR}==>${_LIB_NAME}")
-  file(MAKE_DIRECTORY ${_LIB_DIR}/build)
-  add_library(${_LIB_NAME} SHARED ${_LIB_DIR}/${_LIB_NAME}.cpp)
-  set_property(TARGET ${_LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
-  set_target_properties(${_LIB_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/${_LIB_DIR}/build)
-  target_link_libraries(${_LIB_NAME} ${TF_LIB_FILE})
-endforeach(IDX)
-
-target_link_libraries(CholeskyOp ${ADEPT_LIB_FILE} ${LIBOPENBLAS})
+target_link_libraries(poreflow ${TF_LIB_FILE} ${ADEPT_LIB_FILE} ${LIBOPENBLAS})
+set_target_properties(poreflow PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build  RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build)

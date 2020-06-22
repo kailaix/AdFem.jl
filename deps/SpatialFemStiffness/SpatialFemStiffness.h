@@ -82,7 +82,7 @@ class Forward{
 
 
 
-void backward(
+void SFS_backward(
   double *grad_hmat, const double * grad_vv,  
   int m, int n, double h
 ){

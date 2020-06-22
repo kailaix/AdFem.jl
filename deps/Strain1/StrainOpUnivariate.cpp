@@ -102,7 +102,7 @@ public:
     auto strain_tensor = strain->flat<double>().data();   
 
     // implement your forward function here 
-    forward(strain_tensor, u_tensor, *m_tensor, *n_tensor, *h_tensor);
+    SO1_forward(strain_tensor, u_tensor, *m_tensor, *n_tensor, *h_tensor);
   }
 };
 REGISTER_KERNEL_BUILDER(Name("StrainOpUnivariate").Device(DEVICE_CPU), StrainOpUnivariateOp);
@@ -181,7 +181,7 @@ public:
 
     // TODO:
 
-    backward( 
+    SO1_backward( 
       grad_u_tensor, grad_strain_tensor,
       strain_tensor, u_tensor, *m_tensor, *n_tensor, *h_tensor);
     
