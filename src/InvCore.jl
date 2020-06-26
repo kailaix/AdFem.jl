@@ -252,6 +252,7 @@ Computes the advection term using upwind schemes
 \int_A \mathbf{v} \cdot \nabla u dx 
 ```
 Here $\mathbf{v}$ is a $mn\times 2$ matrix and $u$ is a length $mn$ vector. Zero boundary conditions are assumed. 
+$u$ is a vector of length $m\times n$.
 """
 function compute_fvm_advection_term(v::Union{PyObject, Array{Float64, 2}},
     u::Union{PyObject, Array{Float64,1}},m::Int64,n::Int64,h::Float64)
@@ -273,7 +274,7 @@ Computes the advection matrix for use in the implicit scheme
 Here `v` is a $2mn$ vector, where the first $mn$ entries corresponds to the first dimension of   $\mathbf{v}$
 and the remaining $mn$ entries corresponds to the second dimension. 
 
-It returns the matrix $K$ and an auxilliary term $\mathbf{f}$ due to boundary conditions.
+It returns a matrix $mn\times mn$ matrix $K$ and an auxilliary term $\mathbf{f}$ due to boundary conditions.
 
 ```math 
 \int_\Omega \mathbf{v} \cdot \nabla u dx = K \mathbf{u} + \mathbf{f}
