@@ -205,13 +205,8 @@ println(replace(replace(sympy.julia_code(f), ".*"=>"*"), ".^"=>"^"))
 We can plug the source term into the code 
 
 ```julia
-using Revise
 using PoreFlow
-using ADCME
 using PyPlot
-using Statistics
-using LinearAlgebra
-using ADCMEKit
 
 m = 50
 n = 50
