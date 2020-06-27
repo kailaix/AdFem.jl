@@ -103,4 +103,130 @@ visualize_scalar_on_fvm_points(p, m, n, h)
 title(&quot;Reference&quot;)
 subplot(122)
 visualize_scalar_on_fvm_points(S[2(m+1)*(n+1)+1:end], m, n, h)
-title(&quot;Computed&quot;)</code></pre><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Result</th></tr><tr><td style="text-align: right"><span>$u$</span></td><td style="text-align: right"><img src="../assets/gallery/stokes_u.png" alt/></td></tr><tr><td style="text-align: right"><span>$v$</span></td><td style="text-align: right"><img src="../assets/gallery/stokes_v.png" alt/></td></tr><tr><td style="text-align: right"><span>$p$</span></td><td style="text-align: right"><img src="../assets/gallery/stokes_p.png" alt/></td></tr></table><h2 id="Heat-Transfer-1"><a class="docs-heading-anchor" href="#Heat-Transfer-1">Heat Transfer</a><a class="docs-heading-anchor-permalink" href="#Heat-Transfer-1" title="Permalink"></a></h2><p>We consider the following heat transfer </p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« PoreFlow.jl Documentation</a><a class="docs-footer-nextpage" href="../coupled/">Coupled Geomechanics and Single Phase Flow »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 27 June 2020 18:02">Saturday 27 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+title(&quot;Computed&quot;)</code></pre><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Result</th></tr><tr><td style="text-align: right"><span>$u$</span></td><td style="text-align: right"><img src="../assets/gallery/stokes_u.png" alt/></td></tr><tr><td style="text-align: right"><span>$v$</span></td><td style="text-align: right"><img src="../assets/gallery/stokes_v.png" alt/></td></tr><tr><td style="text-align: right"><span>$p$</span></td><td style="text-align: right"><img src="../assets/gallery/stokes_p.png" alt/></td></tr></table><h2 id="Heat-Transfer-1"><a class="docs-heading-anchor" href="#Heat-Transfer-1">Heat Transfer</a><a class="docs-heading-anchor-permalink" href="#Heat-Transfer-1" title="Permalink"></a></h2><p>We consider the following heat transfer equation </p><div>\[\begin{aligned}
+\frac{\partial T}{\partial t} + \mathbf{u} \cdot \nabla T - \nabla^2 T = f \\ 
+T|_{\partial \Omega} = 0
+\end{aligned}\]</div><h3 id="Test-Problem-1"><a class="docs-heading-anchor" href="#Test-Problem-1">Test Problem</a><a class="docs-heading-anchor-permalink" href="#Test-Problem-1" title="Permalink"></a></h3><p>Let us first consider a test problem and consider the analytical solution </p><div>\[T(x,y) = (1-x)x(1-y)ye^{-t}\]</div><p>and <span>$\mathbf{u} = \begin{pmatrix} 1&amp; 1 \end{pmatrix}$</span>. The right hand side is given by </p><pre><code class="language-julia">using SymPy
+x, y, t = @vars x y t 
+T = (1-x)*x*(1-y)*y*exp(-t)
+f = diff(T, t) + diff(T, x) + diff(T, y) - diff(diff(T, x), x) - diff(diff(T, y), y)
+println(replace(replace(sympy.julia_code(f), &quot;.*&quot;=&gt;&quot;*&quot;), &quot;.^&quot;=&gt;&quot;^&quot;))</code></pre><p>We can plug the source term into the code </p><pre><code class="language-julia">using Revise
+using PoreFlow
+using ADCME
+using PyPlot
+using Statistics
+using LinearAlgebra
+using ADCMEKit
+
+m = 50
+n = 50
+h = 1/n
+NT = 100
+Δt = 1/NT 
+
+
+u = [ones(m*n);ones(m*n)]
+
+bd = bcedge(&quot;all&quot;, m, n, h)
+
+M = compute_fvm_mass_matrix(m, n, h)
+K, rhs1 = compute_fvm_advection_matrix(u, bd, zeros(size(bd, 1)), m, n, h)
+S, rhs2 = compute_fvm_tpfa_matrix(missing, bd, zeros(size(bd, 1)), m, n, h)
+
+function Func(x, y, t)
+    -x*y*(1 - x)*(1 - y)*exp(-t) - x*y*(1 - x)*exp(-t) - x*y*(1 - y)*exp(-t) + x*(1 - x)*(1 - y)*exp(-t) + 2*x*(1 - x)*exp(-t) + y*(1 - x)*(1 - y)*exp(-t) + 2*y*(1 - y)*exp(-t)
+end
+
+A = M/Δt + K - S 
+A = factorize(A)
+U = zeros(m*n, NT+1)
+xy = fvm_nodes(m, n, h)
+x, y = xy[:,1], xy[:,2]
+u0 = @. x*(1-x)*y*(1-y)
+F = zeros(NT+1, m*n)
+Solution = zeros(NT+1, m*n)
+for i = 1:NT+1
+    t = (i-1)*Δt
+    F[i,:] = h^2 * @. Func(x, y, t)
+    Solution[i,:] = eval_f_on_fvm_pts((x,y)-&gt;(1-x)*x*(1-y)*y*exp(-t), m,n, h)
+end
+F = constant(F)
+
+function condition(i, args...)
+    i &lt;= NT
+end
+
+function body(i, u_arr)
+    u = read(u_arr, i)
+    u_arr = write(u_arr, i+1, A\(M*u/Δt - rhs1 + rhs2 + F[i+1]))
+    return i+1, u_arr
+end
+
+i = constant(1, dtype = Int32)
+u_arr = TensorArray(NT+1)
+u_arr = write(u_arr, 1, u0)
+_, u = while_loop(condition, body, [i, u_arr])
+u = set_shape(stack(u), (NT+1, m*n))
+
+
+sess = Session(); init(sess)
+U = run(sess, u)
+Z = zeros(NT+1, n, m)
+
+
+p = visualize_scalar_on_fvm_points(U, m, n, h)
+# saveanim(p, &quot;heat_sol.gif&quot;)
+
+p = visualize_scalar_on_fvm_points(abs.(U-Solution), m, n, h)
+# saveanim(p, &quot;heat_error.gif&quot;)
+</code></pre><table><tr><th style="text-align: right">Computed</th><th style="text-align: right">Error</th></tr><tr><td style="text-align: right"><img src="../assets/gallery/heat_sol.gif" alt/></td><td style="text-align: right"><img src="./asset/gallery/../../assets/gallery/heat_error.gif" alt/></td></tr></table><h3 id="Advection-Effect-1"><a class="docs-heading-anchor" href="#Advection-Effect-1">Advection Effect</a><a class="docs-heading-anchor-permalink" href="#Advection-Effect-1" title="Permalink"></a></h3><p>Now let us consider the advection effect. The upper and lower boundaries are fixed Dirichlet boundaries. The left and right are no-flow boundaries </p><div>\[\frac{\partial T}{\partial n} = 0\]</div><pre><code class="language-julia">using PoreFlow
+using PyPlot
+
+m = 40
+n = 20
+h = 1/n
+NT = 100
+Δt = 1/NT 
+
+
+u = 0.5*[ones(m*n);zeros(m*n)]
+
+up_and_down = bcedge(&quot;upper|lower&quot;, m, n, h)
+
+M = compute_fvm_mass_matrix(m, n, h)
+K, rhs1 = compute_fvm_advection_matrix(u, up_and_down, zeros(size(up_and_down, 1)), m, n, h)
+S, rhs2 = compute_fvm_tpfa_matrix(missing, up_and_down, zeros(size(up_and_down, 1)), m, n, h)
+
+A = M/Δt + K - 0.01*S 
+A = factorize(A)
+
+U = zeros(m*n, NT+1)
+xy = fvm_nodes(m, n, h)
+u0 = @. exp( - 10 * ((xy[:,1]-1.0)^2 + (xy[:,2]-0.5)^2))
+
+function condition(i, args...)
+    i &lt;= NT
+end
+
+function body(i, u_arr)
+    u = read(u_arr, i)
+    u_arr = write(u_arr, i+1, A\(M*u/Δt - rhs1 + rhs2))
+    return i+1, u_arr
+end
+
+i = constant(1, dtype = Int32)
+u_arr = TensorArray(NT+1)
+u_arr = write(u_arr, 1, u0)
+_, u = while_loop(condition, body, [i, u_arr])
+u = set_shape(stack(u), (NT+1, m*n))
+
+
+sess = Session(); init(sess)
+U = run(sess, u)
+Z = zeros(NT+1, n, m)
+for i = 1:NT+1
+    Z[i,:,:] = reshape(U[i,:], m, n)&#39;
+end
+p = visualize_scalar_on_fvm_points(Z, m, n, h)
+saveanim(p, &quot;advec.gif&quot;)
+</code></pre><p><img src="../assets/gallery/advec.gif" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« PoreFlow.jl Documentation</a><a class="docs-footer-nextpage" href="../coupled/">Coupled Geomechanics and Single Phase Flow »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 27 June 2020 18:25">Saturday 27 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
