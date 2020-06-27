@@ -3,9 +3,7 @@
 Here is a collection of common partial differential equations and how you can solve them using the PoreFlow library. Unless we specify particularly, the computational domain will be $\Omega = [0,1]^2$. The configuration of the computational domain is as follows
 
 
-```@raw html
-<img src="./assets/domain.png" width="60%">
-```
+![](./assets/domain.png)
 
 We only show the forward modeling, but the inverse modeling is a by-product of the AD-capable implementation!
 
