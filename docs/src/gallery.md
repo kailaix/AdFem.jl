@@ -181,4 +181,169 @@ title("Computed")
 
 ## Heat Transfer 
 
-We consider the following heat transfer 
+We consider the following heat transfer equation 
+
+$$\begin{aligned}
+\frac{\partial T}{\partial t} + \mathbf{u} \cdot \nabla T - \nabla^2 T = f \\ 
+T|_{\partial \Omega} = 0
+\end{aligned}$$
+
+### Test Problem 
+
+Let us first consider a test problem and consider the analytical solution 
+
+$$T(x,y) = (1-x)x(1-y)ye^{-t}$$
+
+and $\mathbf{u} = \begin{pmatrix} 1& 1 \end{pmatrix}$. The right hand side is given by 
+
+```julia
+using SymPy
+x, y, t = @vars x y t 
+T = (1-x)*x*(1-y)*y*exp(-t)
+f = diff(T, t) + diff(T, x) + diff(T, y) - diff(diff(T, x), x) - diff(diff(T, y), y)
+println(replace(replace(sympy.julia_code(f), ".*"=>"*"), ".^"=>"^"))
+```
+
+We can plug the source term into the code 
+
+```julia
+using Revise
+using PoreFlow
+using ADCME
+using PyPlot
+using Statistics
+using LinearAlgebra
+using ADCMEKit
+
+m = 50
+n = 50
+h = 1/n
+NT = 100
+Δt = 1/NT 
+
+
+u = [ones(m*n);ones(m*n)]
+
+bd = bcedge("all", m, n, h)
+
+M = compute_fvm_mass_matrix(m, n, h)
+K, rhs1 = compute_fvm_advection_matrix(u, bd, zeros(size(bd, 1)), m, n, h)
+S, rhs2 = compute_fvm_tpfa_matrix(missing, bd, zeros(size(bd, 1)), m, n, h)
+
+function Func(x, y, t)
+    -x*y*(1 - x)*(1 - y)*exp(-t) - x*y*(1 - x)*exp(-t) - x*y*(1 - y)*exp(-t) + x*(1 - x)*(1 - y)*exp(-t) + 2*x*(1 - x)*exp(-t) + y*(1 - x)*(1 - y)*exp(-t) + 2*y*(1 - y)*exp(-t)
+end
+
+A = M/Δt + K - S 
+A = factorize(A)
+U = zeros(m*n, NT+1)
+xy = fvm_nodes(m, n, h)
+x, y = xy[:,1], xy[:,2]
+u0 = @. x*(1-x)*y*(1-y)
+F = zeros(NT+1, m*n)
+Solution = zeros(NT+1, m*n)
+for i = 1:NT+1
+    t = (i-1)*Δt
+    F[i,:] = h^2 * @. Func(x, y, t)
+    Solution[i,:] = eval_f_on_fvm_pts((x,y)->(1-x)*x*(1-y)*y*exp(-t), m,n, h)
+end
+F = constant(F)
+
+function condition(i, args...)
+    i <= NT
+end
+
+function body(i, u_arr)
+    u = read(u_arr, i)
+    u_arr = write(u_arr, i+1, A\(M*u/Δt - rhs1 + rhs2 + F[i+1]))
+    return i+1, u_arr
+end
+
+i = constant(1, dtype = Int32)
+u_arr = TensorArray(NT+1)
+u_arr = write(u_arr, 1, u0)
+_, u = while_loop(condition, body, [i, u_arr])
+u = set_shape(stack(u), (NT+1, m*n))
+
+
+sess = Session(); init(sess)
+U = run(sess, u)
+Z = zeros(NT+1, n, m)
+
+
+p = visualize_scalar_on_fvm_points(U, m, n, h)
+# saveanim(p, "heat_sol.gif")
+
+p = visualize_scalar_on_fvm_points(abs.(U-Solution), m, n, h)
+# saveanim(p, "heat_error.gif")
+
+```
+
+| Computed | Error |
+|----------| ----- |
+| ![](./assets/gallery/heat_sol.gif) | ![](./asset/gallery/../../assets/gallery/heat_error.gif)|
+
+
+### Advection Effect
+
+Now let us consider the advection effect. The upper and lower boundaries are fixed Dirichlet boundaries. The left and right are no-flow boundaries 
+
+$$\frac{\partial T}{\partial n} = 0$$
+
+
+
+```julia
+using PoreFlow
+using PyPlot
+
+m = 40
+n = 20
+h = 1/n
+NT = 100
+Δt = 1/NT 
+
+
+u = 0.5*[ones(m*n);zeros(m*n)]
+
+up_and_down = bcedge("upper|lower", m, n, h)
+
+M = compute_fvm_mass_matrix(m, n, h)
+K, rhs1 = compute_fvm_advection_matrix(u, up_and_down, zeros(size(up_and_down, 1)), m, n, h)
+S, rhs2 = compute_fvm_tpfa_matrix(missing, up_and_down, zeros(size(up_and_down, 1)), m, n, h)
+
+A = M/Δt + K - 0.01*S 
+A = factorize(A)
+
+U = zeros(m*n, NT+1)
+xy = fvm_nodes(m, n, h)
+u0 = @. exp( - 10 * ((xy[:,1]-1.0)^2 + (xy[:,2]-0.5)^2))
+
+function condition(i, args...)
+    i <= NT
+end
+
+function body(i, u_arr)
+    u = read(u_arr, i)
+    u_arr = write(u_arr, i+1, A\(M*u/Δt - rhs1 + rhs2))
+    return i+1, u_arr
+end
+
+i = constant(1, dtype = Int32)
+u_arr = TensorArray(NT+1)
+u_arr = write(u_arr, 1, u0)
+_, u = while_loop(condition, body, [i, u_arr])
+u = set_shape(stack(u), (NT+1, m*n))
+
+
+sess = Session(); init(sess)
+U = run(sess, u)
+Z = zeros(NT+1, n, m)
+for i = 1:NT+1
+    Z[i,:,:] = reshape(U[i,:], m, n)'
+end
+p = visualize_scalar_on_fvm_points(Z, m, n, h)
+saveanim(p, "advec.gif")
+
+```
+
+![](./assets/gallery/advec.gif)
