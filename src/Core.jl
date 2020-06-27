@@ -2,6 +2,8 @@ export compute_fem_stiffness_matrix,
 compute_fem_source_term,
 fem_impose_Dirichlet_boundary_condition,
 eval_f_on_gauss_pts,
+eval_f_on_fvm_pts,
+eval_f_on_fem_pts,
 compute_fvm_mass_matrix,
 compute_interaction_matrix,
 compute_fvm_source_term,
@@ -27,7 +29,9 @@ eval_strain_on_gauss_pts,
 eval_stress_on_gauss_pts,
 compute_fvm_mass_matrix,
 compute_strain_energy_term,
-compute_plane_strain_matrix
+compute_plane_strain_matrix,
+compute_fem_laplace_matrix1,
+compute_fem_laplace_matrix
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -279,6 +283,8 @@ Computes the interaction term
 ```math
 \int_A p \delta \varepsilon_v\mathrm{d}x = \int_A p [1,1,0]B^T\delta u_A\mathrm{d}x
 ```
+Here $\varepsilon_v = \text{tr}\; \varepsilon = \text{div}\; \mathbf{u}$.
+
 The output is a $mn \times 2(m+1)(n+1)$ matrix. 
 """
 function compute_interaction_matrix(m::Int64, n::Int64, h::Float64)
@@ -898,6 +904,28 @@ function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
     out
 end
 
+@doc raw"""
+    eval_f_on_fem_pts(f::Function, m::Int64, n::Int64, h::Float64)
+
+Returns $f(x_i, y_i)$ where $(x_i,y_i)$ are FEM nodes. 
+"""
+function eval_f_on_fem_pts(f::Function, m::Int64, n::Int64, h::Float64)
+    xy = fem_nodes(m, n, h)
+    x, y = xy[:,1], xy[:,2]
+    return f.(x, y)
+end
+
+@doc raw"""
+    eval_f_on_fvm_pts(f::Function, m::Int64, n::Int64, h::Float64)
+
+Returns $f(x_i, y_i)$ where $(x_i,y_i)$ are FVM nodes. 
+"""
+function eval_f_on_fvm_pts(f::Function, m::Int64, n::Int64, h::Float64)
+    xy = fvm_nodes(m, n, h)
+    x, y = xy[:,1], xy[:,2]
+    return f.(x, y)
+end
+
 
 @doc raw"""
     eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
@@ -1094,3 +1122,157 @@ function compute_strain_energy_term1(S::Array{Float64, 2}, m::Int64, n::Int64, h
     end
     f
 end
+
+
+@doc raw"""
+    compute_fem_laplace_matrix1(K::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+
+Computes the coefficient matrix for 
+
+```math
+\int_\Omega K \nabla u \cdot \nabla (\delta u) \; dx 
+```
+Here $K\in \mathbf{R}^{2\times 2}$, $u$ is a scalar variable, and `K` is a $4mn \times 2 \times 2$ matrix. 
+
+Returns a $(m+1)(n+1)\times (m+1)(n+1)$ sparse matrix. 
+"""
+function compute_fem_laplace_matrix1(K::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
+    @assert size(K,2)==size(K,3)==2
+    
+    B = zeros(4, 2, 4)
+    for p = 1:2
+        for q = 1:2
+            ξ = pts[p]; η = pts[q]
+            B[(q-1)*2+p,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+            ]
+        end
+    end
+
+    I = Int64[]
+    J = Int64[]
+    V = Float64[]
+    function add(k1, k2, v)
+        push!(I, k1)
+        push!(J, k2)
+        push!(V, v)
+    end
+    k = 0
+    for i = 1:m 
+        for j = 1:n 
+            for p = 1:2
+                for q = 1:2
+                    k += 1
+                    B0 = B[(q-1)*2+p,:,:]
+                    Ω = B0'*K[k,:,:]*B0*0.25*h^2
+                    idx = [(j-1)*(m+1)+i; (j-1)*(m+1)+i+1; j*(m+1)+i; j*(m+1)+i+1]
+                    for i_ = 1:4
+                        for j_ = 1:4
+                            add(idx[i_], idx[j_], Ω[i_, j_])
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return sparse(I,J,V,(m+1)*(n+1),(m+1)*(n+1))
+end
+
+"""
+    compute_fem_laplace_matrix1(K::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+
+`K` is duplicated on each Gauss point. 
+"""
+function compute_fem_laplace_matrix1(K::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+    Knew = zeros(4m*n, 2, 2)
+    for i = 1:4*m*n 
+        Knew[i,:,:] = K 
+    end
+    return compute_fem_laplace_matrix1(Knew, m, n, h)
+end
+
+@doc raw"""
+    compute_fem_laplace_matrix1(K::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+
+Computes the coefficient matrix for 
+
+```math
+\int_\Omega K\nabla u \cdot \nabla (\delta u) \; dx 
+``` 
+
+Here `K` is a vector with length $4mn$ (defined on Gauss points). 
+
+Returns a $(m+1)(n+1)\times (m+1)(n+1)$ sparse matrix. 
+"""
+function compute_fem_laplace_matrix1(K::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    Knew = zeros(4m*n, 2, 2)
+    for i = 1:4*m*n 
+        Knew[i,:,:] = K[i] * diagm(0=>ones(2)) 
+    end
+    return compute_fem_laplace_matrix1(Knew, m, n, h)
+end
+
+@doc raw"""
+    compute_fem_laplace_matrix1(m::Int64, n::Int64, h::Float64)
+
+Computes the coefficient matrix for 
+
+```math
+\int_\Omega \nabla u \cdot \nabla (\delta u) \; dx 
+```
+
+Returns a $(m+1)(n+1)\times (m+1)(n+1)$ sparse matrix. 
+"""
+function compute_fem_laplace_matrix1(m::Int64, n::Int64, h::Float64)
+    Knew = zeros(4m*n, 2, 2)
+    for i = 1:4*m*n 
+        Knew[i,:,:] = diagm(0=>ones(2)) 
+    end
+    return compute_fem_laplace_matrix1(Knew, m, n, h)
+end
+
+
+@doc raw"""
+    compute_fem_laplace_matrix(m::Int64, n::Int64, h::Float64)
+
+Computes the coefficient matrix for 
+
+```math
+\int_\Omega \nabla \mathbf{u} \cdot \nabla (\delta \mathbf{u}) \; dx 
+```
+
+Here
+
+$$ \mathbf{u}  = \begin{bmatrix} u \\ v \end{bmatrix}$$
+
+and 
+
+$$\nabla \mathbf{u} = \begin{bmatrix}u_x & u_y \\ v_x & v_y \end{bmatrix}$$
+
+Returns a $2(m+1)(n+1)\times 2(m+1)(n+1)$ sparse matrix. 
+"""
+function compute_fem_laplace_matrix(m::Int64, n::Int64, h::Float64)
+    K = compute_fem_laplace_matrix1(m, n, h)
+    Z = spzeros((m+1)*(n+1), (m+1)*(n+1))
+    [K Z;Z K]
+end
+
+@doc raw"""
+    compute_fem_laplace_matrix(K::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+
+Computes the coefficient matrix for 
+
+```math
+\int_\Omega K \nabla \mathbf{u} \cdot \nabla (\delta \mathbf{u}) \; dx 
+```
+
+Here $K$ is a scalar defined on Gauss points. `K` is a vector of length $4mn$
+"""
+function compute_fem_laplace_matrix(K::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    K1 = compute_fem_laplace_matrix1(K, m, n, h)
+    K2 = compute_fem_laplace_matrix1(K, m, n, h)
+    Z = spzeros((m+1)*(n+1), (m+1)*(n+1))
+    [K1 Z;Z K2]
+end
+

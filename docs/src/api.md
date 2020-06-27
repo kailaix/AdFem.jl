@@ -15,6 +15,8 @@ compute_fvm_mass_matrix
 compute_fem_mass_matrix1
 compute_fem_stiffness_matrix1
 compute_fvm_advection_matrix
+compute_fem_laplace_matrix1
+compute_fem_laplace_matrix
 ```
 
 ## Vector Assembling Functions
@@ -40,6 +42,8 @@ eval_f_on_boundary_node
 eval_f_on_boundary_edge
 eval_strain_on_gauss_pts
 eval_strain_on_gauss_pts1
+eval_f_on_fvm_pts
+eval_f_on_fem_pts
 ```
 
 ## Boundary Conditions

@@ -6,6 +6,7 @@ using Documenter, PoreFlow
 makedocs(sitename="PoreFlow", modules=[PoreFlow],
 pages = Any[
     "index.md",
+    "gallery.md",
     "Examples"=>Any["coupled.md", "staticelasticity.md", "plasticity.md", 
         "viscoelasticity.md", "viscoelasticity_earth.md", "earthquake.md", "heatequation.md","elastodynamics.md", "twophaseflow.md"],
     "Inverse Modeling"=>Any["inverse.md", "inv_viscoelasticity.md", "coupled_viscoelasticity.md",

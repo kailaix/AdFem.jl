@@ -29,8 +29,9 @@ A differentiable kernel for imposing the Dirichlet boundary of a scalar-valued f
 function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, m::Int64, n::Int64, h::Float64)
     idx = bdnode
     Lbd = L[:, idx]
-    L = scatter_update(L, :, idx, spzero((m+1)*(n+1), length(idx)))
-    L = scatter_update(L, idx, :,  spzero(length(idx), (m+1)*(n+1)))
+    M, N = size(L)
+    L = scatter_update(L, :, idx, spzero(M, length(idx)))
+    L = scatter_update(L, idx, :,  spzero(length(idx), N))
     L = scatter_update(L, idx, idx, spdiag(length(idx)))
     L, Lbd
 end

@@ -301,6 +301,25 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 2}, m::Int64, n::Int6
     visualize_scalar_on_fvm_points(R, m, n, h)
 end
 
+function visualize_scalar_on_fvm_points(φ::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    φ = reshape(φ, m, n)'|>Array
+    m_ = mean(φ)
+    s = std(φ)
+    vmin, vmax = m_ - 2s, m_ + 2s
+    x = (1:m)*h .- 0.5h
+    y = (1:n)*h .- 0.5h
+    ln = pcolormesh(x, y, φ, vmin= vmin, vmax=vmax)
+    colorbar()
+    # c = contour(φ[1,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
+    t = title("t = 0")
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+
+    ln = gca().pcolormesh(x, y, φ, vmin= vmin, vmax=vmax)
+    c = gca().contour(x, y, φ, 10, cmap="jet", vmin=vmin,vmax=vmax)
+end
+
 visualize_potential = visualize_scalar_on_fvm_points
 
 
