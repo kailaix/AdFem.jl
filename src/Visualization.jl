@@ -277,6 +277,7 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int6
     axis("scaled")
     xlabel("x")
     ylabel("y")
+    gca().invert_yaxis()
     function update(i)
         gca().clear()
         # t.set_text("t = $(round(frame * Δt, digits=3))")
@@ -289,6 +290,7 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int6
         k = string(i-1)
         k = repeat("0", 3-length(k))*k 
         title("snapshot = $k")
+        gca().invert_yaxis()
     end
     anim = animate(update, 1:size(φ,1))
 end
