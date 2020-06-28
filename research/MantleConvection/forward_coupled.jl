@@ -9,7 +9,7 @@ using LinearAlgebra
 using ADCMEKit
 
 m = 40
-n = 20
+n = 40
 h = 1/n
 NT = 100
 Δt = 1/NT 
@@ -17,18 +17,18 @@ Ra = 1.0
 
 function solve_stokes(T, η)
     η = convert_to_tensor(η)
-    z = constant(zeros(4m*n))
-    hmat = reshape([η z z z η z z z η], (4m*n,3,3))
-    K = compute_fem_stiffness_matrix(hmat, m, n, h)
+    K = compute_fem_laplace_matrix(η, m, n, h)
     B = constant(compute_interaction_matrix(m, n, h))
     Z = [K -B'
-    B spzero(size(B,1))]
+    -B spzero(size(B,1))]
     bd = bcnode("lower", m, n, h)
-    Z, _ = fem_impose_Dirichlet_boundary_condition(Z, bd, m, n, h)
+    bd = [bd; bd .+ (m+1)*(n+1)]
+    bd_T = [1:m; (n-1)*m .+ (1:m)] # up and lower 
+    Z, _ = fem_impose_Dirichlet_boundary_condition1(Z, [bd;bd_T], m, n, h)
     T = reshape(repeat(T, 1, 4), (-1,))
     rhs = Ra * compute_fem_source_term(constant(zeros(4*m*n)), T, m, n, h)
     rhs = [rhs;constant(zeros(m*n))]
-    rhs = scatter_update(rhs, [bd; bd .+ (m+1)*(n+1)], zeros(2length(bd)))
+    rhs = scatter_update(rhs, [bd; bd_T], zeros(length(bd) + length(bd_T)) )
     sol = Z\rhs
     sol[1:2*(m+1)*(n+1)], sol[2*(m+1)*(n+1)+1:end]
 end
@@ -44,12 +44,12 @@ function solve_heat_eq(u, T)
 end 
 
 function compute_viscosity_parameter(u, T; kwargs...)
-    # η = mantle_viscosity(u, T, m, n, h; kwargs...)
-    η = ones(4*m*n)
+    η = mantle_viscosity(u, T, m, n, h; kwargs...)
+    return η
 end
 
 xy = fvm_nodes(m, n, h)
-T0 = @. exp(-10*((xy[:,1]-1.25)^2 + (xy[:,2]-0.5)^2))
+T0 = @. exp(-10*((xy[:,1]-0.5)^2 + (xy[:,2]-0.2)^2))
 
 u_arr = TensorArray(NT+1)
 T_arr = TensorArray(NT+1)
@@ -80,7 +80,9 @@ sess = Session(); init(sess)
 u_, T_, p_ = run(sess, [u, T, p])
 
 
-p = visualize_displacement(u_, m, n, h)
-saveanim(p, "displacement.gif")
+# p = visualize_displacement(u_, m, n, h)
+# saveanim(p, "displacement.gif")
 # visualize_scalar_on_fvm_points(T_, m, n, h)
 # visualize_scalar_on_fvm_points(p_, m, n, h)
+
+visualize_scalar_on_fvm_points(T_, m, n, h)

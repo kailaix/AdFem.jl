@@ -5,20 +5,13 @@
 using SymPy 
 
 x, y = @vars x y 
-u = x*(1-x)*y*(1-y)
-v = x^2*(1-x^2)*y^2*(1-y^2)
-p = x + y 
+u = 2*pi*sin(pi*x)*sin(pi*x)*cos(pi*y)*sin(pi*y)
+v = -2*pi*sin(pi*x)*sin(pi*y)*cos(pi*x)*sin(pi*y)
+p = sin(pi*x)*sin(pi*y)
+nu = 0.5
 
-g = diff(u, x) + diff(v, y)
+f1 = diff(p, x) - nu * (diff(diff(u, x), x) + diff(diff(u, y), y) )
+f2 = diff(p, y) - nu * (diff(diff(v, x), x) + diff(diff(v, y), y) )
 
-ε = [diff(u,x) 1/2*(diff(u,y) + diff(v, x))
-1/2*(diff(u,y) + diff(v, x)) diff(v,y)]
-σ = -[p 0;0 p] + 2 * ε
-
-f1 = diff(σ[1,1], x) + diff(σ[1,2], y)
-f2 = diff(σ[2,1], x) + diff(σ[2,2], y)
-
-print(replace(replace(sympy.julia_code(g), ".*"=>"*"), ".^"=>"^"))
-
-print(replace(replace(sympy.julia_code(f1), ".*"=>"*"), ".^"=>"^"))
-print(replace(replace(sympy.julia_code(f2), ".*"=>"*"), ".^"=>"^"))
+println(replace(replace(sympy.julia_code(f1), ".*"=>"*"), ".^"=>"^"))
+println(replace(replace(sympy.julia_code(f2), ".*"=>"*"), ".^"=>"^"))

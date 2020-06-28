@@ -94,4 +94,6 @@ fvm_nodes
 cholesky_factorize
 cholesky_outproduct
 fem_to_fvm
+fem_to_gauss_points
+fem_to_gauss_points
 ```

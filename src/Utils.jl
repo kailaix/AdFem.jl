@@ -1,6 +1,6 @@
 export femidx, fvmidx, get_edge_normal,
 plot_u,bcnode,bcedge, layer_model, gauss_nodes, fem_nodes, fvm_nodes, subdomain, interior_node,
-cholesky_outproduct, cholesky_factorize, cholesky_logdet, fem_randidx, gauss_randidx, fem_to_fvm
+cholesky_outproduct, cholesky_factorize, cholesky_logdet, fem_randidx, fem_to_gauss_points, fem_to_fvm
 
 
 """
@@ -339,4 +339,19 @@ function cholesky_logdet(A::Union{Array{<:Real,2}, PyObject})
     op_ = load_op_and_grad("$(@__DIR__)/../depsCholeskyOp/build/libCholeskyOp/build","cholesky_logdet")
     A = convert_to_tensor(A, dtype=Float64)
     L, J = op_(A)
+end
+
+
+@doc raw"""
+    fem_to_gauss_points(u::PyOject, m::Int64, n::Int64, h::Float64)
+
+Given a vector of length $(m+1)(n+1)$, `u`, returns the function values at each Gauss point. 
+
+Returns a vector of length $4mn$.
+"""
+function fem_to_gauss_points(u::PyObject, m::Int64, n::Int64, h::Float64)
+    fem_to_gauss_points_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_to_gauss_points")
+    u,m_,n_,h = convert_to_tensor(Any[u,m,n,h], [Float64,Int64,Int64,Float64])
+    out = fem_to_gauss_points_(u,m_,n_,h)
+    out = set_shape(out, (4*m*n,))
 end
