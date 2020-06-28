@@ -1,5 +1,6 @@
 export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
-    compute_fvm_advection_term, compute_fvm_tpfa_matrix, compute_fvm_advection_matrix
+    compute_fvm_advection_term, compute_fvm_tpfa_matrix, compute_fvm_advection_matrix,
+    compute_fem_advection_matrix1
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow", "dirichlet_bd", multiple=true)
@@ -343,4 +344,72 @@ function eval_grad_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
     r1 = reshape( eval_grad_on_gauss_pts1(u[1:(m+1)*(n+1)], m, n, h), (4*m*n, 1, 2))
     r2 = reshape( eval_grad_on_gauss_pts1(u[(m+1)*(n+1)+1:end], m, n, h), (4*m*n, 1, 2))
     return tf.concat([r1, r2], axis=1)
+end
+
+
+
+"""
+    compute_fem_mass_matrix1(ρ::PyObject,m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel.
+"""
+function compute_fem_mass_matrix1(ρ::PyObject,m::Int64, n::Int64, h::Float64)
+    fem_mass_ = load_op_and_grad("./build/libFemMass","fem_mass", multiple=true)
+    rho,m_,n_,h = convert_to_tensor(Any[ρ,m,n,h], [Float64,Int64,Int64,Float64])
+    ii, jj, vv = fem_mass_(rho,m_,n_,h)
+    SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
+end
+
+
+@doc raw"""
+    compute_fem_mass_matrix(ρ::PyObject,m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel. $\rho$ is a vector of length $4mn$ or $8mn$
+"""
+function compute_fem_mass_matrix(ρ::PyObject,m::Int64, n::Int64, h::Float64)
+    Z = SparseTensor(zeros((m+1)*(n+1), (m+1)*(n+1)))
+    if length(ρ)==4*m*n
+        M = compute_fem_mass_matrix1(ρ, m, n, h)
+        return [M Z 
+                Z M]
+    elseif length(ρ)==8*m*n
+        M1 = compute_fem_mass_matrix1(ρ[1:4*m*n], m, n, h)
+        M2 = compute_fem_mass_matrix1(ρ[4*m*n+1:end], m, n, h)
+        return [M1 Z 
+                Z M2]
+    end
+end
+
+
+"""
+    compute_fvm_source_term(f::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel.
+"""
+function compute_fvm_source_term(f::PyObject, m::Int64, n::Int64, h::Float64)
+    @assert length(f) == 4*m*n || length(f)==m*n 
+    if length(f)==4*m*n 
+        f = (f[1:4:end] + f[2:4:end] + f[3:4:end] + f[4:4:end])/4
+    end
+    f*h^2
+end
+
+
+
+@doc raw"""
+    compute_fem_advection_matrix1(u0::PyObject,v0::PyObject,m::Int64,n::Int64,h::Float64)
+
+Computes the advection term for a scalar function $u$ defined on an FEM grid. The weak form is 
+
+$$\int_\Omega (\mathbf{u}_0 \cdot \nabla u)  \delta u \; dx = \int_\Omega \left(u0 \frac{\partial u}{\partial x} \delta u + v0 \frac{\partial u}{\partial x}  \delta u\right)\; dx$$
+
+Here $u0$ and $v0$ are both vectors of length $4mn$. 
+
+Returns a sparse matrix of size $(m+1)(n+1)\times (m+1)(n+1)$
+"""
+function compute_fem_advection_matrix1(u0::PyObject,v0::PyObject,m::Int64,n::Int64,h::Float64)
+    fem_advection_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_advection", multiple=true)
+    u,v,m_,n_,h = convert_to_tensor(Any[u0,v0,m,n,h], [Float64,Float64,Int64,Int64,Float64])
+    ii, jj, vv = fem_advection_(u,v,m_,n_,h)
+    SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
 end

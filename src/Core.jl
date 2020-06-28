@@ -799,13 +799,13 @@ function compute_von_mises_stress_term(Se::Array{Float64,2},  m::Int64, n::Int64
 end
 
 @doc raw"""
-    compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Float64)
+    compute_fem_mass_matrix1(ρ::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
 
 Computes the mass matrix for a scalar value $u$
 ```math
 \int_A \rho u \delta u \mathrm{d} x
 ```
-The output is a $(m+1)*(n+1)$ sparse matrix. 
+The output is a $(m+1)(n+1)\times (m+1)(n+1)$ sparse matrix. 
 """
 function compute_fem_mass_matrix1(ρ::Array{Float64}, m::Int64, n::Int64, h::Float64)
     I = Int64[]; J = Int64[]; V = Float64[]
@@ -854,7 +854,7 @@ Computes the mass matrix for a scalar value $u$
 ```math
 \int_A u \delta u \mathrm{d} x
 ```
-The output is a $(m+1)*(n+1)$ sparse matrix. 
+The output is a $(m+1)(n+1)\times (m+1)(n+1)$ sparse matrix. 
 """
 function compute_fem_mass_matrix1(m::Int64, n::Int64, h::Float64)
     ρ = ones(4*m*n)

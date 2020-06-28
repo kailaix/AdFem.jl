@@ -17,6 +17,7 @@ compute_fem_stiffness_matrix1
 compute_fvm_advection_matrix
 compute_fem_laplace_matrix1
 compute_fem_laplace_matrix
+compute_fem_advection_matrix1
 ```
 
 ## Vector Assembling Functions

@@ -43,18 +43,24 @@ with
 
 Here $\epsilon_{II}$ is the second invariant of the strain rate tensor, $C > 0$ is a viscosity pre-factor, $E > 0$ is the non-dimensional activation energy,
 $n > 0$ is the nonlinear exponent, $η_\min$, $η_\max$ act as minimum and maximum bounds for the effective viscosity, and $σ_{\text{yield}} > 0$ is the yield
-stress. Moreover
+stress. $w\in (0, 1]$ is the weakening factor, which is used to incorporate phenomenological aspects that
+cannot be represented in a purely viscous flow model, such as processes which govern mega-thrust faults along the subduction interface, or
+partial melting near a mid-ocean ridge.
+
 The viscosity of the mantle is governed by the high-temperature creep of silicates, for which laboratory experiments show that the creep
 strength is temperature-, pressure-, compositional- and stress-dependent. 
 
 The output is a length $4mn$ vector. 
+
+!!! info 
+    See __Towards adjoint-based inversion of time-dependent mantle convection with nonlinear viscosity__ for details.
 """
 function mantle_viscosity(u::Union{Array{Float64}, PyObject},
      T::Union{Array{Float64}, PyObject}, m::Int64, n::Int64, h::Float64;
      σ_yield::Union{Float64, PyObject} = 300e6, 
-     ω::Union{Float64, PyObject}, 
-     η_min::Union{Float64, PyObject} = 1e18, 
-     η_max::Union{Float64, PyObject} = 1e23, 
+     ω::Union{Float64, PyObject} = 1.0, 
+     η_min::Union{Float64, PyObject} = 1e-2, 
+     η_max::Union{Float64, PyObject} = 1e3, 
      E::Union{Float64, PyObject} = 9.0, 
      C::Union{Float64, PyObject} = 1000., N::Union{Float64, PyObject} = 2.)
     u, T, σ_yield, ω, η_min, η_max, E, C, N = convert_to_tensor(
@@ -62,6 +68,7 @@ function mantle_viscosity(u::Union{Array{Float64}, PyObject},
     )
     ε = eval_strain_on_gauss_pts(u, m, n, h)
     εII = 0.5 * sum(ε .* ε, dims = 2)
+    T = reshape(repeat(T, 1, 4), (-1,))
     η = C * exp(E*(0.5 - T))*εII^((1-N)/2N)
     η_min + min(σ_yield/2/sqrt(εII), ω*min(η_max, η))
 end
