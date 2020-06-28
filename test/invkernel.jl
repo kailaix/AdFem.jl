@@ -77,3 +77,14 @@ end
     u = compute_fvm_advection_term(v,u,m,n,h)
     @show run(sess, u)≈jl_u
 end
+
+
+@testset "grad on gauss points" begin 
+    m = 10
+    n = 10
+    h = 0.1
+    u = rand(2*(m+1)*(n+1))
+    ref = eval_grad_on_gauss_pts(u, m, n, h)
+    out = eval_grad_on_gauss_pts(constant(u), m, n, h)
+    @test run(sess, out)≈ref
+end

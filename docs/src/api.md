@@ -44,6 +44,8 @@ eval_strain_on_gauss_pts
 eval_strain_on_gauss_pts1
 eval_f_on_fvm_pts
 eval_f_on_fem_pts
+eval_grad_on_gauss_pts1
+eval_grad_on_gauss_pts
 ```
 
 ## Boundary Conditions

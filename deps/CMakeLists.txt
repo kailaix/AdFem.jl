@@ -54,7 +54,12 @@ message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 find_library(LIBOPENBLAS openblas HINTS ${LIBDIR})
 
 
-add_library(poreflow SHARED Advection/Advection.cpp CholeskyOp/CholeskyOp.cpp ComputeVel/ComputeVel.cpp DirichletBd/DirichletBd.cpp FemStiffness/FemStiffness.cpp FemStiffness1/UnivariateFemStiffness.cpp SpatialFemStiffness/SpatialFemStiffness.cpp SpatialVaryingTangentElastic/SpatialVaryingTangentElastic.cpp Strain/StrainOp.cpp Strain1/StrainOpUnivariate.cpp StrainEnergy/StrainEnergy.cpp StrainEnergy1/StrainEnergyUnivariate.cpp TpfaOp/TpfaOp.cpp VolumetricStrain/VolumetricStrain.cpp ImplicitAdvection/ImplicitAdvection.cpp FemSource/FemSource.cpp)
+add_library(poreflow SHARED Advection/Advection.cpp CholeskyOp/CholeskyOp.cpp ComputeVel/ComputeVel.cpp 
+  DirichletBd/DirichletBd.cpp FemStiffness/FemStiffness.cpp FemStiffness1/UnivariateFemStiffness.cpp 
+  SpatialFemStiffness/SpatialFemStiffness.cpp SpatialVaryingTangentElastic/SpatialVaryingTangentElastic.cpp Strain/StrainOp.cpp 
+  Strain1/StrainOpUnivariate.cpp StrainEnergy/StrainEnergy.cpp StrainEnergy1/StrainEnergyUnivariate.cpp 
+  TpfaOp/TpfaOp.cpp VolumetricStrain/VolumetricStrain.cpp ImplicitAdvection/ImplicitAdvection.cpp FemSource/FemSource.cpp
+  FemGrad/FemGrad.cpp)
 set_property(TARGET poreflow PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(poreflow ${TF_LIB_FILE} ${ADEPT_LIB_FILE} ${LIBOPENBLAS})

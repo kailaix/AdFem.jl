@@ -318,3 +318,29 @@ A differentiable kernel.
 function compute_fem_source_term(f1::PyObject, f2::PyObject, m::Int64, n::Int64, h::Float64)
     [compute_fem_source_term1(f1, m, n, h); compute_fem_source_term1(f2, m, n, h)]
 end
+
+
+
+"""
+    eval_grad_on_gauss_pts1(u::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel. 
+"""
+function eval_grad_on_gauss_pts1(u::PyObject, m::Int64, n::Int64, h::Float64)
+    fem_grad_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_grad")
+    u,m_,n_,h = convert_to_tensor(Any[u,m,n,h], [Float64,Int64,Int64,Float64])
+    out = fem_grad_(u,m_,n_,h)
+    return set_shape(out, (4*m*n, 2))
+end
+
+
+"""
+    eval_grad_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel. 
+"""
+function eval_grad_on_gauss_pts(u::PyObject, m::Int64, n::Int64, h::Float64)
+    r1 = reshape( eval_grad_on_gauss_pts1(u[1:(m+1)*(n+1)], m, n, h), (4*m*n, 1, 2))
+    r2 = reshape( eval_grad_on_gauss_pts1(u[(m+1)*(n+1)+1:end], m, n, h), (4*m*n, 1, 2))
+    return tf.concat([r1, r2], axis=1)
+end

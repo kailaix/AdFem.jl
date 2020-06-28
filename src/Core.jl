@@ -31,7 +31,9 @@ compute_fvm_mass_matrix,
 compute_strain_energy_term,
 compute_plane_strain_matrix,
 compute_fem_laplace_matrix1,
-compute_fem_laplace_matrix
+compute_fem_laplace_matrix,
+eval_grad_on_gauss_pts1,
+eval_grad_on_gauss_pts
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -1276,3 +1278,64 @@ function compute_fem_laplace_matrix(K::Array{Float64, 1}, m::Int64, n::Int64, h:
     [K1 Z;Z K2]
 end
 
+
+@doc raw"""
+    eval_grad_on_gauss_pts1(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+
+
+Evaluates $\nabla u$ on each Gauss point. Here $u$ is a scalar function. 
+
+The input `u` is a vector of length $(m+1)*(n+1)$. The output is a matrix of size $4mn\times 2$. 
+"""
+function eval_grad_on_gauss_pts1(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+    @assert length(u) == (m+1)*(n+1)
+    ret = zeros(4*m*n, 2)
+    B = zeros(4, 2, 4)
+    for q = 1:2
+        for p = 1:2
+            k = (q-1)*2 + p 
+            ξ = pts[p]; η = pts[q]
+            B[k, :, :] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+                -1/h*(1-ξ) 1/h*(1-ξ) -1/h*ξ 1/h*ξ
+            ]
+        end
+    end
+    ret_idx = 0
+    for j = 1:n 
+        for i = 1:m 
+            idx = [(j-1)*(m+1)+i; (j-1)*(m+1)+i+1; j*(m+1)+i; j*(m+1)+i+1 ]
+            uA = u[idx]
+            for q = 1:2
+                for p = 1:2
+                    k = (q-1)*2 + p 
+                    B0 = B[k, :, :]
+                    ret_idx += 1
+                    ret[ret_idx, :] = B0 * uA
+                end
+            end
+        end
+    end
+    return ret 
+end
+
+@doc raw"""
+    eval_grad_on_gauss_pts(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+
+
+Evaluates $\nabla u$ on each Gauss point. Here $\mathbf{u} = (u, v)$.
+
+$$\texttt{g[i,:,:]} = \begin{bmatrix} u_x & u_y\\ v_x & v_y \end{bmatrix}$$
+
+The input `u` is a vector of length $2(m+1)*(n+1)$. The output is a matrix of size $4mn\times 2 \times 2$. 
+"""
+function eval_grad_on_gauss_pts(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+    r1 = eval_grad_on_gauss_pts1(u[1:(m+1)*(n+1)], m, n, h)
+    r2 = eval_grad_on_gauss_pts1(u[(m+1)*(n+1)+1:end], m, n, h)
+    ret = zeros(4*m*n, 2, 2)
+    for i = 1:4*m*n
+        ret[i, 1, :] = r1[i,:]
+        ret[i, 2, :] = r2[i,:] 
+    end
+    return ret 
+end
