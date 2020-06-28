@@ -452,6 +452,63 @@ function visualize_scalar_on_gauss_points(u::Array{Float64,1}, m::Int64, n::Int6
     return x, y, z 
 end
 
+
+function visualize_scalar_on_gauss_points(u::Array{Float64,2}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+    # close("all")
+    z = zeros(2m, 2n)
+    x = zeros(2m)
+    y = zeros(2n)
+
+    for i = 1:m 
+        x[2*(i-1)+1] = pts[1] * h + (i-1)*h 
+        x[2*(i-1)+2] = pts[2] * h + (i-1)*h 
+    end
+
+    for j = 1:n
+        y[2*(j-1)+1] = pts[1] * h + (j-1)*h 
+        y[2*(j-1)+2] = pts[2] * h + (j-1)*h 
+    end
+
+    NT = size(u,1)-1
+    z = zeros(NT+1, 2m, 2n)
+    for k = 1:NT+1
+        for i = 1:m 
+            for j = 1:n 
+                idx = (j-1)*m+i
+                z[k, 2(i-1)+1, 2(j-1)+1] = u[k, 4*(idx-1)+1]
+                z[k, 2(i-1)+2, 2(j-1)+1] = u[k, 4*(idx-1)+2]
+                z[k, 2(i-1)+1, 2(j-1)+2] = u[k, 4*(idx-1)+3]
+                z[k, 2(i-1)+2, 2(j-1)+2] = u[k, 4*(idx-1)+4]
+            end
+        end
+    end
+
+    vmin = mean(z) - 2std(z)
+    vmax = mean(z) + 2std(z)
+    pcolormesh(x, y, z[1,:,:]', vmin=vmin, vmax=vmax,rasterized=true, args...; kwargs...)
+    t = title("snapshot = 000")
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    levels = LinRange(vmin, vmax, 10) |> Array
+    c = contour(x, y, z[1,:,:]', levels, cmap="jet", vmin=vmin, vmax=vmax)
+    gca().invert_yaxis()
+
+    function update(i)
+        gca().clear()
+        pcolormesh(x, y, z[i,:,:]', vmin=vmin, vmax=vmax,rasterized=true, args...; kwargs...)
+        k = string(i-1)
+        k = repeat("0", 3-length(k))*k 
+        title("snapshot = $k")
+        xlim(vmin.-h, vmax.+h)
+        ylim(vmin.-h, vmax.+h)
+        c = contour(x, y, z[i,:,:]', levels, cmap="jet", vmin=vmin, vmax=vmax)
+        gca().invert_yaxis()
+    end
+    animate(update, 2:size(u,1))
+end
+
 @doc raw"""
     visualize_scalar_on_fem_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
 

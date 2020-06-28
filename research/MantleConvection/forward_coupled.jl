@@ -23,7 +23,7 @@ function solve_stokes(T, η)
     B = constant(compute_interaction_matrix(m, n, h))
     Z = [K -B'
     -B spzero(size(B,1))]
-    bd = bcnode("up|lower", m, n, h)
+    bd = bcnode("upper|lower", m, n, h)
     bd = [bd; bd .+ (m+1)*(n+1)]
     bd_T = [1:m; (n-1)*m .+ (1:m)] # pressure up and lower 
     Z, _ = fem_impose_Dirichlet_boundary_condition1(Z, [bd;bd_T], m, n, h)
@@ -51,7 +51,7 @@ function compute_viscosity_parameter(u, T; kwargs...)
 end
 
 xy = fvm_nodes(m, n, h)
-T0 = @. exp(-100*((xy[:,1]-0.5)^2 + (xy[:,2]-0.2)^2))
+T0 = @. -exp(-100*((xy[:,1]-0.5)^2 + (xy[:,2]-0.2)^2))
 
 u_arr = TensorArray(NT+1)
 T_arr = TensorArray(NT+1)
@@ -92,3 +92,4 @@ u_, T_, p_, η_ = run(sess, [u, T, p, η])
 # visualize_scalar_on_fvm_points(p_, m, n, h)
 
 visualize_scalar_on_fvm_points(T_, m, n, h)
+# visualize_scalar_on_gauss_points(η_, m, n, h)
