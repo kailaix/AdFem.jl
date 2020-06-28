@@ -413,3 +413,16 @@ function compute_fem_advection_matrix1(u0::PyObject,v0::PyObject,m::Int64,n::Int
     ii, jj, vv = fem_advection_(u,v,m_,n_,h)
     SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
 end
+
+
+@doc raw"""
+    compute_fem_laplace_matrix1(K::PyObject, m::Int64, n::Int64, h::Float64)
+
+A differentiable kernel. Only $K\in \mathbb{R}^{4mn}$ is supported.
+"""
+function compute_fem_laplace_matrix1(kappa::PyObject, m::Int64, n::Int64, h::Float64)
+    fem_laplace_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_laplace", multiple=true)
+    kappa,m_,n_,h = convert_to_tensor(Any[kappa,m,n,h], [Float64,Int64,Int64,Float64])
+    ii, jj, vv = fem_laplace_(kappa,m_,n_,h)
+    SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
+end

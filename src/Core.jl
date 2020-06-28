@@ -1142,8 +1142,8 @@ function compute_fem_laplace_matrix1(K::Array{Float64, 3}, m::Int64, n::Int64, h
     @assert size(K,2)==size(K,3)==2
     
     B = zeros(4, 2, 4)
-    for p = 1:2
-        for q = 1:2
+    for q = 1:2
+        for p = 1:2
             ξ = pts[p]; η = pts[q]
             B[(q-1)*2+p,:,:] = [
                 -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
@@ -1161,10 +1161,10 @@ function compute_fem_laplace_matrix1(K::Array{Float64, 3}, m::Int64, n::Int64, h
         push!(V, v)
     end
     k = 0
-    for i = 1:m 
-        for j = 1:n 
-            for p = 1:2
-                for q = 1:2
+    for j = 1:n 
+        for i = 1:m 
+            for q = 1:2
+                for p = 1:2
                     k += 1
                     B0 = B[(q-1)*2+p,:,:]
                     Ω = B0'*K[k,:,:]*B0*0.25*h^2
