@@ -1297,7 +1297,7 @@ function eval_grad_on_gauss_pts1(u::Array{Float64,1}, m::Int64, n::Int64, h::Flo
             ξ = pts[p]; η = pts[q]
             B[k, :, :] = [
                 -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
-                -1/h*(1-ξ) 1/h*(1-ξ) -1/h*ξ 1/h*ξ
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
             ]
         end
     end
