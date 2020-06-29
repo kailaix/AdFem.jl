@@ -17,7 +17,7 @@ void FemAdvection_forward(int64 *ii, int64*jj, double *vv,
       double xi = pts[p], eta = pts[q];
       MatrixXd B0(2, 4);
       B0 << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
-                -1/h*(1-xi), 1/h*(1-xi), -1/h*xi, 1/h*xi;
+                -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
       B.push_back(B0);
     }
   }
@@ -69,7 +69,7 @@ void FemAdvection_backward(double *grad_u0, double *grad_v0,
           double xi = pts[p], eta = pts[q];
           MatrixXd B0(2, 4);
           B0 << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
-                    -1/h*(1-xi), 1/h*(1-xi), -1/h*xi, 1/h*xi;
+                    -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
           B.push_back(B0);
         }
       }

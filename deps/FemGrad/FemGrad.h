@@ -29,7 +29,7 @@ void FemGrad_forward(double *ret, const double *u, int m, int n, double h){
       double xi = pts[p], eta = pts[q];
       MatrixXd B0(2, 4);
       B0 << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
-                -1/h*(1-xi), 1/h*(1-xi), -1/h*xi, 1/h*xi;
+                -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
       B.push_back(B0);
     }
   }
@@ -60,7 +60,7 @@ void FemGrad_backward(double *grad_u, const double *grad_ret,
       double xi = pts[p], eta = pts[q];
       MatrixXd B0(2, 4);
       B0 << -1/h*(1-eta), 1/h*(1-eta), -1/h*eta, 1/h*eta,
-                -1/h*(1-xi), 1/h*(1-xi), -1/h*xi, 1/h*xi;
+                -1/h*(1-xi), -1/h*xi, 1/h*(1-xi), 1/h*xi;
       B.push_back(B0.transpose());
     }
   }
