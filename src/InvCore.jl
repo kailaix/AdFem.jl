@@ -422,7 +422,7 @@ Computes the advection term for a vector function $\mathbf{u}$
 
 $$\int_\Omega (\mathbf{u}_0 \cdot \nabla \mathbf{u})  \delta \mathbf{u} \; dx =\begin{bmatrix} \int_\Omega u_0 \frac{\partial  u}{\partial x}\delta u\; dx + \int_\Omega v_0 \frac{\partial  u}{\partial y}\delta u\; dx \\ \int_\Omega u_0 \frac{\partial  v}{\partial x}\delta v\; dx + \int_\Omega v_0 \frac{\partial  v}{\partial y}\delta v\; dx  \end{bmatrix}$$
 
-Here $\mathbf{u} = \begin{bmatrix}u \\ v\end{bmatrix}$ is defined on a finite element grid. $u_0$, $v_0$ are vectors of length $4mn$.2length
+Here $\mathbf{u} = \begin{bmatrix}u \\ v\end{bmatrix}$ is defined on a finite element grid. $u_0$, $v_0$ are vectors of length $4mn$.
 
 Returns a $2(m+1)(n+1)\times 2(m+1)(n+1)$ block diagonal sparse matrix.
 """
