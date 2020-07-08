@@ -1,6 +1,6 @@
 export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
     compute_fvm_advection_term, compute_fvm_tpfa_matrix, compute_fvm_advection_matrix,
-    compute_fem_advection_matrix1
+    compute_fem_advection_matrix1, compute_fem_advection_matrix
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow", "dirichlet_bd", multiple=true)
@@ -354,7 +354,7 @@ end
 A differentiable kernel.
 """
 function compute_fem_mass_matrix1(ρ::PyObject,m::Int64, n::Int64, h::Float64)
-    fem_mass_ = load_op_and_grad("./build/libFemMass","fem_mass", multiple=true)
+    fem_mass_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_mass", multiple=true)
     rho,m_,n_,h = convert_to_tensor(Any[ρ,m,n,h], [Float64,Int64,Int64,Float64])
     ii, jj, vv = fem_mass_(rho,m_,n_,h)
     SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
@@ -401,9 +401,9 @@ end
 
 Computes the advection term for a scalar function $u$ defined on an FEM grid. The weak form is 
 
-$$\int_\Omega (\mathbf{u}_0 \cdot \nabla u)  \delta u \; dx = \int_\Omega \left(u0 \frac{\partial u}{\partial x} \delta u + v0 \frac{\partial u}{\partial x}  \delta u\right)\; dx$$
+$$\int_\Omega (\mathbf{u}_0 \cdot \nabla u)  \delta u \; dx = \int_\Omega \left(u_0 \frac{\partial u}{\partial x} \delta u + v_0 \frac{\partial u}{\partial x}  \delta u\right)\; dx$$
 
-Here $u0$ and $v0$ are both vectors of length $4mn$. 
+Here $u_0$ and $v_0$ are both vectors of length $4mn$. 
 
 Returns a sparse matrix of size $(m+1)(n+1)\times (m+1)(n+1)$
 """
@@ -414,6 +414,23 @@ function compute_fem_advection_matrix1(u0::PyObject,v0::PyObject,m::Int64,n::Int
     SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
 end
 
+
+@doc raw"""
+    compute_fem_advection_matrix(u0::PyObject,v0::PyObject,m::Int64,n::Int64,h::Float64)
+
+Computes the advection term for a vector function $\mathbf{u}$
+
+$$\int_\Omega (\mathbf{u}_0 \cdot \nabla \mathbf{u})  \delta \mathbf{u} \; dx =\begin{bmatrix} \int_\Omega u_0 \frac{\partial  u}{\partial x}\delta u\; dx + \int_\Omega v_0 \frac{\partial  u}{\partial y}\delta u\; dx \\ \int_\Omega u_0 \frac{\partial  v}{\partial x}\delta v\; dx + \int_\Omega v_0 \frac{\partial  v}{\partial y}\delta v\; dx  \end{bmatrix}$$
+
+Here $\mathbf{u} = \begin{bmatrix}u \\ v\end{bmatrix}$ is defined on a finite element grid. $u_0$, $v_0$ are vectors of length $4mn$.2length
+
+Returns a $2(m+1)(n+1)\times 2(m+1)(n+1)$ block diagonal sparse matrix.
+"""
+function compute_fem_advection_matrix(u0::PyObject,v0::PyObject,m::Int64,n::Int64,h::Float64)
+    M = compute_fem_advection_matrix1(u0, v0, m, n, h)
+    Z = spzero((m+1)*(n+1))
+    [M Z;Z M]
+end
 
 @doc raw"""
     compute_fem_laplace_matrix1(K::PyObject, m::Int64, n::Int64, h::Float64)
