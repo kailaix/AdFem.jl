@@ -60,7 +60,7 @@ add_library(poreflow SHARED Advection/Advection.cpp CholeskyOp/CholeskyOp.cpp Co
   Strain1/StrainOpUnivariate.cpp StrainEnergy/StrainEnergy.cpp StrainEnergy1/StrainEnergyUnivariate.cpp 
   TpfaOp/TpfaOp.cpp VolumetricStrain/VolumetricStrain.cpp ImplicitAdvection/ImplicitAdvection.cpp FemSource/FemSource.cpp
   FemGrad/FemGrad.cpp FemMass/FemMass.cpp FemAdvection/FemAdvection.cpp FemToGaussPoints/FemToGaussPoints.cpp
-  FemLaplace/FemLaplace.cpp)
+  FemLaplace/FemLaplace.cpp InteractionTerm/InteractionTerm.cpp)
 set_property(TARGET poreflow PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(poreflow ${TF_LIB_FILE} ${ADEPT_LIB_FILE} ${LIBOPENBLAS})

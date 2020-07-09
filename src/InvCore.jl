@@ -1,6 +1,7 @@
 export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
     compute_fvm_advection_term, compute_fvm_tpfa_matrix, compute_fvm_advection_matrix,
-    compute_fem_advection_matrix1, compute_fem_advection_matrix
+    compute_fem_advection_matrix1, compute_fem_advection_matrix,
+    compute_interaction_term
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow", "dirichlet_bd", multiple=true)
@@ -442,4 +443,24 @@ function compute_fem_laplace_matrix1(kappa::PyObject, m::Int64, n::Int64, h::Flo
     kappa,m_,n_,h = convert_to_tensor(Any[kappa,m,n,h], [Float64,Int64,Int64,Float64])
     ii, jj, vv = fem_laplace_(kappa,m_,n_,h)
     SparseTensor(ii+1, jj+1, vv, (m+1)*(n+1), (m+1)*(n+1))
+end
+
+
+@doc raw"""
+    compute_interaction_term(p::PyObject, m::Int64, n::Int64, h::Float64)
+
+Computes the FVM-FEM interaction term 
+
+```math
+ \begin{bmatrx} \int p \frac{\partial \delta u}{\partial x} dx \\  \int p \frac{\partial \delta v}{\partial y}  dy \end{bmatrix} 
+```
+
+The input is a vector of length $mn$. The output is a $2(m+1)(n+1)$ vector. 
+"""
+function compute_interaction_term(p::Union{Array{Float64,1}, PyObject}, m::Int64, n::Int64, h::Float64)
+    @assert length(p) == m*n
+    interaction_term_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","interaction_term")
+    p,m_,n_,h = convert_to_tensor(Any[p,m,n,h], [Float64,Int64,Int64,Float64])
+    out = interaction_term_(p,m_,n_,h)
+    set_shape(out, (2*(m+1)*(n+1), ))
 end
