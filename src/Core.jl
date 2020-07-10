@@ -1178,6 +1178,7 @@ function compute_fem_laplace_matrix1(K::Array{Float64, 3}, m::Int64, n::Int64, h
             end
         end
     end
+    
     return sparse(I,J,V,(m+1)*(n+1),(m+1)*(n+1))
 end
 

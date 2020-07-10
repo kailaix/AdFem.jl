@@ -402,7 +402,7 @@ end
 
 Computes the advection term for a scalar function $u$ defined on an FEM grid. The weak form is 
 
-$$\int_\Omega (\mathbf{u}_0 \cdot \nabla u)  \delta u \; dx = \int_\Omega \left(u_0 \frac{\partial u}{\partial x} \delta u + v_0 \frac{\partial u}{\partial x}  \delta u\right)\; dx$$
+$$\int_\Omega (\mathbf{u}_0 \cdot \nabla u)  \delta u \; dx = \int_\Omega \left(u_0 \frac{\partial u}{\partial x} \delta u + v_0 \frac{\partial u}{\partial y}  \delta u\right)\; dx$$
 
 Here $u_0$ and $v_0$ are both vectors of length $4mn$. 
 
