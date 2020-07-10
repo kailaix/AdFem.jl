@@ -452,7 +452,7 @@ end
 Computes the FVM-FEM interaction term 
 
 ```math
- \begin{bmatrx} \int p \frac{\partial \delta u}{\partial x} dx \\  \int p \frac{\partial \delta v}{\partial y}  dy \end{bmatrix} 
+ \begin{bmatrix} \int p \frac{\partial \delta u}{\partial x} dx \\  \int p \frac{\partial \delta v}{\partial y}  dy \end{bmatrix} 
 ```
 
 The input is a vector of length $mn$. The output is a $2(m+1)(n+1)$ vector. 
