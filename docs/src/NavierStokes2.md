@@ -17,6 +17,7 @@ The implicit scheme
 Step 1:
 
 The first step is to solve a nonlinear equation
+
 $$\frac{\partial (u+\Delta u) }{\partial t}+(u+\Delta u) \frac{\partial (u+\Delta u)}{\partial x}+(v+\Delta v) \frac{\partial (u+\Delta u)}{\partial y}=-\frac{1}{\rho} \frac{\partial p}{\partial x}+\nu\left(\frac{\partial^{2} (u+\Delta u)}{\partial x^{2}}+\frac{\partial^{2} (u+\Delta u)}{\partial y^{2}}\right) \\
 \frac{\partial (v+\Delta v)}{\partial t}+(u+\Delta u) \frac{\partial (v+\Delta v)}{\partial x}+(v+\Delta v) \frac{\partial (v+\Delta v)}{\partial y}=-\frac{1}{\rho} \frac{\partial p}{\partial y}+\nu\left(\frac{\partial^{2} (v+\Delta v)}{\partial x^{2}}+\frac{\partial^{2} (v+\Delta v)}{\partial y^{2}}\right) \tag{1}$$
 
