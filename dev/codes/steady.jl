@@ -36,8 +36,8 @@ using LinearAlgebra
 using PoreFlow
 using SparseArrays
 
-m = 5
-n = 5
+m = 30
+n = 30
 h = 1/n
 
 
@@ -72,11 +72,7 @@ function compute_residual(S)
 
     H0 = -B * [u;v] + H
 
-    # R = [F;G;H0]
-    R0 = [f1+f2+f3+f4+f5;g3+g4+g5] + [100u;100v]
-
-    # R0 = [u;v]
-    R = [R0; H0]
+    R = [F;G;H0]
     return R
 end
 
@@ -105,17 +101,9 @@ function compute_jacobian(S)
           Gu Gv]
     J = [J0 -B'
         -B spzeros(size(B,1), size(B,1))]
-
-    Z = spzeros((m+1)*(n+1), (m+1)*(n+1))
-    D = [
-        M1+M2+M3 Z+Fv
-        Z N3
-    ] + 100spdiagm(0=>ones(2*(m+1)*(n+1)))
-    J = [D -B'
-        -B spzeros(size(B,1), size(B,1))]
 end
 
-NT = 3
+NT = 5
 S = zeros(m*n+2(m+1)*(n+1), NT+1)
 bd = bcnode("all", m, n, h)
 bd = [bd; bd .+ (m+1)*(n+1); ((1:m) .+ 2(m+1)*(n+1))]
@@ -131,3 +119,30 @@ for i = 1:NT
     S[:,i+1] = S[:,i] - d
     @info i, norm(residual)
 end
+
+xy = fem_nodes(m, n, h)
+x, y = xy[:,1], xy[:,2]
+u = @. x*(1-x)*y*(1-y)
+v = @. x*(1-x)*y*(1-y)^2
+
+xy = fvm_nodes(m, n, h)
+x, y = xy[:,1], xy[:,2]
+p = @. x*(1-x)*y*(1-y)
+
+figure(figsize=(20,10))
+subplot(321)
+visualize_scalar_on_fem_points(S[1:(m+1)*(n+1), end], m, n, h)
+subplot(322)
+visualize_scalar_on_fem_points(u, m, n, h)
+
+subplot(323)
+visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1:(m+1)*(n+1)*2, end], m, n, h)
+subplot(324)
+visualize_scalar_on_fem_points(v, m, n, h)
+
+subplot(325)
+visualize_scalar_on_fvm_points(S[(m+1)*(n+1)*2+1:end, end], m, n, h)
+subplot(326)
+visualize_scalar_on_fvm_points(p, m, n, h)
+
+
