@@ -88,3 +88,60 @@ end
     out = eval_grad_on_gauss_pts(constant(u), m, n, h)
     @test run(sess, out)≈ref
 end
+
+@testset "fem_to_gauss_points2" begin 
+    m = 10
+    n = 10
+    h = 0.1
+    xy = fem_nodes(m, n, h)
+    x, y = xy[:,1], xy[:,2]
+    u0 = @. x*y*(1-x^2)
+    v0 = fem_to_gauss_points(u0, m, n, h)
+    @test run(sess, fem_to_gauss_points(constant(u0), m, n, h)) ≈ v0
+
+    figure(figsize=(10,4))
+    subplot(121)
+    visualize_scalar_on_fem_points(u0, m, n, h)
+    subplot(122)
+    visualize_scalar_on_gauss_points(v0, m, n, h)
+end
+
+@testset "eval_grad_on_gauss_pts" begin 
+    m = 10
+    n = 10
+    h = 0.1
+    xy = fem_nodes(m, n, h)
+    x, y = xy[:,1], xy[:,2]
+    u0 = @. x*y*(1-x^2)
+    u1 = @. sin(x) * cos(y)
+    G = eval_grad_on_gauss_pts([u0;u1], m, n, h)
+
+    xy = gauss_nodes(m, n, h)
+    x, y = xy[:,1], xy[:,2]
+    g11 = @. y-3x^2*y
+    g12 = @. x-x^3
+    g21 = @. cos(x) * cos(y)
+    g22 = @. -sin(x) * sin(y)
+    
+    figure(figsize=(10,10))
+    subplot(221)
+    visualize_scalar_on_gauss_points(G[:,1,1], m, n, h)
+    subplot(222)
+    visualize_scalar_on_gauss_points(G[:,1,2], m, n, h)
+    subplot(223)
+    visualize_scalar_on_gauss_points(G[:,2,1], m, n, h)
+    subplot(224)
+    visualize_scalar_on_gauss_points(G[:,2,2], m, n, h)
+
+    figure(figsize=(10,10))
+    subplot(221)
+    visualize_scalar_on_gauss_points(g11, m, n, h)
+    subplot(222)
+    visualize_scalar_on_gauss_points(g12, m, n, h)
+    subplot(223)
+    visualize_scalar_on_gauss_points(g21, m, n, h)
+    subplot(224)
+    visualize_scalar_on_gauss_points(g22, m, n, h)
+end
+
+

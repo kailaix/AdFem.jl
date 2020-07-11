@@ -41,8 +41,6 @@ function gunc(x, y)
 end
 
 
-
-
 function step1(U, p0, Source = missing)
     Source = coalesce(Source, zeros(2*(m+1)*(n+1)))
     u0 = U[1:(m+1)*(n+1)]
@@ -52,8 +50,7 @@ function step1(U, p0, Source = missing)
 
     M1 = constant(compute_fem_mass_matrix1(m, n, h))
     M2 = compute_fem_mass_matrix1(uxy[:,1], m, n, h)
-    M3 = compute_fem_advection_matrix1(u0, v0,
-                m, n, h)
+    M3 = compute_fem_advection_matrix1(u0, v0, m, n, h)
     M4 = constant(compute_fem_laplace_matrix1(m, n, h))
     A11 = M1 + M2 + M3 + M4
 
@@ -63,8 +60,7 @@ function step1(U, p0, Source = missing)
 
     M1 = constant(compute_fem_mass_matrix1(m, n, h))
     M2 = compute_fem_mass_matrix1(vxy[:,2], m, n, h)
-    M3 = compute_fem_advection_matrix1(v0, u0, 
-                m, n, h)
+    M3 = compute_fem_advection_matrix1(v0, u0, m, n, h)
     M4 = constant(compute_fem_laplace_matrix1(m, n, h))
     A22 = M1 + M2 + M3 + M4
 

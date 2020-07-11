@@ -409,6 +409,8 @@ Here $u_0$ and $v_0$ are both vectors of length $4mn$.
 Returns a sparse matrix of size $(m+1)(n+1)\times (m+1)(n+1)$
 """
 function compute_fem_advection_matrix1(u0::PyObject,v0::PyObject,m::Int64,n::Int64,h::Float64)
+    @assert length(u0) == 4*m*n
+    @assert length(v0) == 4*m*n
     fem_advection_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_advection", multiple=true)
     u,v,m_,n_,h = convert_to_tensor(Any[u0,v0,m,n,h], [Float64,Float64,Int64,Int64,Float64])
     ii, jj, vv = fem_advection_(u,v,m_,n_,h)

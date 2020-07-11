@@ -359,17 +359,14 @@ end
 
 function fem_to_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
     rhs = zeros(4*m*n)
-    k = 0
     for j = 1:n
         for i = 1:m
-            idx = (j-1)*m + i 
-
+            cell_idx = (j-1)*m + i 
             uA = u[[(j-1)*(m+1)+i; (j-1)*(m+1)+i+1; j*(m+1)+i; j*(m+1)+i+1]]
             for q = 1:2
                 for p = 1:2
                     ξ = pts[p]; η = pts[q]
-
-                    k = (idx-1)*4 + 2*(q-1) + p
+                    k = (cell_idx-1)*4 + 2*(q-1) + p
                     rhs[k] = uA[1] * (1-ξ)*(1-η) +
                              uA[2] * ξ*(1-η) +
                              uA[3] * (1-ξ)*η +
