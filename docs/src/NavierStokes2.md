@@ -90,8 +90,11 @@ $$v_{new} = v^{*} - \frac{\Delta t}{\rho}  \frac{\partial \Delta  p}{\partial y}
 ## Example
 
 We consider the (scaled) Taylor–Green vortex as an example to solve the system of equations (1)-(3).
+
 $$u(x,y,t)=\cos(2\pi x)\sin(2\pi y)\exp(-8\pi^2 \nu t)$$
+
 $$v(x,y,t)=-\sin(2\pi x)\cos(2\pi y)\exp(-8\pi^2 \nu t)$$
+
 $$p(x,y,t)=-\frac{\rho}{4}\left( \cos(4\pi x) + \cos(4\pi y) \right)\exp(-16\pi^2 \nu t)$$
 
 
