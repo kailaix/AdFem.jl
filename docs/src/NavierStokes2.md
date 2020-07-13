@@ -135,16 +135,16 @@ tpfa_mat_bdry, _ = compute_fvm_tpfa_matrix(ones(m*n), bc, zeros(size(bc,1)), m, 
 tpfa_mat_bdry = constant(tpfa_mat_bdry)
 
 # exact solutions
-function u1_exact(x1,x2,t)
-    cos(2*pi*x1) * sin(2*pi*x2) * exp(-8*pi*pi*ν*t)
+function u_exact(x,y,t)
+    cos(2*pi*x) * sin(2*pi*y) * exp(-8*pi*pi*ν*t)
 end
 
-function u2_exact(x1,x2,t)
-    -sin(2*pi*x1) * cos(2*pi*x2) * exp(-8*pi*pi*ν*t)
+function v_exact(x1,x2,t)
+    -sin(2*pi*x) * cos(2*pi*y) * exp(-8*pi*pi*ν*t)
 end
 
-function p_exact(x1, x2, t, ρ)
-    -ρ/4 * (cos(4*pi*x1) + cos(4*pi*x2)) * exp(-16*pi*pi*ν*t)
+function p_exact(x, y, t, ρ)
+    -ρ/4 * (cos(4*pi*x) + cos(4*pi*y)) * exp(-16*pi*pi*ν*t)
 end
 
 function step1(U, p0, Source = missing)
@@ -188,15 +188,15 @@ function step1(U, p0, Source = missing)
     return sol
 end
 
-function step2(u0)
-    rhs = ρ / dt * interact_mat * u0
+function step2(U_int)
+    rhs = ρ / dt * interact_mat * U_int
     sol = tpfa_mat_bdry \ rhs
     return sol
 end
 
-function step3(u0, dp)
+function step3(U_int, dp)
     grad_dp = - compute_interaction_term(dp, m, n, h)
-    rhs = mass_mat_2d * u0 - dt/ρ * grad_dp
+    rhs = mass_mat_2d * U_int - dt/ρ * grad_dp
     rhs = scatter_update(rhs, bd_2d, zeros(length(bd_2d)))
     sol = mass_mat_2d_bdry \ rhs
     return sol
@@ -231,8 +231,8 @@ end
 # fem nodes
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
-u0 = @.  u1_exact(x, y, 0.0)
-v0 = @.  u2_exact(x, y, 0.0)
+u0 = @.  u_exact(x, y, 0.0)
+v0 = @.  v_exact(x, y, 0.0)
 velo_arr = TensorArray(NT+1)
 velo_arr = write(velo_arr, 1, [u0; v0])
 
