@@ -28,6 +28,7 @@ where (1) is the continuity equation and (2)-(3) are the momentum equations.
 
 The first step is to solve a nonlinear equation
 $$\frac{\partial (u+\Delta u) }{\partial t}+(u+\Delta u) \frac{\partial (u+\Delta u)}{\partial x}+(v+\Delta v) \frac{\partial (u+\Delta u)}{\partial y}=-\frac{1}{\rho} \frac{\partial p}{\partial x}+\nu\left(\frac{\partial^{2} (u+\Delta u)}{\partial x^{2}}+\frac{\partial^{2} (u+\Delta u)}{\partial y^{2}}\right) \tag{4}$$
+
 $$\frac{\partial (v+\Delta v)}{\partial t}+(u+\Delta u) \frac{\partial (v+\Delta v)}{\partial x}+(v+\Delta v) \frac{\partial (v+\Delta v)}{\partial y}=-\frac{1}{\rho} \frac{\partial p}{\partial y}+\nu\left(\frac{\partial^{2} (v+\Delta v)}{\partial x^{2}}+\frac{\partial^{2} (v+\Delta v)}{\partial y^{2}}\right) \tag{5}$$
 
 Here the inputs $u, v$ are defined in the finite element space, and $p$ in defined in the finite volume space. We solve for $\Delta u, \Delta v$ using the finite element method by linearizing (4)-(5). 
