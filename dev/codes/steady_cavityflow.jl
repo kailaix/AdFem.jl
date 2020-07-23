@@ -55,17 +55,19 @@ using PoreFlow
 using PyPlot
 using SparseArrays
 
-m = 20
-n = 20
+m = 100
+n = 100
 h = 1/n
+nu = 0.01
+
 
 F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc, m, n, h), m, n, h)
 F2 = compute_fem_source_term1(eval_f_on_gauss_pts(gfunc, m, n, h), m, n, h)
 H = h^2*eval_f_on_fvm_pts(hfunc, m, n, h)
-B = compute_interaction_matrix(m, n, h)
+B = constant(compute_interaction_matrix(m, n, h))
 
 # compute F
-Laplace = compute_fem_laplace_matrix1(m, n, h)
+Laplace = constant(nu*compute_fem_laplace_matrix1(m, n, h))
 function compute_residual(S)
     u, v, p = S[1:(m+1)*(n+1)], S[(m+1)*(n+1)+1:2(m+1)*(n+1)], S[2(m+1)*(n+1)+1:2(m+1)*(n+1)+m*n]
     G = eval_grad_on_gauss_pts([u;v], m, n, h)
@@ -73,18 +75,18 @@ function compute_residual(S)
     vgauss = fem_to_gauss_points(v, m, n, h)
     ux, uy, vx, vy = G[:,1,1], G[:,1,2], G[:,2,1], G[:,2,2]
 
-    interaction = run(sess, compute_interaction_term(p, m, n, h)) # julia kernel needed
+    interaction = compute_interaction_term(p, m, n, h) # julia kernel needed
     f1 = compute_fem_source_term1(ugauss.*ux, m, n, h)
     f2 = compute_fem_source_term1(vgauss.*uy, m, n, h)
-    f3 = Laplace*u 
-    f4 = -interaction[1:(m+1)*(n+1)]
+    f3 = -interaction[1:(m+1)*(n+1)]
+    f4 = Laplace*u 
     f5 = -F1
     F = f1 + f2 + f3 + f4 + f5 
 
     g1 = compute_fem_source_term1(ugauss.*vx, m, n, h)
     g2 = compute_fem_source_term1(vgauss.*vy, m, n, h)
-    g3 = Laplace*v 
-    g4 = -interaction[(m+1)*(n+1)+1:end]
+    g3 = -interaction[(m+1)*(n+1)+1:end]    
+    g4 = Laplace*v 
     g5 = -F2
     G = g1 + g2 + g3 + g4 + g5
 
@@ -101,77 +103,116 @@ function compute_jacobian(S)
     vgauss = fem_to_gauss_points(v, m, n, h)
     ux, uy, vx, vy = G[:,1,1], G[:,1,2], G[:,2,1], G[:,2,2]
 
-    M1 = compute_fem_mass_matrix1(ux, m, n, h)
-    M2 = run(sess, compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), m, n, h)) # a julia kernel needed
+    M1 = constant(compute_fem_mass_matrix1(ux, m, n, h))
+    M2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), m, n, h)) # a julia kernel needed
     M3 = Laplace
     Fu = M1 + M2 + M3 
 
-    Fv = compute_fem_mass_matrix1(uy, m, n, h)
+    Fv = constant(compute_fem_mass_matrix1(uy, m, n, h))
 
-    N1 = compute_fem_mass_matrix1(vy, m, n, h)
-    N2 = run(sess, compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), m, n, h))
+    N1 = constant(compute_fem_mass_matrix1(vy, m, n, h))
+    N2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), m, n, h))
     N3 = Laplace
     Gv = N1 + N2 + N3 
 
-    Gu = compute_fem_mass_matrix1(vx, m, n, h)
+    Gu = constant(compute_fem_mass_matrix1(vx, m, n, h))
 
     J0 = [Fu Fv
           Gu Gv]
     J = [J0 -B'
-        -B spzeros(size(B,1), size(B,1))]
+        -B spdiag(zeros(size(B,1)))]
 end
 
-NT = 1
-S = zeros(m*n+2(m+1)*(n+1), NT+1)
-S[1:m+1, 1] = ones(m+1,1)
+NT = 5
+# S = zeros(m*n+2(m+1)*(n+1), NT+1)
+# S[1:m+1, 1] = ones(m+1,1)
 
 bd = bcnode("all", m, n, h)
 # bd = [bd; bd .+ (m+1)*(n+1); ((1:m) .+ 2(m+1)*(n+1))]
-bd = [bd; bd .+ (m+1)*(n+1)] # only apply Dirichlet to velocity
+bd = [bd; bd .+ (m+1)*(n+1); 2*(m+1)*(n+1)+(n-1)*m+1] # only apply Dirichlet to velocity
 
 
-sess = Session(); init(sess)
-
-
-for i = 1:NT 
-    residual = compute_residual(S[:,i])
-    J = compute_jacobian(S[:,i])
+function solve_steady_cavityflow_one_step(S)
+    residual = compute_residual(S)
+    J = compute_jacobian(S)
     
     J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, m, n, h)
-    residual[bd] .= 0.0
+    # residual[bd] .= 0.0
+    residual = scatter_update(residual, bd, zeros(length(bd)))
 
     d = J\residual
-    S[:,i+1] = S[:,i] - d
-    @info i, norm(residual)
+    S_new = S - d
+    return S_new
 end
+
+
+function condition(i, S_arr)
+    i <= NT + 1
+end
+
+function body(i, S_arr)
+    S = read(S_arr, i-1)
+    op = tf.print("i=",i)
+    i = bind(i, op)
+    S_new = solve_steady_cavityflow_one_step(S)
+    S_arr = write(S_arr, i, S_new)
+    return i+1, S_arr
+end
+
+# for i = 1:NT 
+#     residual = compute_residual(S[:,i])
+#     J = compute_jacobian(S[:,i])
+    
+#     J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, m, n, h)
+#     residual[bd] .= 0.0
+
+
+#     d = J\residual
+#     S[:,i+1] = S[:,i] - d
+#     @info i, norm(residual)
+# end
 
 
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
-u = @. u_exact(x,y)
-v = @. v_exact(x,y)
+u0 = @. u_exact(x,y)
+v0 = @. v_exact(x,y)
 
 xy = fvm_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
-p = @. p_exact(x,y)
+p0 = @. p_exact(x,y)
 
-subplot(121)
-visualize_scalar_on_fem_points(S[1:(m+1)*(n+1), end], m, n, h)
-subplot(122)
-visualize_scalar_on_fem_points(u, m, n, h)
+S_arr = TensorArray(NT+1)
+S_arr = write(S_arr, 1, [u0; v0; p0])
+
+i = constant(2, dtype=Int32)
+
+_, S = while_loop(condition, body, [i, S_arr])
+S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n))
+
+sess = Session(); init(sess)
+output = run(sess, S)
+# S = output
+# # out_v = output[:, 1:2*(m+1)*(n+1)]
+# # out_p = output[:, 2*(m+1)*(n+1)+1:end]
+
+# subplot(121)
+# visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
+# subplot(122)
+# visualize_scalar_on_fem_points(u, m, n, h)
 
 figure(figsize=(20,10))
 subplot(321)
-visualize_scalar_on_fem_points(S[1:(m+1)*(n+1), end], m, n, h)
+visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
 subplot(322)
-visualize_scalar_on_fem_points(u, m, n, h)
+visualize_scalar_on_fem_points(u0, m, n, h)
 
 subplot(323)
-visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1:(m+1)*(n+1)*2, end], m, n, h)
+visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
 subplot(324)
-visualize_scalar_on_fem_points(v, m, n, h)
+visualize_scalar_on_fem_points(v0, m, n, h)
 
 subplot(325)
-visualize_scalar_on_fvm_points(S[(m+1)*(n+1)*2+1:end, end], m, n, h)
+visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:end], m, n, h)
 subplot(326)
-visualize_scalar_on_fvm_points(p, m, n, h)
+visualize_scalar_on_fvm_points(p0, m, n, h)

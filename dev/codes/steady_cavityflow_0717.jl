@@ -55,9 +55,11 @@ using PoreFlow
 using PyPlot
 using SparseArrays
 
-m = 20
-n = 20
+m = 100
+n = 100
 h = 1/n
+nu = 0.01
+
 
 F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc, m, n, h), m, n, h)
 F2 = compute_fem_source_term1(eval_f_on_gauss_pts(gfunc, m, n, h), m, n, h)
@@ -65,7 +67,7 @@ H = h^2*eval_f_on_fvm_pts(hfunc, m, n, h)
 B = compute_interaction_matrix(m, n, h)
 
 # compute F
-Laplace = compute_fem_laplace_matrix1(m, n, h)
+Laplace = nu*compute_fem_laplace_matrix1(m, n, h)
 function compute_residual(S)
     u, v, p = S[1:(m+1)*(n+1)], S[(m+1)*(n+1)+1:2(m+1)*(n+1)], S[2(m+1)*(n+1)+1:2(m+1)*(n+1)+m*n]
     G = eval_grad_on_gauss_pts([u;v], m, n, h)
@@ -76,15 +78,15 @@ function compute_residual(S)
     interaction = run(sess, compute_interaction_term(p, m, n, h)) # julia kernel needed
     f1 = compute_fem_source_term1(ugauss.*ux, m, n, h)
     f2 = compute_fem_source_term1(vgauss.*uy, m, n, h)
-    f3 = Laplace*u 
-    f4 = -interaction[1:(m+1)*(n+1)]
+    f3 = -interaction[1:(m+1)*(n+1)]
+    f4 = Laplace*u 
     f5 = -F1
     F = f1 + f2 + f3 + f4 + f5 
 
     g1 = compute_fem_source_term1(ugauss.*vx, m, n, h)
     g2 = compute_fem_source_term1(vgauss.*vy, m, n, h)
-    g3 = Laplace*v 
-    g4 = -interaction[(m+1)*(n+1)+1:end]
+    g3 = -interaction[(m+1)*(n+1)+1:end]    
+    g4 = Laplace*v 
     g5 = -F2
     G = g1 + g2 + g3 + g4 + g5
 
@@ -121,13 +123,13 @@ function compute_jacobian(S)
         -B spzeros(size(B,1), size(B,1))]
 end
 
-NT = 1
+NT = 5
 S = zeros(m*n+2(m+1)*(n+1), NT+1)
 S[1:m+1, 1] = ones(m+1,1)
 
 bd = bcnode("all", m, n, h)
 # bd = [bd; bd .+ (m+1)*(n+1); ((1:m) .+ 2(m+1)*(n+1))]
-bd = [bd; bd .+ (m+1)*(n+1)] # only apply Dirichlet to velocity
+bd = [bd; bd .+ (m+1)*(n+1); 2*(m+1)*(n+1)+(n-1)*m+1:2*(m+1)*(n+1)+(n-1)*m+2] # only apply Dirichlet to velocity
 
 
 sess = Session(); init(sess)
@@ -139,6 +141,7 @@ for i = 1:NT
     
     J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, m, n, h)
     residual[bd] .= 0.0
+
 
     d = J\residual
     S[:,i+1] = S[:,i] - d
