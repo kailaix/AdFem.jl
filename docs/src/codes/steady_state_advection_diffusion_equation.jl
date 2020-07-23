@@ -1,12 +1,13 @@
 using PoreFlow
+using PyPlot
+
 function g_func(x, y)
     -2*x*(1-x) - 2*y*(1-y) + 2*(1-2x)*y*(1-y) + 3*(1-2y)*x*(1-x)
 end
 
-
-m = 100
-n = 100
-h = 1/m
+m = 30
+n = 30
+h = 1/n
 
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
@@ -30,6 +31,12 @@ sess = Session(); init(sess)
 S = run(sess, sol)
 figure(figsize=(10,4))
 subplot(121)
-visualize_scalar_on_fem_points(S-u, m, n, h)
+visualize_scalar_on_fem_points(S, m, n, h)
+title("computed solution")
 subplot(122)
 visualize_scalar_on_fem_points(u, m, n, h)
+title("exact solution")
+
+# subplot(133)
+# visualize_scalar_on_fem_points(S-u, m, n, h)
+# title("difference between computed and exact")

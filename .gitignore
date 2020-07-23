@@ -31,6 +31,9 @@ research/visco_inverse_fixed_pressure/param
 research/visco_inverse_fixed_pressure/space_k
 *.jld2
 research/*.png
+docs/src/codes/*.png
+docs/src/codes/steady_cavityflow_figures
+
 # *.mat
 !research/space_varying_viscoelasticity/viscoelasticity.mat
 *build.log
@@ -57,3 +60,4 @@ test/U_total/*.png
 *.tex
 .vscode/
 !research/viscoelasticity_experimental_data
+docs/src/codes/*.mat

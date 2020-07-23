@@ -320,6 +320,7 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 1}, m::Int64, n::Int6
 
     ln = gca().pcolormesh(x, y, φ, vmin= vmin, vmax=vmax)
     c = gca().contour(x, y, φ, 10, cmap="jet", vmin=vmin,vmax=vmax)
+    gca().invert_yaxis()
 end
 
 visualize_potential = visualize_scalar_on_fvm_points
