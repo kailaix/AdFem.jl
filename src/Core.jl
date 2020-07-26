@@ -1209,6 +1209,7 @@ Here `K` is a vector with length $4mn$ (defined on Gauss points).
 Returns a $(m+1)(n+1)\times (m+1)(n+1)$ sparse matrix. 
 """
 function compute_fem_laplace_matrix1(K::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    @assert length(K)==4*m*n
     Knew = zeros(4m*n, 2, 2)
     for i = 1:4*m*n 
         Knew[i,:,:] = K[i] * diagm(0=>ones(2)) 
