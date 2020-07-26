@@ -59,6 +59,8 @@ fem_impose_Dirichlet_boundary_condition1
 
 
 ## Visualization 
+In `visualize_scalar_on_XXX_points`, the first argument is the data matrix. When the data matrix is 1D, one snapshot is plotted. When the data matrix is 2D, it is understood as multiple snapshots at different time steps (each row is a snapshot). When the data matrix is 3D, it is understood as `time step × height × width`. 
+
 ```@docs
 visualize_pressure
 visualize_displacement
