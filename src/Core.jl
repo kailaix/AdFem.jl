@@ -1246,7 +1246,7 @@ Computes the coefficient matrix for
 
 Here
 
-$$ \mathbf{u}  = \begin{bmatrix} u \\ v \end{bmatrix}$$
+$$\mathbf{u}  = \begin{bmatrix} u \\ v \end{bmatrix}$$
 
 and 
 
