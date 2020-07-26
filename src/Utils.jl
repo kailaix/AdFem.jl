@@ -344,6 +344,7 @@ end
 
 @doc raw"""
     fem_to_gauss_points(u::PyOject, m::Int64, n::Int64, h::Float64)
+    fem_to_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
 
 Given a vector of length $(m+1)(n+1)$, `u`, returns the function values at each Gauss point. 
 
@@ -354,4 +355,25 @@ function fem_to_gauss_points(u::PyObject, m::Int64, n::Int64, h::Float64)
     u,m_,n_,h = convert_to_tensor(Any[u,m,n,h], [Float64,Int64,Int64,Float64])
     out = fem_to_gauss_points_(u,m_,n_,h)
     out = set_shape(out, (4*m*n,))
+end
+
+function fem_to_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64)
+    rhs = zeros(4*m*n)
+    for j = 1:n
+        for i = 1:m
+            cell_idx = (j-1)*m + i 
+            uA = u[[(j-1)*(m+1)+i; (j-1)*(m+1)+i+1; j*(m+1)+i; j*(m+1)+i+1]]
+            for q = 1:2
+                for p = 1:2
+                    ξ = pts[p]; η = pts[q]
+                    k = (cell_idx-1)*4 + 2*(q-1) + p
+                    rhs[k] = uA[1] * (1-ξ)*(1-η) +
+                             uA[2] * ξ*(1-η) +
+                             uA[3] * (1-ξ)*η +
+                             uA[4] *  ξ  * η
+                end
+            end
+        end
+    end
+    return rhs
 end
