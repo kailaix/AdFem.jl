@@ -157,3 +157,13 @@ end
     out_ = M * u 
     @test run(sess, out)≈out_
 end 
+
+@testset "compute_interaction_term" begin 
+    m = 10
+    n = 20
+    h = 0.1
+    p = rand(m*n)
+    t1 = compute_interaction_term(p, m, n, h)
+    t2 = compute_interaction_term(constant(p), m, n, h)
+    @test run(sess, t2)≈t1
+end

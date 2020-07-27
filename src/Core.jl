@@ -1341,3 +1341,44 @@ function eval_grad_on_gauss_pts(u::Array{Float64,1}, m::Int64, n::Int64, h::Floa
     end
     return ret 
 end
+
+@doc raw"""
+    compute_interaction_term(p::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+
+Computes the FVM-FEM interaction term 
+
+```math
+ \begin{bmatrix} \int p \frac{\partial \delta u}{\partial x} dx \\  \int p \frac{\partial \delta v}{\partial y}  dy \end{bmatrix} 
+```
+
+The input is a vector of length $mn$. The output is a $2(m+1)(n+1)$ vector. 
+"""
+function compute_interaction_term(pres::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+    @assert length(pres)==m*n 
+    rhs = zeros((m+1)*(n+1)*2)
+    B = zeros(4, 2, 8)
+    for i = 1:2
+        for j = 1:2
+            η = pts[i]; ξ = pts[j]
+            B[(j-1)*2+i,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η 0.0 0.0 0.0 0.0
+                0.0 0.0 0.0 0.0 -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+            ]
+        end
+    end
+    for i = 1:m 
+        for j = 1:n 
+            pA = pres[(j-1)*m+i]
+            for p = 1:2
+                for q = 1:2
+                    idx1 = [(j-1)*(m+1)+i;(j-1)*(m+1)+i+1;j*(m+1)+i;j*(m+1)+i+1]
+                    idx2 = idx1 .+ (m+1)*(n+1)
+                    Bk = B[(q-1)*2+p,:,:]
+                    rhs[idx1] += B[(q-1)*2+p,1,1:4] * pA * h * h * 0.25
+                    rhs[idx2] += B[(q-1)*2+p,2,5:end] * pA * h * h * 0.25
+                end
+            end
+        end
+    end
+    rhs
+end
