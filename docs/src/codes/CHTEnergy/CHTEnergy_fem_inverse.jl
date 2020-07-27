@@ -39,9 +39,6 @@ n = 20
 h = 1/n 
 
 #---------------------------------------------
-# discretized governing equation 
-#  J * u^{n+1} - J * u^n = - v ⋅ grad u + K * u^{n+1} + F^{n+1}
-#---------------------------------------------
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
 T0 = @. T_exact(x, y)
