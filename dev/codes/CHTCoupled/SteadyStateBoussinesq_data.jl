@@ -44,7 +44,7 @@ function ffunc_(x, y)
 end
 
 function gfunc_(x, y)
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)    
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x)*(1 - y) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)
 end
 
 function hfunc_(x,y)
@@ -102,7 +102,13 @@ function compute_residual(S)
     g3 = -interaction[(m+1)*(n+1)+1:end]    
     g4 = Laplace*v 
     g5 = -F2
-    G = g1 + g2 + g3 + g4 + g5
+    T_gauss = fem_to_gauss_points(T, m, n, h)
+    buoyance_term = -compute_fem_source_term1(T_gauss, m, n, h)
+
+    G = g1 + g2 + g3 + g4 + g5 + buoyance_term
+
+    
+
 
     H0 = -B * [u;v] + H
 
@@ -164,18 +170,21 @@ function compute_jacobian(S)
     DV_TY = compute_fem_mass_matrix1(DV_TY, m, n, h)
     # DU_TX = SparseTensor(spzeros((m+1)*(n+1),(m+1)*(n+1)))
     # DV_TY = SparseTensor(spzeros((m+1)*(n+1),(m+1)*(n+1)))
-         
+    T_mat = -constant(compute_fem_mass_matrix1(m, n, h))
+    T_mat = [SparseTensor(spzeros((m+1)*(n+1), (m+1)*(n+1))); T_mat]
+
     J0 = [Fu Fv
           Gu Gv]
-    J = [J0 -B'
-        -B spdiag(zeros(size(B,1)))]
+    J = [J0 -B' T_mat
+        -B spdiag(zeros(size(B,1))) SparseTensor(spzeros(m*n, (m+1)*(n+1)))]
+    
 
     N = 2*(m+1)*(n+1) + m*n 
-    J = [J SparseTensor(spzeros(N,(m+1)*(n+1)))
-        DU_TX DV_TY SparseTensor(spzeros((m+1)*(n+1), m*n)) M]
+    J = [J 
+        [DU_TX DV_TY SparseTensor(spzeros((m+1)*(n+1), m*n)) M]]
 end
 
-NT = 10    # number of iterations for Newton's method
+NT = 5    # number of iterations for Newton's method
 
 bd = bcnode("all", m, n, h)
 bd = [bd; bd .+ (m+1)*(n+1); 

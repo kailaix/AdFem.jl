@@ -55,16 +55,39 @@ function heat_source_func(x, y)
     x^2*y*(x - 1)^2*(y - 1)*(2*y - 1) + x*y^2*(x - 1)*(2*x - 1)*(y - 1)^2 - 2.0*x*(x - 1) - 2.0*y*(y - 1)
 end
 
+function q1_func_(t, x, y)
+    -1.0*x*y*(1 - x)*(1 - y)
+end
+
+
+function q2_func_(t, x, y)
+    -1.0*x*y*(1 - x)*(1 - y)
+end
+
 using LinearAlgebra
 using MAT
 using PoreFlow
 using PyPlot
 using SparseArrays
 
-m = 20
-n = 20
+m = 50
+n = 50
 h = 1/n
 nu = 0.01
+NT_transport = 500
+Δt = 1/NT_transport
+κ1 = 1.0 
+κ2 = 1.0 
+
+NT = 5    # number of iterations for Newton's method
+
+bd = bcnode("all", m, n, h)
+bd = [bd; bd .+ (m+1)*(n+1); 
+    2*(m+1)*(n+1)+(n-1)*m+1:2*(m+1)*(n+1)+(n-1)*m+2;
+    (2*(m+1)*(n+1)+m*n) .+ bd] 
+# only apply Dirichlet to velocity; set left bottom two points to zero to fix rank deficient problem for pressure
+
+
 
 
 F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc_, m, n, h), m, n, h)
@@ -175,14 +198,6 @@ function compute_jacobian(S)
         DU_TX DV_TY SparseTensor(spzeros((m+1)*(n+1), m*n)) M]
 end
 
-NT = 10    # number of iterations for Newton's method
-
-bd = bcnode("all", m, n, h)
-bd = [bd; bd .+ (m+1)*(n+1); 
-    2*(m+1)*(n+1)+(n-1)*m+1:2*(m+1)*(n+1)+(n-1)*m+2;
-    (2*(m+1)*(n+1)+m*n) .+ bd] 
-# only apply Dirichlet to velocity; set left bottom two points to zero to fix rank deficient problem for pressure
-
 
 function solve_steady_cavityflow_one_step(S)
     residual = compute_residual(S)
@@ -198,7 +213,6 @@ function solve_steady_cavityflow_one_step(S)
     S_new = S - d
     return S_new
 end
-
 
 function condition(i, S_arr)
     i <= NT + 1
@@ -246,83 +260,110 @@ i = constant(2, dtype=Int32)
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n+(m+1)*(n+1)))
 
+
+u = S[NT+1, 1:(m+1)*(n+1)]
+v = S[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)]
+p = S[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n]
+T = S[NT+1, 2*(m+1)*(n+1)+m*n+1:end]
+
+Q1 = zeros(NT_transport, (m+1)*(n+1))
+Q2 = zeros(NT_transport, (m+1)*(n+1))
+for i = 1:NT_transport
+    t = i*Δt
+    Q1[i, :] = eval_f_on_fem_pts((x,y)->q1_func_(t, x, y), m, n, h)
+    Q2[i, :] = eval_f_on_fem_pts((x,y)->q2_func_(t, x, y), m, n, h)
+end
+Q1 = constant(Q1)
+Q2 = constant(Q2)
+
+function solve_transport_step(w1, w2, q1, q2)
+    w1 = (1/Δt * w1 + κ1 * u + q1) / (1/Δt + κ1)
+    w2 = (1/Δt * w2 + κ2 * v + q2) / (1/Δt + κ2)
+    w1, w2
+end
+
+function transport_condition(i, w1_arr, w2_arr)
+    i <= NT_transport
+end
+
+function transport_body(i, w1_arr, w2_arr)
+    w1 = read(w1_arr, i)
+    w2 = read(w2_arr, i)
+    q1 = Q1[i]
+    q2 = Q2[i]
+    op = tf.print("transport equation, step: ", i)
+    i = bind(i, op)
+    w1, w2 = solve_transport_step(w1, w2, q1, q2)
+    i+1, write(w1_arr, i+1, w1), write(w2_arr, i+1, w2)
+end
+
+i = constant(1, dtype = Int32)
+w1_arr = TensorArray(NT_transport+1)
+w2_arr = TensorArray(NT_transport+1)
+w1_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
+w2_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
+w1_arr = write(w1_arr, 1, w1_0)
+w2_arr = write(w2_arr, 1, w2_0)
+_, w1, w2 = while_loop(transport_condition, transport_body, [i, w1_arr, w2_arr])
+w1, w2 = stack(w1), stack(w2)
+w1 = set_shape(w1, (NT_transport+1, (m+1)*(n+1)))
+w2 = set_shape(w2, (NT_transport+1, (m+1)*(n+1)))
+
+
 sess = Session(); init(sess)
-output = run(sess, S)
+W1, W2, u_, v_, p_ = run(sess, [w1, w2, u, v, p])
 
-# S = output
-# # out_v = output[:, 1:2*(m+1)*(n+1)]
-# # out_p = output[:, 2*(m+1)*(n+1)+1:end]
-
-matwrite("CHTcoupled_data_coupled.mat", 
-    Dict(
-        "V"=>output[end, 1:2*(m+1)*(n+1)]
-    ))
-
-figure(figsize=(25,10))
-subplot(241)
-title("u velocity")
-visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
-subplot(245)
-visualize_scalar_on_fem_points(u0, m, n, h)
-
-subplot(242)
-title("v velocity")
-visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
-subplot(246)
-visualize_scalar_on_fem_points(v0, m, n, h)
-
-subplot(243)
-visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n], m, n, h)
-title("pressure")
-subplot(247)
-visualize_scalar_on_fvm_points(p0, m, n, h)
-title("")
+figure(figsize=(15,5))
+subplot(131)
+visualize_scalar_on_fem_points(W2[end,:], m, n, h)
+title("Numerical")
+subplot(132)
+visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Analytical")
+subplot(133)
+visualize_scalar_on_fem_points(W2[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Difference")
+# visualize_scalar_on_fvm_points(p_, m, n, h)
 
 
+# sess = Session(); init(sess)
+# output = run(sess, S)
 
-subplot(244)
-title("temperature")
-visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end], m, n, h)
-subplot(248)
-visualize_scalar_on_fem_points(t0, m, n, h)
+# # S = output
+# # # out_v = output[:, 1:2*(m+1)*(n+1)]
+# # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
 
-tight_layout()
+# matwrite("CHTcoupled_data_coupled.mat", 
+#     Dict(
+#         "V"=>output[end, 1:2*(m+1)*(n+1)]
+#     ))
 
-# final_u=output[NT+1, 1:(1+m)*(1+n)]
-# final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
-# final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
+# figure(figsize=(25,10))
+# subplot(241)
+# title("u velocity")
+# visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
+# subplot(245)
+# visualize_scalar_on_fem_points(u0, m, n, h)
 
-# u1 = final_u[50*101+1: 50*101+101]
-# u2 = final_u[51:101:end]
+# subplot(242)
+# title("v velocity")
+# visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
+# subplot(246)
+# visualize_scalar_on_fem_points(v0, m, n, h)
 
-# v1 = final_v[50*101+1: 50*101+101]
-# v2 = final_v[51:101:end]
-# xx = 0:0.01:1
+# subplot(243)
+# visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n], m, n, h)
+# title("pressure")
+# subplot(247)
+# visualize_scalar_on_fvm_points(p0, m, n, h)
+# title("")
 
-# figure();plot(xx, u1);
-# savefig("u_horizontal.png")
 
-# figure();plot(xx, u2);
-# savefig("u_vertical.png")
 
-# figure();plot(xx, v1);
-# savefig("v_horizontal.png")
+# subplot(244)
+# title("temperature")
+# visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end], m, n, h)
+# subplot(248)
+# visualize_scalar_on_fem_points(t0, m, n, h)
 
-# figure();plot(xx, v2);
-# savefig("v_vertical.png")
-
-# p1 = final_p[49*100+1: 49*100+100]
-# p2 = final_p[50*100+1: 50*100+100]
-# p3 = 0.5 * (p1 .+ p2)
-
-# p4 = final_p[50:100:end]
-# p5 = final_p[51:100:end]
-# p6 = 0.5 * (p4 .+ p5)
-
-# xx = 0.005:0.01:1
-
-# figure();plot(xx, p3);
-# savefig("p_horizontal.png")
-
-# figure();plot(xx, p6);
-# savefig("p_vertical.png")
+# tight_layout()
