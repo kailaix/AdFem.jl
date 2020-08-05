@@ -129,7 +129,7 @@ NT = 5
 
 bd = bcnode("all", m, n, h)
 # bd = [bd; bd .+ (m+1)*(n+1); ((1:m) .+ 2(m+1)*(n+1))]
-bd = [bd; bd .+ (m+1)*(n+1); 2*(m+1)*(n+1)+(n-1)*m+1] # only apply Dirichlet to velocity
+bd = [bd; bd .+ (m+1)*(n+1); 2*(m+1)*(n+1)+(n-1)*m+1:2*(m+1)*(n+1)+(n-1)*m+2] # only apply Dirichlet to velocity
 
 
 function solve_steady_cavityflow_one_step(S)

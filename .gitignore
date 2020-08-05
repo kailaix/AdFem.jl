@@ -61,3 +61,5 @@ test/U_total/*.png
 .vscode/
 !research/viscoelasticity_experimental_data
 docs/src/codes/*.mat
+*.png
+*.mat

@@ -1,4 +1,4 @@
-# Navier-Stokes equations
+# Steady-state Navier-Stokes equations
 
 The Navier-Stokes equations describe the motion of viscous flow formed by a fluid material. Assume the material has density $\rho$, dynamic viscosity $\mu$, velocity $\bf u$, pressure $p$, and body accelerations $\bf g$, the Navier-Stokes equations include the the continuity equation, which describes the conservation of mass:
 
@@ -82,5 +82,3 @@ Results of numerical experiments are summarized in the table below. In each case
 |  20 by 20 |     20     |    0.20     |       28       |        0.01       | 0.008823737264381126 |
 |  20 by 20 |     20     |    0.20     |       29       |        0.01       | 0.010599176390172771 |
 |  20 by 20 |     20     |    0.20     |       50       |        0.01       | 0.009202237809712532 |
-| 100 by 100|     20     |      0      |        5       |        0.01       | 0.010000000000000711 |
-| 100 by 100|     20     |    0.01     |        6       |        0.01       | 0.010032512397842351 |

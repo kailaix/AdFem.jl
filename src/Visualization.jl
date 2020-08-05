@@ -259,7 +259,7 @@ end
 
 
 @doc raw"""
-    visualize_potential(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
+    visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
 
 Generates scattered potential animation for the potential $\phi\in \mathbb{R}^{(NT+1)\times n \times m}$.
 """
@@ -313,11 +313,9 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 1}, m::Int64, n::Int6
     ln = pcolormesh(x, y, φ, vmin= vmin, vmax=vmax)
     colorbar()
     # c = contour(φ[1,:,:], 10, cmap="jet", vmin=vmin,vmax=vmax)
-    t = title("t = 0")
     axis("scaled")
     xlabel("x")
     ylabel("y")
-
     ln = gca().pcolormesh(x, y, φ, vmin= vmin, vmax=vmax)
     c = gca().contour(x, y, φ, 10, cmap="jet", vmin=vmin,vmax=vmax)
     gca().invert_yaxis()
@@ -502,8 +500,8 @@ function visualize_scalar_on_gauss_points(u::Array{Float64,2}, m::Int64, n::Int6
         k = string(i-1)
         k = repeat("0", 3-length(k))*k 
         title("snapshot = $k")
-        xlim(vmin.-h, vmax.+h)
-        ylim(vmin.-h, vmax.+h)
+        xlim(-h, m*h+h)
+        ylim(-h, n*h+h)
         c = contour(x, y, z[i,:,:]', levels, cmap="jet", vmin=vmin, vmax=vmax)
         gca().invert_yaxis()
     end
@@ -532,3 +530,44 @@ function visualize_scalar_on_fem_points(u::Array{Float64,1}, m::Int64, n::Int64,
     gca().invert_yaxis()
     return x, y, z 
 end
+
+
+@doc raw"""
+    visualize_scalar_on_fem_points(u::Array{Float64,2}, m::Int64, n::Int64, h::Float64, args...;kwargs...)
+
+Visualizes the scalar `u` using pcolormesh. Here `u` is a matrix of size $NT \times (m+1)(n+1)$ ($NT$ is the number of time steps) and the values are defined on the FEM points.
+"""
+function visualize_scalar_on_fem_points(u::Array{Float64,2}, m::Int64, 
+        n::Int64, h::Float64, args...;kwargs...)
+    z = zeros(size(u,1), m+1, n+1)
+    for i = 1:size(u,1)
+        z[i,:,:] = reshape(u[i,:], m+1, n+1)
+    end
+    x = Array((0:m)*h)
+    y = Array((0:n)*h)
+    vmin = mean(z) - 2std(z)
+    vmax = mean(z) + 2std(z)
+    pcolormesh(x, y, z[1,:,:]', vmin=vmin, vmax=vmax,rasterized=true, args...; kwargs...)
+    t = title("snapshot = 000")
+    colorbar()
+    axis("scaled")
+    xlabel("x")
+    ylabel("y")
+    levels = LinRange(vmin, vmax, 10) |> Array
+    c = contour(x, y, z[1,:,:]', levels, cmap="jet", vmin=vmin, vmax=vmax)
+    gca().invert_yaxis()
+
+    function update(i)
+        gca().clear()
+        pcolormesh(x, y, z[i,:,:]', vmin=vmin, vmax=vmax,rasterized=true, args...; kwargs...)
+        k = string(i-1)
+        k = repeat("0", 3-length(k))*k 
+        title("snapshot = $k")
+        xlim(-h, m*h+h)
+        ylim(-h, n*h+h)
+        c = contour(x, y, z[i,:,:]', levels, cmap="jet", vmin=vmin, vmax=vmax)
+        gca().invert_yaxis()
+    end
+    animate(update, 2:size(u,1))
+end
+

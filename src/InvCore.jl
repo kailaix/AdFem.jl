@@ -1,7 +1,7 @@
 export compute_strain_energy_term1, compute_space_varying_tangent_elasticity_matrix,
     compute_fvm_advection_term, compute_fvm_tpfa_matrix, compute_fvm_advection_matrix,
     compute_fem_advection_matrix1, compute_fem_advection_matrix,
-    compute_interaction_term
+    compute_interaction_term, compute_fem_laplace_term1
 
 function fem_impose_coupled_Dirichlet_boundary_condition(A::SparseTensor, bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
     op = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow", "dirichlet_bd", multiple=true)
@@ -451,13 +451,7 @@ end
 @doc raw"""
     compute_interaction_term(p::PyObject, m::Int64, n::Int64, h::Float64)
 
-Computes the FVM-FEM interaction term 
-
-```math
- \begin{bmatrix} \int p \frac{\partial \delta u}{\partial x} dx \\  \int p \frac{\partial \delta v}{\partial y}  dy \end{bmatrix} 
-```
-
-The input is a vector of length $mn$. The output is a $2(m+1)(n+1)$ vector. 
+A differentiable kernel.
 """
 function compute_interaction_term(p::Union{Array{Float64,1}, PyObject}, m::Int64, n::Int64, h::Float64)
     @assert length(p) == m*n
@@ -466,3 +460,44 @@ function compute_interaction_term(p::Union{Array{Float64,1}, PyObject}, m::Int64
     out = interaction_term_(p,m_,n_,h)
     set_shape(out, (2*(m+1)*(n+1), ))
 end
+
+@doc raw"""
+    compute_fem_laplace_term1(u::PyObject,κ::PyObject,m::Int64,n::Int64,h::Float64)
+    compute_fem_laplace_term1(u::PyObject,m::Int64,n::Int64,h::Float64)
+    compute_fem_laplace_term1(u::Array{Float64},κ::PyObject, m::Int64,n::Int64,h::Float64)
+    compute_fem_laplace_term1(u::PyObject,κ::Array{Float64}, m::Int64,n::Int64,h::Float64) 
+
+Computes the Laplace term for a scalar function $u$
+
+```math
+\int_\Omega K\nabla u \cdot \nabla \nabla(\delta u) \mathrm{d}x
+```
+
+Here `κ` is a vector of length $4mn$, and `u` is a vector of length $(m+1)(n+1)$. 
+
+When `κ` is not provided, the following term is calculated:
+
+```math
+\int_\Omega \nabla u \cdot \nabla \nabla(\delta u) \mathrm{d}x
+```
+"""
+function compute_fem_laplace_term1(u::PyObject,κ::PyObject,m::Int64,n::Int64,h::Float64)
+    @assert length(u) == (m+1)*(n+1) && length(size(u))==1
+    @assert length(κ) == 4*m*n && length(size(κ))==1
+    fem_laplace_term_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_laplace_term")
+    u,kappa,m_,n_,h = convert_to_tensor(Any[u,κ,m,n,h], [Float64,Float64,Int64,Int64,Float64])
+    out = fem_laplace_term_(u,kappa,m_,n_,h)
+    set_shape(out, ((m+1)*(n+1), ))
+end
+
+function compute_fem_laplace_term1(u::PyObject,m::Int64,n::Int64,h::Float64)
+    κ = constant(ones(4*m*n))
+    compute_fem_laplace_matrix1(u, κ, m, n, h)
+end
+
+compute_fem_laplace_term1(u::Array{Float64},κ::PyObject, m::Int64,n::Int64,h::Float64) = 
+    compute_fem_laplace_term1(constant(u), κ, m, n, h)
+
+compute_fem_laplace_term1(u::PyObject,κ::Array{Float64}, m::Int64,n::Int64,h::Float64) = 
+    compute_fem_laplace_term1(u, constant(κ), m, n, h)
+    
