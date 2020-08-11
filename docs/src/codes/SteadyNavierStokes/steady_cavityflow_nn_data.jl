@@ -218,21 +218,21 @@ matwrite("steady_cavity_data.mat",
         "V"=>output
     ))
 
-figure(figsize=(20,10))
-subplot(321)
-visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
-subplot(322)
-visualize_scalar_on_fem_points(u0, m, n, h)
+# figure(figsize=(20,10))
+# subplot(321)
+# visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
+# subplot(322)
+# visualize_scalar_on_fem_points(u0, m, n, h)
 
-subplot(323)
-visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
-subplot(324)
-visualize_scalar_on_fem_points(v0, m, n, h)
+# subplot(323)
+# visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
+# subplot(324)
+# visualize_scalar_on_fem_points(v0, m, n, h)
 
-subplot(325)
-visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:end], m, n, h)
-subplot(326)
-visualize_scalar_on_fvm_points(p0, m, n, h)
+# subplot(325)
+# visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:end], m, n, h)
+# subplot(326)
+# visualize_scalar_on_fvm_points(p0, m, n, h)
 
 ####################################################################################
 
@@ -250,30 +250,30 @@ visualize_scalar_on_fvm_points(p0, m, n, h)
 ####################################################################################
 
 
-final_u=output[NT+1, 1:(1+m)*(1+n)]
-final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
-final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
+# final_u=output[NT+1, 1:(1+m)*(1+n)]
+# final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
+# final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
 
-u1 = final_u[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
-u2 = final_u[Int(n/2)+1:m+1:end]
+# u1 = final_u[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+# u2 = final_u[Int(n/2)+1:m+1:end]
 
-v1 = final_v[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
-v2 = final_v[Int(n/2)+1:m+1:end]
-xx = 0:h:1
+# v1 = final_v[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+# v2 = final_v[Int(n/2)+1:m+1:end]
+# xx = 0:h:1
 
 
 
-figure();plot(xx, u1);#plot(xx, u12);
-savefig("u_horizontal.png")
+# figure();plot(xx, u1);#plot(xx, u12);
+# savefig("u_horizontal.png")
 
-figure();plot(xx, u2);#plot(xx, u22);
-savefig("u_vertical.png")
+# figure();plot(xx, u2);#plot(xx, u22);
+# savefig("u_vertical.png")
 
-figure();plot(xx, v1);#plot(xx, v12);
-savefig("v_horizontal.png")
+# figure();plot(xx, v1);#plot(xx, v12);
+# savefig("v_horizontal.png")
 
-figure();plot(xx, v2);#plot(xx, v22);
-savefig("v_vertical.png")
+# figure();plot(xx, v2);#plot(xx, v22);
+# savefig("v_vertical.png")
 
 
 ####################################################################################
@@ -291,18 +291,18 @@ savefig("v_vertical.png")
 
 
 
-p1 = final_p[(Int(n/2)-1)*m+1: (Int(n/2)-1)*m+m]
-p2 = final_p[Int(n/2)*m+1: Int(n/2)*m+m]
-p3 = 0.5 * (p1 .+ p2)
+# p1 = final_p[(Int(n/2)-1)*m+1: (Int(n/2)-1)*m+m]
+# p2 = final_p[Int(n/2)*m+1: Int(n/2)*m+m]
+# p3 = 0.5 * (p1 .+ p2)
 
-p4 = final_p[Int(n/2):m:end]
-p5 = final_p[Int(n/2)+1:m:end]
-p6 = 0.5 * (p4 .+ p5)
+# p4 = final_p[Int(n/2):m:end]
+# p5 = final_p[Int(n/2)+1:m:end]
+# p6 = 0.5 * (p4 .+ p5)
 
-xx = 0.005:h:1
+# xx = 0.005:h:1
 
-figure();plot(xx, p3);#plot(xx, p32);
-savefig("p_horizontal.png")
+# figure();plot(xx, p3);#plot(xx, p32);
+# savefig("p_horizontal.png")
 
-figure();plot(xx, p6);#plot(xx, p62);
-savefig("p_vertical.png")
+# figure();plot(xx, p6);#plot(xx, p62);
+# savefig("p_vertical.png")

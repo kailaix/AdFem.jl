@@ -1,4 +1,4 @@
-reset_default_graph()
+# reset_default_graph()
 # using SymPy 
 
 # x, y = @vars x y
@@ -203,6 +203,52 @@ end
 # end
 
 
+function plot_velocity_pressure_viscosity(k) 
+
+    figure(figsize=(14,4));
+    subplot(131)
+    visualize_scalar_on_fem_points(S_true[end, 1:(m+1)*(n+1)], m, n, h); title("velocity x data")
+    subplot(132)
+    visualize_scalar_on_fem_points(run(sess, S[end,1:(m+1)*(n+1)]), m, n, h); title("velocity x prediction")
+    subplot(133)
+    visualize_scalar_on_fem_points(S_true[end, 1:(m+1)*(n+1)] - run(sess, S[end,1:(m+1)*(n+1)]), m, n, h); title("velocity x error")
+    savefig("figures/steady_xy_nn_velox$k.png")
+    # savefig("steady_xy_ones_velox.png")
+
+    figure(figsize=(14,4));
+    subplot(131)
+    visualize_scalar_on_fem_points(S_true[end, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h); title("velocity y data")
+    subplot(132)
+    visualize_scalar_on_fem_points(run(sess, S[end,(m+1)*(n+1)+1:2*(m+1)*(n+1)]), m, n, h); title("velocity y prediction")
+    subplot(133)
+    visualize_scalar_on_fem_points(S_true[end, (m+1)*(n+1)+1:2*(m+1)*(n+1)] - run(sess, S[end,(m+1)*(n+1)+1:2*(m+1)*(n+1)]), m, n, h); title("velocity y error")
+    savefig("figures/steady_xy_nn_veloy$k.png")
+    # savefig("steady_xy_ones_veloy.png")
+
+
+    figure(figsize=(14,4));
+    subplot(131)
+    visualize_scalar_on_fvm_points(S_true[end, 2*(m+1)*(n+1)+1:end], m, n, h); title("pressure data")
+    subplot(132)
+    visualize_scalar_on_fvm_points(run(sess, S[end,2*(m+1)*(n+1)+1:end]), m, n, h); title("pressure prediction")
+    subplot(133)
+    visualize_scalar_on_fvm_points(S_true[end, 2*(m+1)*(n+1)+1:end] - run(sess, S[end,2*(m+1)*(n+1)+1:end]), m, n, h); title("pressure difference")
+    savefig("figures/steady_xy_nn_pres$k.png")
+    # savefig("steady_xy_ones_pres.png")
+
+
+    figure(figsize=(14,4));
+    subplot(131)
+    visualize_scalar_on_fvm_points(nu_exact.(x,y), m, n, h); title("viscosity exact")
+    subplot(132)
+    visualize_scalar_on_gauss_points(run(sess, nu_gauss), m, n, h); title("viscosity prediction")
+    subplot(133)
+    visualize_scalar_on_fvm_points(nu_exact.(x,y).-run(sess, nu_gauss)[1:4:end], m, n, h); title("viscosity difference")
+    savefig("figures/steady_xy_nn_visc$k.png")
+    # savefig("steady_xy_ones_visc.png")
+
+end
+
 
 
 S_arr = TensorArray(NT+1)
@@ -222,51 +268,16 @@ loss = loss * 1e10
 sess = Session(); init(sess)
 @info run(sess, loss)
 
-max_iter = 2000
-loss_ = BFGS!(sess, loss, max_iter)
-figure(); semilogy(loss_); title("loss vs. iteration")
-savefig("steady_xy_loss.png")
+max_iter = 1000
+
+# ADCME.load(sess, "nn$k.mat")
+
+for k = 1:100
+    loss_ = BFGS!(sess, loss, max_iter)
+    matwrite("figures/loss$k.mat", Dict("L"=>loss_))
+    close("all"); semilogy(loss_); title("loss vs. iteration")
+    savefig("figures/steady_xy_loss$k.png")
+    plot_velocity_pressure_viscosity(k)
+    ADCME.save(sess, "figures/nn$k.mat")
+end
 # savefig("steady_xy_ones_loss.png")
-
-
-figure(figsize=(14,4));
-subplot(131)
-visualize_scalar_on_fem_points(S_true[end, 1:(m+1)*(n+1)], m, n, h); title("velocity x data")
-subplot(132)
-visualize_scalar_on_fem_points(run(sess, S[end,1:(m+1)*(n+1)]), m, n, h); title("velocity x prediction")
-subplot(133)
-visualize_scalar_on_fem_points(S_true[end, 1:(m+1)*(n+1)] - run(sess, S[end,1:(m+1)*(n+1)]), m, n, h); title("velocity x error")
-savefig("steady_xy_nn_velox.png")
-# savefig("steady_xy_ones_velox.png")
-
-figure(figsize=(14,4));
-subplot(131)
-visualize_scalar_on_fem_points(S_true[end, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h); title("velocity y data")
-subplot(132)
-visualize_scalar_on_fem_points(run(sess, S[end,(m+1)*(n+1)+1:2*(m+1)*(n+1)]), m, n, h); title("velocity y prediction")
-subplot(133)
-visualize_scalar_on_fem_points(S_true[end, (m+1)*(n+1)+1:2*(m+1)*(n+1)] - run(sess, S[end,(m+1)*(n+1)+1:2*(m+1)*(n+1)]), m, n, h); title("velocity y error")
-savefig("steady_xy_nn_veloy.png")
-# savefig("steady_xy_ones_veloy.png")
-
-
-figure(figsize=(14,4));
-subplot(131)
-visualize_scalar_on_fvm_points(S_true[end, 2*(m+1)*(n+1)+1:end], m, n, h); title("pressure data")
-subplot(132)
-visualize_scalar_on_fvm_points(run(sess, S[end,2*(m+1)*(n+1)+1:end]), m, n, h); title("pressure prediction")
-subplot(133)
-visualize_scalar_on_fvm_points(S_true[end, 2*(m+1)*(n+1)+1:end] - run(sess, S[end,2*(m+1)*(n+1)+1:end]), m, n, h); title("pressure difference")
-savefig("steady_xy_nn_pres.png")
-# savefig("steady_xy_ones_pres.png")
-
-
-figure(figsize=(14,4));
-subplot(131)
-visualize_scalar_on_fvm_points(nu_exact.(x,y), m, n, h); title("viscosity exact")
-subplot(132)
-visualize_scalar_on_gauss_points(run(sess, nu_gauss), m, n, h); title("viscosity prediction")
-subplot(133)
-visualize_scalar_on_fvm_points(nu_exact.(x,y).-run(sess, nu_gauss)[1:4:end], m, n, h); title("viscosity difference")
-savefig("steady_xy_nn_visc.png")
-# savefig("steady_xy_ones_visc.png")
