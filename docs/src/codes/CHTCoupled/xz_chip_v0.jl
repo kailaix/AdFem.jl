@@ -19,7 +19,7 @@ k_mold = 0.014531
 k_chip = 2.60475
 k_air = 0.64357
 nu = 0.47893 # equal to 1/Re
-power_source = 82.46295 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
+power_source = 82.46295 / 4.0 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
 
 u_std = 0.001
@@ -42,9 +42,9 @@ for i = 1:(m+1)
     for j = 1:(n+1)
         if (i-1)*h >= solid_left-1e-9 && (i-1)*h <= solid_right+1e-9 && (j-1)*h >= solid_top-1e-9 && (j-1)*h <= solid_bottom+1e-9
             # print(i, j)
-            global solid_fem_idx = [solid_fem_idx; j*(m+1)+i]
+            global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
             if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
-                global chip_fem_idx = [chip_fem_idx; j*(m+1)+i]
+                global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
             end
         end
     end
@@ -54,9 +54,9 @@ for i = 1:m
     for j = 1:n
         if (i-1)*h + h/2 >= solid_left-1e-9 && (i-1)*h + h/2 <= solid_right+1e-9 && 
             (j-1)*h + h/2 >= solid_top-1e-9 && (j-1)*h + h/2 <= solid_bottom+1e-9
-            global solid_fvm_idx = [solid_fvm_idx; j*m+i]
+            global solid_fvm_idx = [solid_fvm_idx; (j-1)*m+i]
             if (i-1)*h + h/2 >= chip_left-1e-9 && (i-1)*h + h/2 <= chip_right+1e-9 && (j-1)*h + h/2 >= chip_top-1e-9 && (j-1)*h + h/2<= chip_bottom+1e-9
-                global chip_fvm_idx = [chip_fvm_idx; j*m+i]
+                global chip_fvm_idx = [chip_fvm_idx; (j-1)*m+i]
             end
         end
     end
@@ -268,3 +268,85 @@ print("Solution range:",
 # figure();visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
 # figure();visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);gca().invert_yaxis()
 # figure();visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
+
+####################################################################################
+
+# prev_data = matread("steady_cavity_data.mat")["V"]
+
+# final_u2=prev_data[NT+1, 1:(1+m)*(1+n)]
+# final_v2=prev_data[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
+# final_p2=prev_data[NT+1, 2*(m+1)*(n+1)+1:end]
+
+# u12 = final_u2[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+# u22 = final_u2[Int(n/2)+1:m+1:end]
+
+# v12 = final_v2[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+# v22 = final_v2[Int(n/2)+1:m+1:end]
+####################################################################################
+final_u=output[NT+1, 1:(1+m)*(1+n)] .* u_std
+final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)] .* u_std
+final_p=output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std
+final_t=output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty
+
+u1 = final_u[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+u2 = final_u[Int(n/2)+1:m+1:end]
+
+v1 = final_v[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+v2 = final_v[Int(n/2)+1:m+1:end]
+
+t1 = final_t[Int(n/2)*(m+1)+1: Int(n/2)*(m+1)+m+1]
+t2 = final_t[Int(n/2)+1:m+1:end]
+xx = 0:h:1
+xx = xx .* 0.0305
+
+
+
+figure();plot(xx, u1);#plot(xx, u12);
+savefig("u_horizontal.png")
+
+figure();plot(xx, u2);#plot(xx, u22);
+savefig("u_vertical.png")
+
+figure();plot(xx, v1);#plot(xx, v12);
+savefig("v_horizontal.png")
+
+figure();plot(xx, v2);#plot(xx, v22);
+savefig("v_vertical.png")
+
+figure();plot(xx, t1);#plot(xx, t12);
+savefig("t_horizontal.png")
+
+figure();plot(xx, t2);#plot(xx, t22);
+savefig("t_vertical.png")
+
+####################################################################################
+
+# p12 = final_p2[(Int(n/2)-1)*m+1: (Int(n/2)-1)*m+m]
+# p22 = final_p2[Int(n/2)*m+1: Int(n/2)*m+m]
+# p32 = 0.5 * (p12 .+ p22)
+
+# p42 = final_p2[Int(n/2):m:end]
+# p52 = final_p2[Int(n/2)+1:m:end]
+# p62 = 0.5 * (p42 .+ p52)
+
+
+####################################################################################
+
+
+
+p1 = final_p[(Int(n/2)-1)*m+1: (Int(n/2)-1)*m+m]
+p2 = final_p[Int(n/2)*m+1: Int(n/2)*m+m]
+p3 = 0.5 * (p1 .+ p2)
+
+p4 = final_p[Int(n/2):m:end]
+p5 = final_p[Int(n/2)+1:m:end]
+p6 = 0.5 * (p4 .+ p5)
+
+xx = h/2 :h:1
+xx = xx .* 0.0305
+
+figure();plot(xx, p3);#plot(xx, p32);
+savefig("p_horizontal.png")
+
+figure();plot(xx, p6);#plot(xx, p62);
+savefig("p_vertical.png")

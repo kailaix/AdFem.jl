@@ -46,9 +46,9 @@ for i = 1:(m+1)
     for j = 1:(n+1)
         if (i-1)*h >= solid_left-1e-9 && (i-1)*h <= solid_right+1e-9 && (j-1)*h >= solid_top-1e-9 && (j-1)*h <= solid_bottom+1e-9
             # print(i, j)
-            global solid_fem_idx = [solid_fem_idx; j*(m+1)+i]
+            global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
             if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
-                global chip_fem_idx = [chip_fem_idx; j*(m+1)+i]
+                global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
             end
         end
     end
@@ -58,9 +58,9 @@ for i = 1:m
     for j = 1:n
         if (i-1)*h + h/2 >= solid_left-1e-9 && (i-1)*h + h/2 <= solid_right+1e-9 && 
             (j-1)*h + h/2 >= solid_top-1e-9 && (j-1)*h + h/2 <= solid_bottom+1e-9
-            global solid_fvm_idx = [solid_fvm_idx; j*m+i]
+            global solid_fvm_idx = [solid_fvm_idx; (j-1)*m+i]
             if (i-1)*h + h/2 >= chip_left-1e-9 && (i-1)*h + h/2 <= chip_right+1e-9 && (j-1)*h + h/2 >= chip_top-1e-9 && (j-1)*h + h/2<= chip_bottom+1e-9
-                global chip_fvm_idx = [chip_fvm_idx; j*m+i]
+                global chip_fvm_idx = [chip_fvm_idx; (j-1)*m+i]
             end
         end
     end
@@ -69,7 +69,7 @@ end
 # initialize space varying k and heat source
 
 xy = fem_nodes(m, n, h)
-chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 1]
+chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip = @. k_nn(chip_x, chip_y); k_chip=stack(k_chip)
 
 k_fem = k_air * constant(ones((m+1)*(n+1)))
@@ -254,7 +254,7 @@ loss = mean((V_computed[idx] .- observed_data)^2)
 loss = loss * 1e10
 # ---------------------------------------------------
 # create a session and run 
-max_iter = 100
+max_iter = 15
 sess = Session(); init(sess)
 loss_ = BFGS!(sess, loss, max_iter)
 figure(); semilogy(loss_); savefig("xzchipv0_nn_loss.png")
@@ -272,3 +272,5 @@ figure(); semilogy(loss_); savefig("xzchipv0_nn_loss.png")
 # visualize_scalar_on_fem_points(k0.-run(sess, k), m, n, h); title("conductivity difference")
 # savefig("xzchipv0_k.png")
 
+# xx = chip_left : h : chip_right
+# yy = chip_top : h : chip_bottom

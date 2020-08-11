@@ -42,9 +42,9 @@ for i = 1:(m+1)
     for j = 1:(n+1)
         if (i-1)*h >= solid_left-1e-9 && (i-1)*h <= solid_right+1e-9 && (j-1)*h >= solid_top-1e-9 && (j-1)*h <= solid_bottom+1e-9
             # print(i, j)
-            global solid_fem_idx = [solid_fem_idx; j*(m+1)+i]
+            global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
             if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
-                global chip_fem_idx = [chip_fem_idx; j*(m+1)+i]
+                global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
             end
         end
     end
@@ -54,9 +54,9 @@ for i = 1:m
     for j = 1:n
         if (i-1)*h + h/2 >= solid_left-1e-9 && (i-1)*h + h/2 <= solid_right+1e-9 && 
             (j-1)*h + h/2 >= solid_top-1e-9 && (j-1)*h + h/2 <= solid_bottom+1e-9
-            global solid_fvm_idx = [solid_fvm_idx; j*m+i]
+            global solid_fvm_idx = [solid_fvm_idx; (j-1)*m+i]
             if (i-1)*h + h/2 >= chip_left-1e-9 && (i-1)*h + h/2 <= chip_right+1e-9 && (j-1)*h + h/2 >= chip_top-1e-9 && (j-1)*h + h/2<= chip_bottom+1e-9
-                global chip_fvm_idx = [chip_fvm_idx; j*m+i]
+                global chip_fvm_idx = [chip_fvm_idx; (j-1)*m+i]
             end
         end
     end

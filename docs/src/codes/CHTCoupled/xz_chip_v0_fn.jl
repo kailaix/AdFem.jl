@@ -5,7 +5,7 @@ using PyPlot
 using SparseArrays
 
 function k_exact(x, y)
-    2.5 + 100000 * (x - 0.5)^3 / (1 + y^2)
+    3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
 end
 
 # geometry setup in domain [0,1]^2
@@ -35,7 +35,6 @@ n = 200
 h = 1/n
 NT = 5    # number of iterations for Newton's method, 8 is good for m=400
 
-
 # compute solid indices and chip indices
 solid_fem_idx = Array{Int64, 1}([])
 solid_fvm_idx = Array{Int64, 1}([])
@@ -46,9 +45,9 @@ for i = 1:(m+1)
     for j = 1:(n+1)
         if (i-1)*h >= solid_left-1e-9 && (i-1)*h <= solid_right+1e-9 && (j-1)*h >= solid_top-1e-9 && (j-1)*h <= solid_bottom+1e-9
             # print(i, j)
-            global solid_fem_idx = [solid_fem_idx; j*(m+1)+i]
+            global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
             if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
-                global chip_fem_idx = [chip_fem_idx; j*(m+1)+i]
+                global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
             end
         end
     end
@@ -58,9 +57,9 @@ for i = 1:m
     for j = 1:n
         if (i-1)*h + h/2 >= solid_left-1e-9 && (i-1)*h + h/2 <= solid_right+1e-9 && 
             (j-1)*h + h/2 >= solid_top-1e-9 && (j-1)*h + h/2 <= solid_bottom+1e-9
-            global solid_fvm_idx = [solid_fvm_idx; j*m+i]
+            global solid_fvm_idx = [solid_fvm_idx; (j-1)*m+i]
             if (i-1)*h + h/2 >= chip_left-1e-9 && (i-1)*h + h/2 <= chip_right+1e-9 && (j-1)*h + h/2 >= chip_top-1e-9 && (j-1)*h + h/2<= chip_bottom+1e-9
-                global chip_fvm_idx = [chip_fvm_idx; j*m+i]
+                global chip_fvm_idx = [chip_fvm_idx; (j-1)*m+i]
             end
         end
     end
@@ -68,7 +67,7 @@ end
 
 # initialize space varying k and heat source
 xy = fem_nodes(m, n, h)
-chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 1]
+chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip = @. k_exact(chip_x, chip_y)
 # k_chip=stack(k_chip)
 
