@@ -3,6 +3,7 @@ using MAT
 using PoreFlow
 using PyPlot
 using SparseArrays
+
 function k_exact(x, y)
     3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
 end
@@ -26,7 +27,7 @@ chip_bottom = 0.505
 k_mold = 0.014531
 k_air = 0.64357
 nu = 0.47893 # equal to 1/Re
-power_source = 0.06189 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
+power_source = 82.46295 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
 
 u_std = 0.001
@@ -36,7 +37,7 @@ T_infty = 300
 m = 200
 n = 200
 h = 1/n
-NT = 7    # number of iterations for Newton's method, 8 is good for m=400
+NT = 5    # number of iterations for Newton's method, 8 is good for m=400
 
 
 # compute solid indices and chip indices
@@ -44,8 +45,6 @@ solid_fem_idx = Array{Int64, 1}([])
 solid_fvm_idx = Array{Int64, 1}([])
 chip_fem_idx = Array{Int64, 1}([])
 chip_fvm_idx = Array{Int64, 1}([])
-chip_fem_top_idx = Array{Int64, 1}([])
-
 
 for i = 1:(m+1)
     for j = 1:(n+1)
@@ -54,9 +53,6 @@ for i = 1:(m+1)
             global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
             if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
                 global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
-            end
-            if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_top+1e-9
-                global chip_fem_top_idx = [chip_fem_top_idx; (j-1)*(m+1)+i]
             end
         end
     end
@@ -79,6 +75,7 @@ end
 xy = fem_nodes(m, n, h)
 chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip = @. k_nn(chip_x, chip_y); k_chip=stack(k_chip)
+k_chip_exact = @. k_exact(chip_x, chip_y)
 
 k_fem = k_air * constant(ones((m+1)*(n+1)))
 k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
@@ -87,8 +84,6 @@ kgauss = fem_to_gauss_points(k_fem, m, n, h)
 
 heat_source_fem = zeros((m+1)*(n+1))
 heat_source_fem[chip_fem_idx] .= power_source #/ h^2
-heat_source_fem[chip_fem_top_idx] .= 82.46295
-
 heat_source_gauss = fem_to_gauss_points(heat_source_fem, m, n, h)
 
 # chip_gauss_idx = [ 4 .* chip_fvm_idx; 4 .* chip_fvm_idx .- 1; 4 .* chip_fvm_idx .- 2; 4 .* chip_fvm_idx .- 3]
@@ -234,6 +229,95 @@ function body(i, S_arr)
     return i+1, S_arr
 end
 
+function plot_velo_pres_temp_cond(k) 
+
+    S_true = V_data
+    S = run(sess, V_computed)
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact x velocity")
+    visualize_scalar_on_fem_points(S_true[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted x velocity")
+    visualize_scalar_on_fem_points(S[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in x velocity")
+    visualize_scalar_on_fem_points(S[1:(m+1)*(n+1)] .* u_std .- S_true[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures/xzchipv0_nn_velox$k.png")
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact y velocity")
+    visualize_scalar_on_fem_points(S_true[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted y velocity")
+    visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in y velocity")
+    visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1: 2*(m+1)*(n+1)]  .* u_std .- S_true[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures/xzchipv0_nn_veloy$k.png")
+
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact pressure")
+    visualize_scalar_on_fvm_points(S_true[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted pressure")
+    visualize_scalar_on_fvm_points(S[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n]  .* p_std, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in pressure")
+    visualize_scalar_on_fvm_points(S[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std .- S_true[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std,  m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures/xzchipv0_nn_pres$k.png")
+
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact temperature")
+    visualize_scalar_on_fem_points(S_true[ 2*(m+1)*(n+1)+m*n+1:end] .* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted temperature")
+    visualize_scalar_on_fem_points(S[ 2*(m+1)*(n+1)+m*n+1:end] .* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in temperature")
+    visualize_scalar_on_fem_points(S[ 2*(m+1)*(n+1)+m*n+1:end]  .* T_infty .- S_true[2*(m+1)*(n+1)+m*n+1:end] .* T_infty, m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures/xzchipv0_nn_temp$k.png")
+
+    figure(figsize=(15,4))
+    subplot(131)
+    xx = chip_left : h : chip_right
+    yy = chip_top : h : chip_bottom
+    k_chip_exact_2d = reshape(k_chip_exact, length(yy), length(xx))
+    pcolor(xx, yy, k_chip_exact_2d)
+    gca().set_aspect(1)
+    colorbar()
+    title("exact chip conductivity")
+    
+
+    subplot(132)
+    k_chip_ = run(sess, k_chip)
+    k_chip_2d = reshape(k_chip_, length(yy), length(xx))
+    pcolor(xx, yy, k_chip_2d)
+    gca().set_aspect(1)
+    colorbar()
+    title("predicted chip conductivity")
+
+    subplot(133)
+    pcolor(xx, yy, k_chip_2d .- k_chip_exact_2d)
+    gca().set_aspect(1)
+    colorbar()
+    title("difference in chip conductivity")
+
+    tight_layout()
+    savefig("xzchip_figures/xzchipv0_nn_cond$k.png")
+
+end
+
 S_arr = TensorArray(NT+1)
 S_arr = write(S_arr, 1, zeros(m*n+3*(m+1)*(n+1)))
 
@@ -264,24 +348,15 @@ loss = mean((V_computed[idx] .- observed_data)^2)
 loss = loss * 1e10
 # ---------------------------------------------------
 # create a session and run 
-max_iter = 10
+max_iter = 1
 sess = Session(); init(sess)
-loss_ = BFGS!(sess, loss, max_iter)
-figure(); semilogy(loss_); savefig("xzchipv0_nn_loss.png")
 
+for k = 1:20
+    loss_ = BFGS!(sess, loss, max_iter)
+    matwrite("xzchip_figures/loss$k.mat", Dict("L"=>loss_))
+    close("all"); semilogy(loss_); title("loss vs. iteration")
+    savefig("xzchip_figures/loss$k.png")
+    plot_velo_pres_temp_cond(k)
+    ADCME.save(sess, "xzchip_figures/nn$k.mat")
+end
 
-# xy = fem_nodes(m, n, h)
-# x, y = xy[:, 1], xy[:, 2]
-# k0 = @. k_exact(x,y)
-
-# figure(figsize=(14,4));
-# subplot(131)
-# visualize_scalar_on_fem_points(k0, m, n, h); title("conductivity exact")
-# subplot(132)
-# visualize_scalar_on_fem_points(run(sess, k), m, n, h); title("conductivity prediction")
-# subplot(133)
-# visualize_scalar_on_fem_points(k0.-run(sess, k), m, n, h); title("conductivity difference")
-# savefig("xzchipv0_k.png")
-
-# xx = chip_left : h : chip_right
-# yy = chip_top : h : chip_bottom
