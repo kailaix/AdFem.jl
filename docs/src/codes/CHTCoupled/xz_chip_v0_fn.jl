@@ -6,6 +6,9 @@ using SparseArrays
 
 function k_exact(x, y)
     3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
+    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 
+    # 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 
+    # 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
 end
 
 # geometry setup in domain [0,1]^2

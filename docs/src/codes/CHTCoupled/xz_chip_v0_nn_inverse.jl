@@ -6,6 +6,9 @@ using SparseArrays
 
 function k_exact(x, y)
     3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
+    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 
+    # 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 
+    # 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
 end
 
 function k_nn(x, y)
@@ -95,9 +98,6 @@ heat_source_gauss = fem_to_gauss_points(heat_source_fem, m, n, h)
 # heat_source_gauss = zeros(4*m*n)
 # heat_source_gauss[chip_gauss_idx] .= power_source
 
-# F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc_, m, n, h), m, n, h)
-# F2 = compute_fem_source_term1(eval_f_on_gauss_pts(gfunc_, m, n, h), m, n, h)
-# H = h^2*eval_f_on_fvm_pts(hfunc_, m, n, h)
 B = constant(compute_interaction_matrix(m, n, h))
 
 # compute F
@@ -105,11 +105,6 @@ Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
 heat_source = constant(compute_fem_source_term1(heat_source_gauss, m, n, h))
 
 LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, m, n, h))
-# xy = fem_nodes(m, n, h)
-# x, y = xy[:, 1], xy[:, 2]
-# k = @. k_nn(x, y); k=stack(k)
-# kgauss = fem_to_gauss_points(k, m, n, h)
-# LaplaceK = compute_fem_laplace_matrix1(kgauss, m, n, h)
 
 bd = bcnode("all", m, n, h)
 
@@ -250,7 +245,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in x velocity")
     visualize_scalar_on_fem_points(S[1:(m+1)*(n+1)] .* u_std .- S_true[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
     tight_layout()
-    savefig("xzchip_figures/xzchipv0_nn_velox$k.png")
+    savefig("xzchip_figures1/xzchipv0_nn_velox$k.png")
 
     figure(figsize=(15,4))
     subplot(131)
@@ -263,7 +258,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in y velocity")
     visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1: 2*(m+1)*(n+1)]  .* u_std .- S_true[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
     tight_layout()
-    savefig("xzchip_figures/xzchipv0_nn_veloy$k.png")
+    savefig("xzchip_figures1/xzchipv0_nn_veloy$k.png")
 
 
     figure(figsize=(15,4))
@@ -277,9 +272,9 @@ function plot_velo_pres_temp_cond(k)
     title("difference in pressure")
     visualize_scalar_on_fvm_points(S[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std .- S_true[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std,  m, n, h);gca().invert_yaxis()
     tight_layout()
-    savefig("xzchip_figures/xzchipv0_nn_pres$k.png")
+    savefig("xzchip_figures1/xzchipv0_nn_pres$k.png")
 
-
+    
     figure(figsize=(15,4))
     subplot(131)
     title("exact temperature")
@@ -291,7 +286,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in temperature")
     visualize_scalar_on_fem_points(S[ 2*(m+1)*(n+1)+m*n+1:end]  .* T_infty .- S_true[2*(m+1)*(n+1)+m*n+1:end] .* T_infty, m, n, h);gca().invert_yaxis()
     tight_layout()
-    savefig("xzchip_figures/xzchipv0_nn_temp$k.png")
+    savefig("xzchip_figures1/xzchipv0_nn_temp$k.png")
 
     figure(figsize=(15,4))
     subplot(131)
@@ -319,7 +314,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in chip conductivity")
 
     tight_layout()
-    savefig("xzchip_figures/xzchipv0_nn_cond$k.png")
+    savefig("xzchip_figures1/xzchipv0_nn_cond$k.png")
 
 end
 
@@ -356,12 +351,12 @@ loss = loss * 1e10
 max_iter = 1
 sess = Session(); init(sess)
 
-for k = 1:20
+for k = 1:100
     loss_ = BFGS!(sess, loss, max_iter)
-    matwrite("xzchip_figures/loss$k.mat", Dict("L"=>loss_))
+    matwrite("xzchip_figures1/loss$k.mat", Dict("L"=>loss_))
     close("all"); semilogy(loss_); title("loss vs. iteration")
-    savefig("xzchip_figures/loss$k.png")
+    savefig("xzchip_figures1/loss$k.png")
     plot_velo_pres_temp_cond(k)
-    ADCME.save(sess, "xzchip_figures/nn$k.mat")
+    ADCME.save(sess, "xzchip_figures1/nn$k.mat")
 end
 
