@@ -19,7 +19,7 @@ k_mold = 0.014531
 k_chip = 2.60475
 k_air = 0.64357
 nu = 0.47893 # equal to 1/Re
-power_source = 82.46295 / 4.0 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
+power_source = 0.06189 #82.46295 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
 
 u_std = 0.001
@@ -29,7 +29,7 @@ T_infty = 300
 m = 200
 n = 200
 h = 1/n
-NT = 5    # number of iterations for Newton's method, 8 is good for m=400
+NT = 7    # number of iterations for Newton's method, 8 is good for m=400
 
 
 # compute solid indices and chip indices
@@ -37,6 +37,7 @@ solid_fem_idx = Array{Int64, 1}([])
 solid_fvm_idx = Array{Int64, 1}([])
 chip_fem_idx = Array{Int64, 1}([])
 chip_fvm_idx = Array{Int64, 1}([])
+chip_fem_top_idx = Array{Int64, 1}([])
 
 for i = 1:(m+1)
     for j = 1:(n+1)
@@ -45,6 +46,9 @@ for i = 1:(m+1)
             global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
             if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
                 global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
+            end
+            if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_top+1e-9
+                global chip_fem_top_idx = [chip_fem_top_idx; (j-1)*(m+1)+i]
             end
         end
     end
@@ -74,6 +78,8 @@ kgauss = fem_to_gauss_points(k_fem, m, n, h)
 
 heat_source_fem = zeros((m+1)*(n+1))
 heat_source_fem[chip_fem_idx] .= power_source #/ h^2
+heat_source_fem[chip_fem_top_idx] .= 82.46295
+
 heat_source_gauss = fem_to_gauss_points(heat_source_fem, m, n, h)
 
 # chip_gauss_idx = [ 4 .* chip_fvm_idx; 4 .* chip_fvm_idx .- 1; 4 .* chip_fvm_idx .- 2; 4 .* chip_fvm_idx .- 3]
@@ -264,10 +270,10 @@ print("Solution range:",
 
 
 # separate plots
-# figure();visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
-# figure();visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
-# figure();visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);gca().invert_yaxis()
-# figure();visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
+# figure();visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis(); savefig("U.png")
+# figure();visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis();savefig("V.png")
+# figure();visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);savefig("P.png")
+# figure();visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis();savefig("T.png")
 
 ####################################################################################
 
