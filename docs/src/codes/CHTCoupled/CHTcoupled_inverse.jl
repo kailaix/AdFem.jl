@@ -36,7 +36,13 @@ function t_exact(x,y)
 end
 
 function k_exact(x,y)
-    1 + x^2 + x / (1+y^2)
+    1 + x^2 + x / (1 + y^2)
+end
+
+function k_nn(x, y)
+    out = fc([x y], [20,20,20,1])^2 + 0.5 # N x 1 
+    squeeze(out)
+    # 1 + x^2 + x / (1 + y^2)
 end
 
 function ffunc_(x, y)
@@ -44,7 +50,7 @@ function ffunc_(x, y)
 end
 
 function gfunc_(x, y)
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - buoyance_coef * x*y*(1 - x)*(1 - y) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)    
 end
 
 function hfunc_(x,y)
@@ -52,7 +58,7 @@ function hfunc_(x,y)
 end
 
 function heat_source_func(x, y)
-    # x^2*y*(x - 1)^2*(y - 1)*(2*y - 1) + x*y^2*(x - 1)*(2*x - 1)*(y - 1)^2 - 2.0*x*(x - 1) - 2.0*y*(y - 1)    # if k=1.0
+    # x^2*y*(x - 1)^2*(y - 1)*(2*y - 1) + x*y^2*(x - 1)*(2*x - 1)*(y - 1)^2 - 2.0*x*(x - 1) - 2.0*y*(y - 1) # for k=1.0
     (2*x^2*y*(x - 1)*(2*y - 1) + x*y*(x - 1)*(y - 1)*(y^2 + 1)^2*(x*(x - 1)*(2*y - 1) + y*(2*x - 1)*(y - 1)) - (y^2 + 1)*(2*x*(x - 1)*(x + (x^2 + 1)*(y^2 + 1)) + 2*y*(x + (x^2 + 1)*(y^2 + 1))*(y - 1) + y*(2*x - 1)*(y - 1)*(2*x*(y^2 + 1) + 1)))/(y^2 + 1)^2
 end
 
@@ -66,7 +72,6 @@ m = 20
 n = 20
 h = 1/n
 nu = 0.01
-buoyance_coef = 1.0
 
 F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc_, m, n, h), m, n, h)
 F2 = compute_fem_source_term1(eval_f_on_gauss_pts(gfunc_, m, n, h), m, n, h)
@@ -78,15 +83,17 @@ Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
 heat_source = eval_f_on_gauss_pts(heat_source_func, m, n, h)
 heat_source = constant(compute_fem_source_term1(heat_source, m, n, h))
 
-kgauss = eval_f_on_gauss_pts(k_exact, m, n, h)
-LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, m, n, h))
+xy = fem_nodes(m, n, h)
+x, y = xy[:, 1], xy[:, 2]
+k = @. k_nn(x, y); k=stack(k)
+kgauss = fem_to_gauss_points(k, m, n, h)
+LaplaceK = compute_fem_laplace_matrix1(kgauss, m, n, h)
+# kgauss = eval_f_on_gauss_pts(k_exact, m, n, h)
+# LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, m, n, h))
 
-# xy = fem_nodes(m, n, h)
-# x, y = xy[:, 1], xy[:, 2]
-# k = @. k_nn(x, y); k=stack(k)
-# kgauss = fem_to_gauss_points(k, m, n, h)
-# LaplaceK = compute_fem_laplace_matrix1(kgauss, m, n, h)
-
+# The temperature term is 
+# T_xx + T_yy + q = u T_x + v T_y
+# 
 function compute_residual(S)
     u, v, p, T = S[1:(m+1)*(n+1)], 
         S[(m+1)*(n+1)+1:2(m+1)*(n+1)], 
@@ -110,17 +117,13 @@ function compute_residual(S)
     g3 = -interaction[(m+1)*(n+1)+1:end]    
     g4 = Laplace*v 
     g5 = -F2
-    T_gauss = fem_to_gauss_points(T, m, n, h)
-    buoyance_term = - buoyance_coef * compute_fem_source_term1(T_gauss, m, n, h)
-
-    G = g1 + g2 + g3 + g4 + g5 + buoyance_term
+    G = g1 + g2 + g3 + g4 + g5
 
     H0 = -B * [u;v] + H
 
     # T_xx + T_yy = u T_x + v T_y - heat_source 
-    # ugauss = zeros_like(ugauss)
-    # vgauss = zeros_like(vgauss)
-    T0 = LaplaceK * T + compute_fem_advection_matrix1(ugauss,vgauss, m, n, h) * T - heat_source
+    T0 = LaplaceK * T + compute_fem_advection_matrix1(constant(ugauss),constant(vgauss), m, n, h) * T - heat_source
+
     R = [F;G;H0;T0]
     return R
 end
@@ -150,50 +153,25 @@ function compute_jacobian(S)
 
     Gu = constant(compute_fem_mass_matrix1(vx, m, n, h))
 
-
-    
-# # T_xx + T_yy = u T_x + v T_y - heat_source 
-# A = constant(compute_fem_laplace_matrix1(m, n, h))
-# T0 = A * T + compute_fem_advection_matrix1(ugauss,vgauss, m, n, h) * T - 
-#         compute_fem_source_term1(heat_source, m, n, h)
-
-
-    # T_xx + T_yy = u T_x + v T_y + heat_source 
-    # - dT_xx - dT_yy + du T_x + dv T_y + u dT_x + v dT_y = ...
-    
-
-
-    # ugauss = zeros_like(ugauss)
-    # vgauss = zeros_like(vgauss)
     # M = constant(compute_fem_laplace_matrix1(m, n, h)) +
-    #      compute_fem_advection_matrix1(ugauss,vgauss, m, n, h) 
-    # out = eval_grad_on_gauss_pts1(T, m, n, h)
-    # DU_TX = out[:,1]
-    # DV_TY = out[:,2]
-    # DU_TX = compute_fem_mass_matrix1(DU_TX, m, n, h)
-    # DV_TY = compute_fem_mass_matrix1(DV_TY, m, n, h)
-    # # DU_TX = SparseTensor(spzeros((m+1)*(n+1),(m+1)*(n+1)))
-    # # DV_TY = SparseTensor(spzeros((m+1)*(n+1),(m+1)*(n+1)))
-
+        #  compute_fem_advection_matrix1(ugauss,vgauss, m, n, h) 
+       
     M = LaplaceK + constant(compute_fem_advection_matrix1(ugauss,vgauss, m, n, h))
 
     gradT = eval_grad_on_gauss_pts1(T, m, n, h)
     Tx, Ty = gradT[:,1], gradT[:,2]
     DU_TX = constant(compute_fem_mass_matrix1(Tx, m, n, h))       # (m+1)*(n+1), (m+1)*(n+1)
     DV_TY = constant(compute_fem_mass_matrix1(Ty, m, n, h))       # (m+1)*(n+1), (m+1)*(n+1)
-
-    T_mat = -buoyance_coef * constant(compute_fem_mass_matrix1(m, n, h))
-    T_mat = [SparseTensor(spzeros((m+1)*(n+1), (m+1)*(n+1))); T_mat]
-
-    J0 = [Fu Fv
+        
+    J0 = [Fu Fv                         # Jacobian of [u; v]
           Gu Gv]
 
-    J1 = [J0 -B' T_mat
-        -B spdiag(zeros(size(B,1))) SparseTensor(spzeros(m*n, (m+1)*(n+1)))]
-    
-    N = 2*(m+1)*(n+1) + m*n 
-    J = [J1 
-        [DU_TX DV_TY SparseTensor(spzeros((m+1)*(n+1), m*n)) M]]
+    J1 = [J0 -B'                        # Jacobian of [u; v; p]
+          -B spdiag(zeros(size(B,1)))]
+
+    N = 2*(m+1)*(n+1) + m*n                                     # length of [u; v; p]
+    J = [J1 SparseTensor(spzeros(N,(m+1)*(n+1)))                # Jacobian of [u; v; p; T]
+        DU_TX DV_TY SparseTensor(spzeros((m+1)*(n+1), m*n)) M]
 end
 
 NT = 5    # number of iterations for Newton's method
@@ -234,26 +212,11 @@ function body(i, S_arr)
     return i+1, S_arr
 end
 
-# for i = 1:NT 
-#     residual = compute_residual(S[:,i])
-#     J = compute_jacobian(S[:,i])
-    
-#     J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, m, n, h)
-#     residual[bd] .= 0.0
-
-
-#     d = J\residual
-#     S[:,i+1] = S[:,i] - d
-#     @info i, norm(residual)
-# end
-
-
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
 u0 = @. u_exact(x,y)
 v0 = @. v_exact(x,y)
 t0 = @. t_exact(x,y)
-
 
 xy = fvm_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
@@ -267,81 +230,40 @@ i = constant(2, dtype=Int32)
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n+(m+1)*(n+1)))
 
+V_computed = S[end, :]
+
+V_data = matread("CHTcoupled_data.mat")["V"]
+
+sample_size = 40
+idx = rand(1:(m+1)*(n+1), sample_size)
+idx = [idx; (m+1)*(n+1) .+ idx; 2*(m+1)*(n+1)+m*n .+ idx]
+observed_data = V_data[idx]
+
+noise = true
+noise_level = 0.05
+if noise
+    noise_ratio = (1 - noise_level) .+ 2 * noise_level * rand(Float64, size(observed_data)) # uniform on (1-noise_level, 1+noise_level)
+    observed_data = observed_data .* noise_ratio
+end
+
+loss = mean((V_computed[idx] .- observed_data)^2)
+loss = loss * 1e10
+# ---------------------------------------------------
+# create a session and run 
+max_iter = 100
 sess = Session(); init(sess)
-output = run(sess, S)
+loss_ = BFGS!(sess, loss, max_iter)
+figure(); semilogy(loss_); savefig("chtcoupled_loss.png")
 
-# S = output
-# # out_v = output[:, 1:2*(m+1)*(n+1)]
-# # out_p = output[:, 2*(m+1)*(n+1)+1:end]
+xy = fem_nodes(m, n, h)
+x, y = xy[:, 1], xy[:, 2]
+k0 = @. k_exact(x,y)
 
-matwrite("SteadyStateBoussinesq_data.mat", 
-    Dict(
-        "V"=>output[end, :]
-    ))
-
-figure(figsize=(25,10))
-subplot(241)
-title("u velocity")
-visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
-subplot(245)
-visualize_scalar_on_fem_points(u0, m, n, h)
-
-subplot(242)
-title("v velocity")
-visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
-subplot(246)
-visualize_scalar_on_fem_points(v0, m, n, h)
-
-subplot(243)
-visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n], m, n, h)
-title("pressure")
-subplot(247)
-visualize_scalar_on_fvm_points(p0, m, n, h)
-title("")
-
-subplot(244)
-title("temperature")
-visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end], m, n, h)
-subplot(248)
-visualize_scalar_on_fem_points(t0, m, n, h)
-
-tight_layout()
-
-# final_u=output[NT+1, 1:(1+m)*(1+n)]
-# final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
-# final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
-
-# u1 = final_u[50*101+1: 50*101+101]
-# u2 = final_u[51:101:end]
-
-# v1 = final_v[50*101+1: 50*101+101]
-# v2 = final_v[51:101:end]
-# xx = 0:0.01:1
-
-# figure();plot(xx, u1);
-# savefig("u_horizontal.png")
-
-# figure();plot(xx, u2);
-# savefig("u_vertical.png")
-
-# figure();plot(xx, v1);
-# savefig("v_horizontal.png")
-
-# figure();plot(xx, v2);
-# savefig("v_vertical.png")
-
-# p1 = final_p[49*100+1: 49*100+100]
-# p2 = final_p[50*100+1: 50*100+100]
-# p3 = 0.5 * (p1 .+ p2)
-
-# p4 = final_p[50:100:end]
-# p5 = final_p[51:100:end]
-# p6 = 0.5 * (p4 .+ p5)
-
-# xx = 0.005:0.01:1
-
-# figure();plot(xx, p3);
-# savefig("p_horizontal.png")
-
-# figure();plot(xx, p6);
-# savefig("p_vertical.png")
+figure(figsize=(14,4));
+subplot(131)
+visualize_scalar_on_fem_points(k0, m, n, h); title("conductivity exact")
+subplot(132)
+visualize_scalar_on_fem_points(run(sess, k), m, n, h); title("conductivity prediction")
+subplot(133)
+visualize_scalar_on_fem_points(k0.-run(sess, k), m, n, h); title("conductivity difference")
+savefig("chtcoupled_k.png")

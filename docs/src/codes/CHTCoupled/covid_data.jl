@@ -88,8 +88,7 @@ bd = [bd; bd .+ (m+1)*(n+1);
 # only apply Dirichlet to velocity; set left bottom two points to zero to fix rank deficient problem for pressure
 
 
-
-
+## STEP 1: NAVIER STOKES EQUATIONS
 F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc_, m, n, h), m, n, h)
 F2 = compute_fem_source_term1(eval_f_on_gauss_pts(gfunc_, m, n, h), m, n, h)
 H = h^2*eval_f_on_fvm_pts(hfunc_, m, n, h)
@@ -101,7 +100,7 @@ heat_source = eval_f_on_gauss_pts(heat_source_func, m, n, h)
 heat_source = constant(compute_fem_source_term1(heat_source, m, n, h))
 # The temperature term is 
 # T_xx + T_yy + q = u T_x + v T_y
-# 
+
 function compute_residual(S)
     u, v, p, T = S[1:(m+1)*(n+1)], 
         S[(m+1)*(n+1)+1:2(m+1)*(n+1)], 
@@ -140,14 +139,14 @@ end
 
 function compute_jacobian(S)
     u, v, p, T = S[1:(m+1)*(n+1)], 
-        S[(m+1)*(n+1)+1:2(m+1)*(n+1)], 
-        S[2(m+1)*(n+1)+1:2(m+1)*(n+1)+m*n],
-        S[2(m+1)*(n+1)+m*n+1:end]
+                 S[(m+1)*(n+1)+1:2(m+1)*(n+1)], 
+                 S[2(m+1)*(n+1)+1:2(m+1)*(n+1)+m*n],
+                 S[2(m+1)*(n+1)+m*n+1:end]
         
-    G = eval_grad_on_gauss_pts([u;v], m, n, h)
+    graduv = eval_grad_on_gauss_pts([u;v], m, n, h)
     ugauss = fem_to_gauss_points(u, m, n, h)
     vgauss = fem_to_gauss_points(v, m, n, h)
-    ux, uy, vx, vy = G[:,1,1], G[:,1,2], G[:,2,1], G[:,2,2]
+    ux, uy, vx, vy = graduv[:,1,1], graduv[:,1,2], graduv[:,2,1], graduv[:,2,2]
 
     M1 = constant(compute_fem_mass_matrix1(ux, m, n, h))
     M2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), m, n, h)) # a julia kernel needed
@@ -163,38 +162,22 @@ function compute_jacobian(S)
 
     Gu = constant(compute_fem_mass_matrix1(vx, m, n, h))
 
-
-    
-# # T_xx + T_yy = u T_x + v T_y - heat_source 
-# A = constant(compute_fem_laplace_matrix1(m, n, h))
-# T0 = A * T + compute_fem_advection_matrix1(ugauss,vgauss, m, n, h) * T - 
-#         compute_fem_source_term1(heat_source, m, n, h)
-
-
-    # T_xx + T_yy = u T_x + v T_y + heat_source 
-    # - dT_xx - dT_yy + du T_x + dv T_y + u dT_x + v dT_y = ...
-    
-
-
-    # ugauss = zeros_like(ugauss)
-    # vgauss = zeros_like(vgauss)
     M = constant(compute_fem_laplace_matrix1(m, n, h)) +
          compute_fem_advection_matrix1(ugauss,vgauss, m, n, h) 
-    out = eval_grad_on_gauss_pts1(T, m, n, h)
-    DU_TX = out[:,1]
-    DV_TY = out[:,2]
-    DU_TX = compute_fem_mass_matrix1(DU_TX, m, n, h)
-    DV_TY = compute_fem_mass_matrix1(DV_TY, m, n, h)
-    # DU_TX = SparseTensor(spzeros((m+1)*(n+1),(m+1)*(n+1)))
-    # DV_TY = SparseTensor(spzeros((m+1)*(n+1),(m+1)*(n+1)))
-         
-    J0 = [Fu Fv
-          Gu Gv]
-    J = [J0 -B'
-        -B spdiag(zeros(size(B,1)))]
 
-    N = 2*(m+1)*(n+1) + m*n 
-    J = [J SparseTensor(spzeros(N,(m+1)*(n+1)))
+    gradT = eval_grad_on_gauss_pts1(T, m, n, h)
+    Tx, Ty = gradT[:,1], gradT[:,2]
+    DU_TX = constant(compute_fem_mass_matrix1(Tx, m, n, h))       # (m+1)*(n+1), (m+1)*(n+1)
+    DV_TY = constant(compute_fem_mass_matrix1(Ty, m, n, h))       # (m+1)*(n+1), (m+1)*(n+1)
+         
+    J0 = [Fu Fv                         # Jacobian of [u; v]
+          Gu Gv]
+
+    J1 = [J0 -B'                        # Jacobian of [u; v; p]
+          -B spdiag(zeros(size(B,1)))]
+
+    N = 2*(m+1)*(n+1) + m*n                                     # length of [u; v; p]
+    J = [J1 SparseTensor(spzeros(N,(m+1)*(n+1)))                # Jacobian of [u; v; p; T]
         DU_TX DV_TY SparseTensor(spzeros((m+1)*(n+1), m*n)) M]
 end
 
@@ -227,45 +210,32 @@ function body(i, S_arr)
     return i+1, S_arr
 end
 
-# for i = 1:NT 
-#     residual = compute_residual(S[:,i])
-#     J = compute_jacobian(S[:,i])
-    
-#     J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, m, n, h)
-#     residual[bd] .= 0.0
-
-
-#     d = J\residual
-#     S[:,i+1] = S[:,i] - d
-#     @info i, norm(residual)
-# end
-
-
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
 u0 = @. u_exact(x,y)
 v0 = @. v_exact(x,y)
-t0 = @. t_exact(x,y)
-
+T0 = @. t_exact(x,y)
 
 xy = fvm_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
 p0 = @. p_exact(x,y)
 
 S_arr = TensorArray(NT+1)
-S_arr = write(S_arr, 1, zeros(m*n+3*(m+1)*(n+1)))
+S_arr = write(S_arr, 1, [u0; v0; p0; T0])
+# S_arr = write(S_arr, 1, zeros(m*n+3*(m+1)*(n+1)))
 
 i = constant(2, dtype=Int32)
 
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n+(m+1)*(n+1)))
 
-
 u = S[NT+1, 1:(m+1)*(n+1)]
 v = S[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)]
 p = S[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n]
 T = S[NT+1, 2*(m+1)*(n+1)+m*n+1:end]
 
+## STEP 2: TRANSPORT EQUATION
+# pre-compute source term
 Q1 = zeros(NT_transport, (m+1)*(n+1))
 Q2 = zeros(NT_transport, (m+1)*(n+1))
 for i = 1:NT_transport
@@ -291,8 +261,8 @@ function transport_body(i, w1_arr, w2_arr)
     w2 = read(w2_arr, i)
     q1 = Q1[i]
     q2 = Q2[i]
-    op = tf.print("transport equation, step: ", i)
-    i = bind(i, op)
+    # op = tf.print("transport equation, step: ", i)
+    # i = bind(i, op)
     w1, w2 = solve_transport_step(w1, w2, q1, q2)
     i+1, write(w1_arr, i+1, w1), write(w2_arr, i+1, w2)
 end
@@ -309,61 +279,36 @@ w1, w2 = stack(w1), stack(w2)
 w1 = set_shape(w1, (NT_transport+1, (m+1)*(n+1)))
 w2 = set_shape(w2, (NT_transport+1, (m+1)*(n+1)))
 
-
 sess = Session(); init(sess)
 W1, W2, u_, v_, p_ = run(sess, [w1, w2, u, v, p])
 
 figure(figsize=(15,5))
 subplot(131)
-visualize_scalar_on_fem_points(W2[end,:], m, n, h)
-title("Numerical")
+visualize_scalar_on_fem_points(W1[end,:], m, n, h)
+title("Computed droplet x-velocity")
 subplot(132)
 visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Analytical")
+title("Exact droplet x-velocity")
+subplot(133)
+visualize_scalar_on_fem_points(W1[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Difference")
+
+figure(figsize=(15,5))
+subplot(131)
+visualize_scalar_on_fem_points(W2[end,:], m, n, h)
+title("Computed droplet y-velocity")
+subplot(132)
+visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Exact droplet y-velocity")
 subplot(133)
 visualize_scalar_on_fem_points(W2[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
 title("Difference")
-# visualize_scalar_on_fvm_points(p_, m, n, h)
-
-
-# sess = Session(); init(sess)
-# output = run(sess, S)
+tight_layout()
 
 # # S = output
 # # # out_v = output[:, 1:2*(m+1)*(n+1)]
 # # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
 
-# matwrite("CHTcoupled_data_coupled.mat", 
-#     Dict(
-#         "V"=>output[end, 1:2*(m+1)*(n+1)]
-#     ))
+# matwrite("covid_data.mat", Dict(
+#         "W1"=>W1, "W2"=>W2))
 
-# figure(figsize=(25,10))
-# subplot(241)
-# title("u velocity")
-# visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
-# subplot(245)
-# visualize_scalar_on_fem_points(u0, m, n, h)
-
-# subplot(242)
-# title("v velocity")
-# visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
-# subplot(246)
-# visualize_scalar_on_fem_points(v0, m, n, h)
-
-# subplot(243)
-# visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n], m, n, h)
-# title("pressure")
-# subplot(247)
-# visualize_scalar_on_fvm_points(p0, m, n, h)
-# title("")
-
-
-
-# subplot(244)
-# title("temperature")
-# visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end], m, n, h)
-# subplot(248)
-# visualize_scalar_on_fem_points(t0, m, n, h)
-
-# tight_layout()
