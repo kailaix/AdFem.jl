@@ -2,14 +2,9 @@ using LinearAlgebra
 using MAT
 using PoreFlow
 using PyPlot
+using Random
 using SparseArrays
-
-function k_exact(x, y)
-    3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
-    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 
-    # 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 
-    # 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
-end
+Random.seed!(118)
 
 # geometry setup in domain [0,1]^2
 solid_left = 0.45
@@ -23,7 +18,7 @@ chip_top = 0.5
 chip_bottom = 0.505
 
 k_mold = 0.014531
-k_chip = 2.60475
+k_chipdie = 2.60475
 k_air = 0.64357
 nu = 0.47893 # equal to 1/Re
 power_source = 0.06189 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
@@ -32,6 +27,15 @@ buoyance_coef = 299102.83
 u_std = 0.001
 p_std = 0.000001225
 T_infty = 300
+
+epsilon_k = 0.3
+
+function k_exact(x, y)
+    # 3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
+    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
+    k_mold + (rand() < 0.5) * ((1 - epsilon_k) + rand() * 2 * epsilon_k) * k_chipdie
+
+end
 
 m = 200
 n = 200
@@ -244,7 +248,7 @@ sess = Session(); init(sess)
 output = run(sess, S)
 
 
-matwrite("xzchipv0_fn_data.mat", 
+matwrite("xzchipv0_fn_data2.mat", 
     Dict(
         "V"=>output[end, :]
     ))
@@ -268,6 +272,7 @@ subplot(224)
 title("temperature")
 visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
 tight_layout()
+savefig("forward_soln.png")
 
 print("Solution range:",
     "\n [u velocity] \t min:", minimum(output[NT+1, 1:(m+1)*(n+1)] .* u_std), ",\t max:", maximum(output[NT+1, 1:(m+1)*(n+1)] .* u_std),
