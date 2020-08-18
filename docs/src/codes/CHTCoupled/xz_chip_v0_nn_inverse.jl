@@ -40,7 +40,7 @@ function k_exact(x, y)
 end
 
 function k_nn(x, y)
-    out = fc([x y], [20,20,20,1])^2 + 0.5 # N x 1 
+    out = fc([x y], [20,20,20,1])^2 + 0.01 # N x 1 
     squeeze(out)
 end
 
@@ -91,7 +91,7 @@ end
 xy = fem_nodes(m, n, h)
 chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 # k_chip = @. k_nn(chip_x, chip_y); k_chip=stack(k_chip)
-k_chip = Variable(ones(length(chip_fem_idx)))
+k_chip = Variable(k_mold .* ones(length(chip_fem_idx)))
 k_chip_exact = @. k_exact(chip_x, chip_y)
 
 
@@ -341,7 +341,7 @@ S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n+(m+1)*(n+1)))
 # output = run(sess, S)
 V_computed = S[end, :]
 
-V_data = matread("xzchipv0_fn_data.mat")["V"]
+V_data = matread("xzchipv0_fn_data_m$(m)_n$n.mat")["V"]
 
 # sample_size = 100
 # idx = rand(1:(m+1)*(n+1), sample_size)
