@@ -18,6 +18,13 @@
 # println(replace(replace(sympy.julia_code(simplify(f)), ".^"=>"^"), ".*"=>"*"))
 # println(replace(replace(sympy.julia_code(simplify(g)), ".^"=>"^"), ".*"=>"*"))
 # println(replace(replace(sympy.julia_code(simplify(h)), ".^"=>"^"), ".*"=>"*"))
+function nu_exact(x, y)
+    (1 + x / (1 + x^2 + 2 * y^2)) * 0.01
+end
+
+function nu_nn(x, y)
+    0.01 + fc([x y], [20,20,20,1])|>squeeze
+end
 
 function u_exact(x,y)
     x*(1-x)*y*(1-y)
@@ -40,11 +47,13 @@ function k_exact(x,y)
 end
 
 function ffunc_(x, y)
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + 0.02*x*(1 - x) + y*(1 - x)*(1 - y) + 0.02*y*(1 - y)    
+    # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + 0.02*x*(1 - x) + y*(1 - x)*(1 - y) + 0.02*y*(1 - y)    
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + y*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(0.01*x/(x^2 + 2*y^2 + 1) + 0.01)
 end
 
 function gfunc_(x, y)
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)    
+    # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)    
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(0.01*x/(x^2 + 2*y^2 + 1) + 0.01)
 end
 
 function hfunc_(x,y)
@@ -70,11 +79,11 @@ using PoreFlow
 using PyPlot
 using SparseArrays
 
-m = 50
-n = 50
+m = 20
+n = 20
 h = 1/n
 nu = 0.01
-NT_transport = 500
+NT_transport = 100
 Δt = 1/NT_transport
 κ1 = 1.0 
 κ2 = 1.0 
@@ -95,7 +104,12 @@ H = h^2*eval_f_on_fvm_pts(hfunc_, m, n, h)
 B = constant(compute_interaction_matrix(m, n, h))
 
 # compute F
-Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
+nu_gauss_exact = eval_f_on_gauss_pts(nu_exact, m, n, h)
+xy = gauss_nodes(m, n, h)
+x, y = xy[:,1], xy[:,2]
+nu_gauss = @. nu_nn(x, y); nu_gauss = stack(nu_gauss)
+Laplace = compute_fem_laplace_matrix1(nu_gauss, m, n, h)
+# Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
 heat_source = eval_f_on_gauss_pts(heat_source_func, m, n, h)
 heat_source = constant(compute_fem_source_term1(heat_source, m, n, h))
 # The temperature term is 
@@ -279,36 +293,13 @@ w1, w2 = stack(w1), stack(w2)
 w1 = set_shape(w1, (NT_transport+1, (m+1)*(n+1)))
 w2 = set_shape(w2, (NT_transport+1, (m+1)*(n+1)))
 
+W1_data = matread("covid_figures/covid_fn_data.mat")["W1"]
+W2_data = matread("covid_figures/covid_fn_data.mat")["W2"]
+
+loss = mean((w1.- W1_data)^2) + mean((w2.- W2_data)^2)
+# loss = loss * 1e10
+
+max_iter = 10
 sess = Session(); init(sess)
-W1, W2, u_, v_, p_ = run(sess, [w1, w2, u, v, p])
-
-figure(figsize=(15,5))
-subplot(131)
-visualize_scalar_on_fem_points(W1[end,:], m, n, h)
-title("Computed droplet x-velocity")
-subplot(132)
-visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Exact droplet x-velocity")
-subplot(133)
-visualize_scalar_on_fem_points(W1[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Difference")
-
-figure(figsize=(15,5))
-subplot(131)
-visualize_scalar_on_fem_points(W2[end,:], m, n, h)
-title("Computed droplet y-velocity")
-subplot(132)
-visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Exact droplet y-velocity")
-subplot(133)
-visualize_scalar_on_fem_points(W2[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Difference")
-tight_layout()
-
-# # S = output
-# # # out_v = output[:, 1:2*(m+1)*(n+1)]
-# # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
-
-matwrite("covid_data.mat", Dict(
-        "W1"=>W1, "W2"=>W2))
-
+loss_ = BFGS!(sess, loss, max_iter)
+figure(); semilogy(loss_); savefig("covid_figures/covid_fn_loss.png")

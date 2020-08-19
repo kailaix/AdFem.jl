@@ -73,7 +73,7 @@ using SparseArrays
 m = 50
 n = 50
 h = 1/n
-nu = 0.01
+nu = Variable(0.1) # exact nu = 0.01
 NT_transport = 500
 Δt = 1/NT_transport
 κ1 = 1.0 
@@ -279,36 +279,16 @@ w1, w2 = stack(w1), stack(w2)
 w1 = set_shape(w1, (NT_transport+1, (m+1)*(n+1)))
 w2 = set_shape(w2, (NT_transport+1, (m+1)*(n+1)))
 
+# sess = Session(); init(sess)
+# W1, W2, u_, v_, p_ = run(sess, [w1, w2, u, v, p])
+
+W1_data = matread("covid_data.mat")["W1"]
+W2_data = matread("covid_data.mat")["W2"]
+
+loss = mean((w1.- W1_data)^2) + mean((w2.- W2_data)^2)
+loss = loss * 1e10
+
+max_iter = 20
 sess = Session(); init(sess)
-W1, W2, u_, v_, p_ = run(sess, [w1, w2, u, v, p])
-
-figure(figsize=(15,5))
-subplot(131)
-visualize_scalar_on_fem_points(W1[end,:], m, n, h)
-title("Computed droplet x-velocity")
-subplot(132)
-visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Exact droplet x-velocity")
-subplot(133)
-visualize_scalar_on_fem_points(W1[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Difference")
-
-figure(figsize=(15,5))
-subplot(131)
-visualize_scalar_on_fem_points(W2[end,:], m, n, h)
-title("Computed droplet y-velocity")
-subplot(132)
-visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Exact droplet y-velocity")
-subplot(133)
-visualize_scalar_on_fem_points(W2[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
-title("Difference")
-tight_layout()
-
-# # S = output
-# # # out_v = output[:, 1:2*(m+1)*(n+1)]
-# # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
-
-matwrite("covid_data.mat", Dict(
-        "W1"=>W1, "W2"=>W2))
-
+loss_ = BFGS!(sess, loss, max_iter)
+figure(); semilogy(loss_); savefig("covid_param_loss.png")
