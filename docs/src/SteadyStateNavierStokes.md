@@ -13,7 +13,7 @@ $$\tau_{ij} = \mu \left(\frac{\partial u_i}{\partial x_j} + \frac{\partial u_j}{
 
 # Steady-state Navier-Stokes equations for incompressible flow
 
-We assume the fluid material is incompressible, i.e., has constant density $\rho$, and we denote its the kinematic viscosity as $\nu=\mu / \rho$.
+We assume the fluid material is incompressible with constant density $\rho$, and we denote its the kinematic viscosity as $\nu=\mu / \rho$.
 We assume that the system has reached a steady state. Then, the steady-state incompressible Navier-Stokes equations in two spatial dimensions are given by
 
 $$\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y}=0 \tag{1}$$
@@ -24,31 +24,39 @@ where (1) is the continuity equation and (2)-(3) are the momentum equations.
 
 ## The Newton's method
 
-Let $\delta u'$ denote the finite element basis for $u$, and $\delta v'$ denote the finite element basis for $v$. To derive the weak form of (4)-(5), we multiply both sides of (2)-(3) by $\delta u'$ and $\delta v'$, respectively.
+Let $\delta u'$ denote the finite element basis for $u$, and $\delta v'$ denote the finite element basis for $v$. To derive the weak form, we multiply both sides of (2)-(3) by $\delta u'$ and $\delta v'$, respectively.
 
 $$\left(u \frac{\partial u}{\partial x}, \delta u'\right)+ \left(v \frac{\partial u}{\partial y} , \delta u'\right) =  -\frac{1}{\rho} \left(\frac{\partial p}{\partial x}, \delta u'\right)+\nu\left(\frac{\partial^{2} u}{\partial x^{2}}+\frac{\partial^{2} u}{\partial y^{2}}, \ \delta u'\right)+\left(f, \delta u'\right)$$
 
 $$\left(u \frac{\partial v}{\partial x}, \delta v'\right) + \left(v \frac{\partial v}{\partial y}, \delta v'\right) = -\frac{1}{\rho}\left( \frac{\partial p}{\partial y}, \delta v'\right) +\nu\left(\frac{\partial^{2} v}{\partial x^{2}}+\frac{\partial^{2} v}{\partial y^{2}} ,\ \delta v'\right)+ \left( g, \delta v'\right)$$
 
+
+
 Then we have the following weak form
 
-$$\left(u \frac{\partial u}{\partial x}, \delta u'\right)+ \left(v \frac{\partial u}{\partial y} , \delta u'\right) =  \frac{1}{\rho} \left(p, \ \frac{\partial \delta u'}{\partial x}\right)-\nu\left(\nabla u, \nabla \delta u'\right)+\left(f, \delta u'\right)$$
+$$\left(u \frac{\partial u}{\partial x}, \delta u'\right)+ \left(v \frac{\partial u}{\partial y} , \delta u'\right) =  \frac{1}{\rho} \left(p, \ \frac{\partial \delta u'}{\partial x}\right)-\nu\left(\nabla u, \nabla \delta u'\right)+\left(f, \delta u'\right) \tag{4}$$
 
-$$\left(u \frac{\partial v}{\partial x}, \delta v'\right) + \left(v \frac{\partial v}{\partial y}, \delta v'\right) = \frac{1}{\rho}\left(p, \frac{\partial \delta v'}{\partial y}\right) -\nu\left(\nabla v, \nabla\delta v'\right)+ \left( g, \delta v'\right)$$
+$$\left(u \frac{\partial v}{\partial x}, \delta v'\right) + \left(v \frac{\partial v}{\partial y}, \delta v'\right) = \frac{1}{\rho}\left(p, \frac{\partial \delta v'}{\partial y}\right) -\nu\left(\nabla v, \nabla\delta v'\right)+ \left( g, \delta v'\right) \tag{5}$$
 
-We use the Newton's method to solve the problem iteratively.
+Additionally, we multiply both sides of (1) by $\delta p'$, then we have
 
-Let 
+$$\left(\frac{\partial u}{\partial x}, \delta p'\right) + \left(\frac{\partial v}{\partial y}, \delta p' \right) = 0 \tag{6}$$
+
+The weak form (4),(5), and (6) are nonlinear in $u$ and $v$. We use the Newton's method to solve coupled system  iteratively.
+
+To this end, we define the residual functions
 
 $$F(u,v) = \left(u \frac{\partial u}{\partial x}, \delta u'\right)+ \left(v \frac{\partial u}{\partial y} , \delta u'\right) -  \frac{1}{\rho} \left(p, \ \frac{\partial \delta u'}{\partial x}\right)+ \nu\left(\nabla u, \nabla \delta u'\right)-\left(f, \delta u'\right)$$
 
 $$G(u,v) = \left(u \frac{\partial v}{\partial x}, \delta v'\right) + \left(v \frac{\partial v}{\partial y}, \delta v'\right) -\frac{1}{\rho}\left(p, \frac{\partial \delta v'}{\partial y}\right) +\nu\left(\nabla v, \nabla\delta v'\right)- \left( g, \delta v'\right)$$
 
+$$H(u, v) = \left(\frac{\partial u}{\partial x}, \delta p'\right) + \left(\frac{\partial v}{\partial y}, \delta p' \right)$$
+
 we have the following equation for one iteration of the Newton's method
 
-$$\begin{bmatrix}\nabla_u F(u,v)  & \nabla_v F(u,v)  \\ \nabla_u G(u,v)  & \nabla_v G(u,v)\end{bmatrix} \begin{bmatrix}\Delta u\\ \Delta v\end{bmatrix} = - \begin{bmatrix}F(u,v) \\ G(u,v) \end{bmatrix} \tag{4}$$
+$$\begin{bmatrix}\nabla_u F(u,v)  & \nabla_v F(u,v) & \nabla_p F(u, v)  \\ \nabla_u G(u,v)  & \nabla_v G(u,v) & \nabla_p G(u, v) \\ \nabla_u H(u, v) & \nabla_v H(u,v) & 0\end{bmatrix} \begin{bmatrix}\Delta u\\ \Delta v \\ \Delta p\end{bmatrix} = - \begin{bmatrix}F(u,v) \\ G(u,v)\\H(u,v) \end{bmatrix} \tag{4}$$
 
-$$\begin{bmatrix} u_{new}\\ v_{new} \end{bmatrix} = \begin{bmatrix} u\\ v\end{bmatrix} + \begin{bmatrix}\Delta u\\ \Delta v \end{bmatrix}$$
+$$\begin{bmatrix} u_{new}\\ v_{new} \\ p_{new} \end{bmatrix} = \begin{bmatrix} u\\ v \\ p\end{bmatrix} + \begin{bmatrix}\Delta u\\ \Delta v \\\Delta p \end{bmatrix}$$
 
 
 
@@ -60,7 +68,7 @@ $$G(u+\Delta u, v+\Delta v) = G(u,v) + \nabla_u G(u,v) \Delta u + \nabla_v G(u,v
 
 Thus, we have
 
-$$\nabla_u F(u,v)\Delta u = \left(\Delta u \frac{\partial u}{\partial x}, \delta u'\right) +\left(u \frac{\partial \Delta u }{\partial x}, \delta u'\right)+ \left(v \frac{\partial \Delta u }{\partial y}, \delta u'\right) +ν (\nabla (\Delta u), \nabla \delta u')$$
+$$\nabla_u F(u,v)\Delta u = \left(\Delta u \frac{\partial u}{\partial x}, \delta u'\right) +\left(u \frac{\partial \Delta u }{\partial x}, \delta u'\right)+ \left(v \frac{\partial \Delta u }{\partial y}, \delta u'\right) + (\nu\nabla (\Delta u), \nabla \delta u')$$
 
 $$\nabla_v F(u,v)\Delta v = \left(\Delta v \frac{\partial u}{\partial y}, \delta u'\right)$$
 

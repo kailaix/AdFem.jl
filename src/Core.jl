@@ -1382,3 +1382,47 @@ function compute_interaction_term(pres::Array{Float64, 1}, m::Int64, n::Int64, h
     end
     rhs
 end
+
+
+function compute_fem_advection_matrix1(u0::Array{Float64, 1},v0::Array{Float64, 1},m::Int64,n::Int64,h::Float64)
+    @assert length(u0) == 4*m*n
+    @assert length(v0) == 4*m*n
+
+    B = zeros(4, 2, 4)
+    for q = 1:2
+        for p = 1:2
+            ξ = pts[p]; η = pts[q]
+            B[(q-1)*2+p,:,:] = [
+                -1/h*(1-η) 1/h*(1-η) -1/h*η 1/h*η
+                -1/h*(1-ξ) -1/h*ξ 1/h*(1-ξ) 1/h*ξ
+            ]
+        end
+    end
+
+    I = Int64[]
+    J = Int64[]
+    V = Float64[]
+    function add(k1, k2, v)
+        push!(I, k1)
+        push!(J, k2)
+        push!(V, v)
+    end
+    k = 0
+    for j = 1:n 
+        for i = 1:m 
+            for q = 1:2
+                for p = 1:2
+                    k += 1
+                    B0 = B[(q-1)*2+p,:,:]
+                    Ω = B0'*K[k,:,:]*B0*0.25*h^2
+                    idx = [(j-1)*(m+1)+i; (j-1)*(m+1)+i+1; j*(m+1)+i; j*(m+1)+i+1]
+                    for i_ = 1:4
+                        for j_ = 1:4
+                            add(idx[i_], idx[j_], Ω[i_, j_])
+                        end
+                    end
+                end
+            end
+        end
+    end
+end

@@ -259,15 +259,18 @@ end
 
 
 @doc raw"""
-    visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
+    visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64;
+    vmin::Union{Real, Missing} = missing, vmax::Union{Real, Missing} = missing)
 
 Generates scattered potential animation for the potential $\phi\in \mathbb{R}^{(NT+1)\times n \times m}$.
 """
-function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64)
+function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int64, h::Float64;
+    vmin::Union{Real, Missing} = missing, vmax::Union{Real, Missing} = missing)
     m_ = mean(φ)
     s = std(φ)
     close("all")
-    vmin, vmax = m_ - 2s, m_ + 2s
+    vmin = coalesce(vmin, m_ - 2s)
+    vmax = coalesce(vmax, m_ + 2s)
     x = (1:m)*h .- 0.5h
     y = (1:n)*h .- 0.5h
     ln = pcolormesh(x, y, φ[1,:,:], vmin= vmin, vmax=vmax)
@@ -295,19 +298,22 @@ function visualize_scalar_on_fvm_points(φ::Array{Float64, 3}, m::Int64, n::Int6
     anim = animate(update, 1:size(φ,1))
 end
 
-function visualize_scalar_on_fvm_points(φ::Array{Float64, 2}, m::Int64, n::Int64, h::Float64)
+function visualize_scalar_on_fvm_points(φ::Array{Float64, 2}, m::Int64, n::Int64, h::Float64;
+        vmin::Union{Real, Missing} = missing, vmax::Union{Real, Missing} = missing)
     R = zeros(size(φ,1), n, m)
     for i = 1:size(φ,1)
         R[i,:,:] = reshape(φ[i,:], m, n)'
     end
-    visualize_scalar_on_fvm_points(R, m, n, h)
+    visualize_scalar_on_fvm_points(R, m, n, h, vmin = vmin, vmax=vmax)
 end
 
-function visualize_scalar_on_fvm_points(φ::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
+function visualize_scalar_on_fvm_points(φ::Array{Float64, 1}, m::Int64, n::Int64, h::Float64;
+    vmin::Union{Real, Missing} = missing, vmax::Union{Real, Missing} = missing)
     φ = reshape(φ, m, n)'|>Array
     m_ = mean(φ)
     s = std(φ)
-    vmin, vmax = m_ - 2s, m_ + 2s
+    vmin = coalesce(vmin, m_ - 2s)
+    vmax = coalesce(vmax, m_ + 2s)
     x = (1:m)*h .- 0.5h
     y = (1:n)*h .- 0.5h
     ln = pcolormesh(x, y, φ, vmin= vmin, vmax=vmax)
