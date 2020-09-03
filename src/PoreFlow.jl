@@ -30,6 +30,7 @@ module PoreFlow
     include("MFEM.jl")
     include("MCore.jl")
     include("MVisualize.jl")
+    include("MUtils.jl")
     
 
 end

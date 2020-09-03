@@ -29,3 +29,18 @@ function compute_fem_laplace_matrix1(kappa::PyObject, mesh::Mesh)
     n = size(mesh.nodes, 1)
     RawSparseTensor(indices, vv, n, n)
 end
+
+
+"""
+    fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, mesh::Mesh)
+
+A differentiable kernel for imposing the Dirichlet boundary of a scalar-valued function. 
+"""
+function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, mesh::Mesh)
+    idx = bdnode
+    Lbd = L[:, idx]
+    L = scatter_update(L, :, idx, spzero(size(mesh.nodes, 1), length(idx)))
+    L = scatter_update(L, idx, :,  spzero(length(idx), size(mesh.nodes, 1)))
+    L = scatter_update(L, idx, idx, spdiag(length(idx)))
+    L, Lbd
+end
