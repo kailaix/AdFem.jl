@@ -2,8 +2,8 @@ using SymPy
 
 x, y, t = @vars x y t
 T = x * (1-x) * y * (1-y) 
-# K = 1 + x^2 + x / (1+y^2)
-K = 1.0
+K = 1 + x^2 + x / (1+y^2)
+# K = 1.0
 u = x * (1-x)* y * (1-y)
 v = x * (1-x) * y * (1-y)
 p = x * (1-x) * y * (1-y) 
