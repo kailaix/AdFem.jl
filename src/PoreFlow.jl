@@ -27,6 +27,9 @@ module PoreFlow
     include("Visualization.jl")
     include("Constitutive.jl")
     include("Solver.jl")
+    include("MFEM.jl")
+    include("MCore.jl")
+    include("MVisualize.jl")
     
 
 end
