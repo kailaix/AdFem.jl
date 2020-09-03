@@ -21,7 +21,7 @@ for i = 2:n
     push!(bd, (i-1)*(m+1)+m+1)
 end
 
-A, _ = fem_impose_Dirichlet_boundary_condition1(A, bd, m, n, h)
+A, _ = fem_impose_Dirichlet_boundary_condition1(A, bd, mesh)
 rhs = compute_fem_source_term1(F, mesh)
 rhs = scatter_update(rhs, bd, zeros(length(bd)))
 sol = A\rhs
@@ -35,4 +35,31 @@ visualize_scalar_on_fem_points(S, mesh)
 title(&quot;Computed&quot;)
 subplot(122)
 visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)-&gt;sin(π*x)*sin(π*y), mesh), mesh)
-title(&quot;Reference&quot;)</code></pre><p><img src="../assets/mfem/poisson.png" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inv_viscoelasticity_earth/">« Viscoelasticity Model for the Earth</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 3 September 2020 20:41">Thursday 3 September 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+title(&quot;Reference&quot;)</code></pre><p><img src="../assets/mfem/poisson.png" alt/></p><p>As a more interesting example, we consider the domain with two holes. Here we let the right hand side be 1. We impose Dirichlet boundary conditions on the bounding box and Neumann boundary conditions around the disc boundaries. </p><pre><code class="language-julia">using PyPlot 
+using PoreFlow
+
+mesh = Mesh(&quot;twoholes.msh&quot;)
+
+kappa = constant(ones(get_ngauss(mesh)))
+A = compute_fem_laplace_matrix1(kappa, mesh)
+F = constant(eval_f_on_gauss_pts((x,y)-&gt;1.0, mesh))
+
+bd = Int64[]
+for i = 1:size(mesh.nodes, 1)
+    x = mesh.nodes[i,1]
+    y = mesh.nodes[i,2]
+    if abs(x-0.049)&lt;1e-5 || abs(x)&lt;1e-5 || abs(y)&lt;1e-5 || abs(y-0.023)&lt;1e-5
+        push!(bd, i)
+    end
+end
+
+A, _ = fem_impose_Dirichlet_boundary_condition1(A, bd, mesh)
+rhs = compute_fem_source_term1(F, mesh)
+rhs = scatter_update(rhs, bd, zeros(length(bd)))
+sol = A\rhs
+
+sess = Session(); init(sess)
+S = run(sess, sol)
+
+visualize_scalar_on_fem_points(S, mesh)
+savefig(&quot;uPoisson.png&quot;)</code></pre><p><img src="./assets/mfem/uPoisson.png" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inv_viscoelasticity_earth/">« Viscoelasticity Model for the Earth</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 3 September 2020 21:32">Thursday 3 September 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
