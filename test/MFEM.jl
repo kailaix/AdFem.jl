@@ -34,3 +34,6 @@ scatter(nodes[:,1], nodes[:,2])
 savefig("g.png")
 
 @test get_area(mesh)≈ones(8)*0.25/2
+
+@PDATA
+Mesh("twoholes.stl")

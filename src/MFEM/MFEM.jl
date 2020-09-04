@@ -1,7 +1,7 @@
 export install_mfem, Mesh, get_ngauss, get_area
 
 
-LIBMFEM = joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("nnfem_mfem"))
+LIBMFEM = joinpath(@__DIR__, "..", "..",  "deps", "MFEM", "build", get_library_name("nnfem_mfem"))
 libmfem = missing 
 
 mutable struct Mesh
