@@ -22,19 +22,19 @@ sess = Session(); init(sess)
 @show run(sess, u)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(fem_laplace_scalar(kappa)^2)
+function scalar_function(x)
+    return sum(values(fem_laplace_scalar(x, mesh))^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(get_ngauss(mesh)))
+v_ = rand(get_ngauss(mesh))
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)

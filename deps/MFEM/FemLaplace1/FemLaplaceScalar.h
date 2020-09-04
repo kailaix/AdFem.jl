@@ -23,8 +23,30 @@ namespace MFEM{
     }
   }
 
-  void FemLaplaceScalar_backward(int64 *ii, int64 *jj, double *vv, const double *kappa){
-    
+  void FemLaplaceScalar_backward(
+    double *grad_kappa,
+    const double * grad_vv,
+    const int64 *indices, const double *vv, const double *kappa){
+    int nz = 0;
+    int s = 0;
+    for(int i = 0; i<mmesh.nelem; i++){
+        NNFEM_Element * elem = mmesh.elements[i];
+        Eigen::MatrixXd D(3, 2);
+        for (int k = 0; k<elem->ngauss; k++){
+          D << elem->hx(0, k), elem->hy(0, k),
+             elem->hx(1, k), elem->hy(1, k),
+             elem->hx(2, k), elem->hy(2, k);
+          Eigen::MatrixXd N = D * D.transpose() * elem->w[k];
+          double v = 0.0;
+          for (int p = 0; p < 3; p ++)
+            for (int q = 0; q<3; q++){
+              v += grad_vv[nz] * N(p, q);
+              nz ++;
+            }
+          grad_kappa[s++] = v;
+        }
+        
+    }
   }
 
 }
