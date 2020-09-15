@@ -8,14 +8,6 @@ repo-url = "https://github.com/kailaix/ADCME.jl"
 uuid = "07b341a0-ce75-57c6-b2de-414ffdc00be5"
 version = "0.5.12"
 
-[[ADCMEKit]]
-deps = ["ADCME", "LinearAlgebra", "PyCall", "PyPlot"]
-git-tree-sha1 = "97a5c4a0c19713a45b1db0cdbd049b6dd9fe1729"
-repo-rev = "master"
-repo-url = "https://github.com/kailaix/ADCMEKit.jl.git"
-uuid = "b6719975-6fcd-4453-92fa-4206f52c3839"
-version = "0.3.0"
-
 [[AbstractFFTs]]
 deps = ["LinearAlgebra"]
 git-tree-sha1 = "051c95d6836228d120f5f4b984dd5aba1624f716"
