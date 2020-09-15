@@ -15,8 +15,8 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-ADCME = "0.5.2"
-ADCMEKit = "0.2"
+ADCME = "0.5,0.6"
+ADCMEKit = "0.2,0.3"
 Parameters = "0.12"
 PyCall = "1.91"
 PyPlot = "2.9"

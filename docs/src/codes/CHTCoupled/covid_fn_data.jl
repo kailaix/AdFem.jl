@@ -19,7 +19,7 @@
 # println(replace(replace(sympy.julia_code(simplify(g)), ".^"=>"^"), ".*"=>"*"))
 # println(replace(replace(sympy.julia_code(simplify(h)), ".^"=>"^"), ".*"=>"*"))
 function nu_exact(x, y)
-    (1 + x / (1 + x^2 + 2 * y^2)) * 0.01
+    (1 + 1 / (1 + x^2)) * 0.01
 end
 
 function u_exact(x,y)
@@ -43,13 +43,13 @@ function k_exact(x,y)
 end
 
 function ffunc_(x, y)
-    # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + 0.02*x*(1 - x) + y*(1 - x)*(1 - y) + 0.02*y*(1 - y)    
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + y*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(0.01*x/(x^2 + 2*y^2 + 1) + 0.01)
+    # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + 0.02*x*(1 - x) + y*(1 - x)*(1 - y) + 0.02*y*(1 - y)    # nu=0.01
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + y*(1 - x)*(1 - y) - (0.01 + 0.01/(x^2 + 1))*(-2*x*(1 - x) - 2*y*(1 - y))
 end
 
 function gfunc_(x, y)
     # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)    
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(0.01*x/(x^2 + 2*y^2 + 1) + 0.01)
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) - (0.01 + 0.01/(x^2 + 1))*(-2*x*(1 - x) - 2*y*(1 - y))
 end
 
 function hfunc_(x,y)
@@ -78,13 +78,13 @@ using SparseArrays
 m = 20
 n = 20
 h = 1/n
-nu = 0.01
+# nu = 0.01
 NT_transport = 100
 Δt = 1/NT_transport
 κ1 = 1.0 
 κ2 = 1.0 
 
-NT = 5    # number of iterations for Newton's method
+NT = 4    # number of iterations for Newton's method
 
 bd = bcnode("all", m, n, h)
 bd = [bd; bd .+ (m+1)*(n+1); 
@@ -278,7 +278,8 @@ i = constant(1, dtype = Int32)
 w1_arr = TensorArray(NT_transport+1)
 w2_arr = TensorArray(NT_transport+1)
 w1_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
-w2_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
+# w2_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
+w2_0 = eval_f_on_fem_pts((x,y)->x^2*y^2*(1-x)*(1-y), m, n, h)
 w1_arr = write(w1_arr, 1, w1_0)
 w2_arr = write(w2_arr, 1, w2_0)
 _, w1, w2 = while_loop(transport_condition, transport_body, [i, w1_arr, w2_arr])
@@ -300,7 +301,7 @@ subplot(133)
 visualize_scalar_on_fem_points(W1[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
 title("Difference")
 tight_layout()
-savefig("covid_figures/forward_soln1.png")
+savefig("covid_figures2/forward_soln1.png")
 
 figure(figsize=(15,5))
 subplot(131)
@@ -313,12 +314,12 @@ subplot(133)
 visualize_scalar_on_fem_points(W2[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
 title("Difference")
 tight_layout()
-savefig("covid_figures/forward_soln2.png")
+savefig("covid_figures2/forward_soln2.png")
 
 # # S = output
 # # # out_v = output[:, 1:2*(m+1)*(n+1)]
 # # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
 
-matwrite("covid_figures/covid_fn_data.mat", Dict(
+matwrite("covid_figures2/covid_fn_data.mat", Dict(
         "W1"=>W1, "W2"=>W2))
 

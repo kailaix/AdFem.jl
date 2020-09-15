@@ -21,6 +21,8 @@ jobs:
           key: conda3
           restore-keys: |
             conda3
+      - name: Install ADCME
+        run: julia --project=docs/ --color=yes -e 'using Pkg;  Pkg.add(PackageSpec(url="https://github.com/kailaix/ADCME.jl", rev="master")); Pkg.build("ADCME")'
       - name: Install dependencies
         run: julia --project=docs/ --color=yes -e 'using Pkg;  Pkg.add("Documenter"); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.build("ADCME")'
       - name: Build and deploy
