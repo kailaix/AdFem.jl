@@ -1,5 +1,6 @@
 #include "../Common.h"
 namespace MFEM{
+  // integrate_T( f, phi ) = f(x_1) * phi(x_1) * w_1 + f(x_2) * phi(x_2) * w_2 + ...
   void FemSourceScalar_forward(double * rhs, const double *f){
     int k = 0;
     for (int i = 0; i < mmesh.nelem; i++){

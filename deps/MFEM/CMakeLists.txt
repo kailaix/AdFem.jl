@@ -53,8 +53,10 @@ endif()
 
 include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${LIBDIR}/../include)
 find_library(mfem mfem HINTS ${LIBDIR})
-add_library(nnfem_mfem SHARED Common.cpp FemLaplace1/FemLaplaceScalar.cpp 
-          FemSource1/FemSourceScalar.cpp)
+add_library(nnfem_mfem SHARED Common.cpp 
+        FemLaplace1/FemLaplaceScalar.cpp 
+          FemSource1/FemSourceScalar.cpp
+          FemToGaussPoints/FemToGaussPointsMfem.cpp)
 
 message("MFEM = ${mfem}")
 target_link_libraries(nnfem_mfem ${TF_LIB_FILE} ${mfem})
