@@ -1,23 +1,25 @@
-# using SymPy 
+using ADCME
+using LinearAlgebra
+using MAT
+using PoreFlow
+using PyPlot
+using SparseArrays
 
-# x, y = @vars x y
-# u = x*(1-x)*y*(1-y)
-# v = x*(1-x)*y*(1-y)^2
 
-# p = x*(1-x)*y*(1-y)
+SMALL_SIZE = 22
+MEDIUM_SIZE = 24
+BIGGER_SIZE = 24
 
-# ux = diff(u,x)
-# uy = diff(u,y)
-# vx = diff(v,x)
-# vy = diff(v,y)
-# px = diff(p,x)
-# py = diff(p,y)
-# f = u*ux + v*uy - (diff(ux,x)+diff(uy,y)) + px
-# g = u*vx + v*vy - (diff(vx,x)+diff(vy,y)) + py
-# h = diff(u, x) + diff(v, y)
-# println(replace(replace(sympy.julia_code(simplify(f)), ".^"=>"^"), ".*"=>"*"))
-# println(replace(replace(sympy.julia_code(simplify(g)), ".^"=>"^"), ".*"=>"*"))
-# println(replace(replace(sympy.julia_code(simplify(h)), ".^"=>"^"), ".*"=>"*"))
+plt.rc("font", size=SMALL_SIZE)          # controls default text sizes
+plt.rc("axes", titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc("axes", labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc("xtick", labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc("ytick", labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc("legend", fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+# Example 3: 
+
 function nu_exact(x, y)
     (1 + 1 / (1 + x^2)) * 0.01
 end
@@ -77,11 +79,7 @@ function q2_func_(t, x, y)
     -1.0*x*y*(1 - x)*(1 - y)
 end
 
-using LinearAlgebra
-using MAT
-using PoreFlow
-using PyPlot
-using SparseArrays
+
 
 m = 20
 n = 20
@@ -111,14 +109,11 @@ B = constant(compute_interaction_matrix(m, n, h))
 nu_gauss_exact = eval_f_on_gauss_pts(nu_exact, m, n, h)
 xy = gauss_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
-# nu_gauss = @. nu_nn(x, y); nu_gauss = stack(nu_gauss)
 nu_gauss = nu_nn(x, y)
 Laplace = compute_fem_laplace_matrix1(nu_gauss, m, n, h)
 # Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
 heat_source = eval_f_on_gauss_pts(heat_source_func, m, n, h)
 heat_source = constant(compute_fem_source_term1(heat_source, m, n, h))
-# The temperature term is 
-# T_xx + T_yy + q = u T_x + v T_y
 
 function compute_residual(S)
     u, v, p, T = S[1:(m+1)*(n+1)], 
@@ -286,44 +281,6 @@ function transport_body(i, w1_arr, w2_arr)
     i+1, write(w1_arr, i+1, w1), write(w2_arr, i+1, w2)
 end
 
-function plot_velocity_pressure_viscosity(k)
-    W1_computed, W2_computed = run(sess, [w1, w2])
-    figure(figsize=(14,4));
-    subplot(131)
-    visualize_scalar_on_fem_points(W1_data[end, :], m, n, h); 
-    title("Exact droplet x-velocity")
-    subplot(132)
-    visualize_scalar_on_fem_points(W1_computed[end, :], m, n, h);
-    title("Computed droplet x-velocity")
-    subplot(133)
-    visualize_scalar_on_fem_points(W1_data[end, :] .- W1_computed[end, :], m, n, h); 
-    title("Difference in droplet x-velocity")
-    tight_layout()
-    savefig("covid_figures5/covid_nn_w1_$k.png")
-
-    figure(figsize=(14,4));
-    subplot(131)
-    visualize_scalar_on_fem_points(W2_data[end, :], m, n, h); 
-    title("Exact droplet y-velocity")
-    subplot(132)
-    visualize_scalar_on_fem_points(W2_computed[end, :], m, n, h);
-    title("Computed droplet y-velocity")
-    subplot(133)
-    visualize_scalar_on_fem_points(W2_data[end, :] .- W2_computed[end, :], m, n, h); 
-    title("Difference in droplet y-velocity")
-    tight_layout()
-    savefig("covid_figures5/covid_nn_w2_$k.png")
-
-    figure(figsize=(14,4));
-    subplot(131)
-    visualize_scalar_on_gauss_points(nu_gauss_exact, m, n, h); title("viscosity exact");gca().invert_yaxis()
-    subplot(132)
-    visualize_scalar_on_gauss_points(run(sess, nu_gauss), m, n, h); title("viscosity prediction");gca().invert_yaxis()
-    subplot(133)
-    visualize_scalar_on_gauss_points(nu_gauss_exact.-run(sess, nu_gauss), m, n, h); title("viscosity difference");gca().invert_yaxis()
-    tight_layout()
-    savefig("covid_figures5/covid_nn_visc$k.png")
-end
 
 i = constant(1, dtype = Int32)
 w1_arr = TensorArray(NT_transport+1)
@@ -338,28 +295,36 @@ w1, w2 = stack(w1), stack(w2)
 w1 = set_shape(w1, (NT_transport+1, (m+1)*(n+1)))
 w2 = set_shape(w2, (NT_transport+1, (m+1)*(n+1)))
 
-W1_data = matread("covid_figures5/covid_fn_data.mat")["W1"]
-W2_data = matread("covid_figures5/covid_fn_data.mat")["W2"]
+W1_data = matread("sess_figures/ex3/covid_fn_data.mat")["W1"]
+W2_data = matread("sess_figures/ex3/covid_fn_data.mat")["W2"]
 
-sample_size = 22
-idx = rand(1:(m+1)*(n+1), sample_size)
-
-matwrite("covid_figures5/idx.mat", Dict(
-        "idx"=>idx))
-
-loss = mean((w1[:,idx].- W1_data[:,idx])^2) + mean((w2[:,idx].- W2_data[:,idx])^2)
+loss = mean((w1.- W1_data)^2) + mean((w2.- W2_data)^2)
 loss = loss * 1e10
 
+max_iter = 10
+# ---------------------------------------------------
 sess = Session(); init(sess)
-@info run(sess, loss)
-max_iter = 100
 
-for k = 1:50
-    loss_ = BFGS!(sess, loss, max_iter)
-    matwrite("covid_figures5/loss$k.mat", Dict("L"=>loss_))
-    close("all"); semilogy(loss_); title("loss vs. iteration")
-    savefig("covid_figures5/nn_loss$k.png")
-    plot_velocity_pressure_viscosity(k)
-    ADCME.save(sess, "covid_figures5/nn$k.mat")
-end
+ADCME.load(sess, "sess_figures/ex3/nn1.mat")
 
+# vmax = maximum(nu_gauss_exact)
+# vmin = minimum(nu_gauss_exact)
+
+idx = matread("sess_figures/ex3/idx.mat")["idx"]
+xy = fem_nodes(m, n, h)
+obs_x, obs_y = xy[idx, 1], xy[idx, 2]
+
+figure();visualize_scalar_on_gauss_points(nu_gauss_exact, m, n, h);gca().invert_yaxis(); 
+scatter(obs_x, obs_y, s=100, marker="<", c="#ff0000", zorder=999)
+tight_layout() 
+savefig("sess_figures/ex3/viscosity_exact.png")
+
+figure();visualize_scalar_on_gauss_points(run(sess, nu_gauss), m, n, h);gca().invert_yaxis();
+scatter(obs_x, obs_y, s=100, marker="<", c="#ff0000", zorder=999)
+tight_layout()
+savefig("sess_figures/ex3/viscosity_prediction.png")
+
+figure();visualize_scalar_on_gauss_points(nu_gauss_exact.-run(sess, nu_gauss), m, n, h);gca().invert_yaxis(); 
+scatter(obs_x, obs_y, s=100, marker="<", c="#ff0000", zorder=999)
+tight_layout()
+savefig("sess_figures/ex3/viscosity_error.png")

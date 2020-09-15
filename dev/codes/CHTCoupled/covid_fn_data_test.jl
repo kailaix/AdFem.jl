@@ -19,14 +19,8 @@
 # println(replace(replace(sympy.julia_code(simplify(g)), ".^"=>"^"), ".*"=>"*"))
 # println(replace(replace(sympy.julia_code(simplify(h)), ".^"=>"^"), ".*"=>"*"))
 function nu_exact(x, y)
-    (1 + 1 / (1 + x^2)) * 0.01
-end
-
-function nu_nn(x, y)
-    # out = fc([x y], [20,20,20,1])^2 + 0.5 # N x 1 
-    # out = fc([x y], [20,20,20,1])^2 + 0.01
-    out = fc(x, [20,20,20,1])^2 + 0.01
-    squeeze(out)
+    # 0.1 * ( 1 + x / (1 + x^2 + 2 * y^2))
+    1 + x / (1 + x^2 + 2 * y^2)
 end
 
 function u_exact(x,y)
@@ -51,14 +45,15 @@ end
 
 function ffunc_(x, y)
     # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + 0.02*x*(1 - x) + y*(1 - x)*(1 - y) + 0.02*y*(1 - y)    # nu=0.01
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + y*(1 - x)*(1 - y) - (0.01 + 0.01/(x^2 + 1))*(-2*x*(1 - x) - 2*y*(1 - y))
+    # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + y*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(0.1*x/(x^2 + 2*y^2 + 1) + 0.1) #nu=0.1*(0.1 * ( 1 + x / (1 + x^2 + 2 * y^2)))
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - y) + y*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(x/(x^2 + 2*y^2 + 1) + 1)  #nu=1 + x / (1 + x^2 + 2 * y^2)
 end
 
 function gfunc_(x, y)
     # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) + 0.02*x*(1 - x) + 0.02*y*(1 - y)    
-    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) - (0.01 + 0.01/(x^2 + 1))*(-2*x*(1 - x) - 2*y*(1 - y))
+    # x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(0.1*x/(x^2 + 2*y^2 + 1) + 0.1)
+    x*y*(1 - x)*(1 - y)*(-x*y*(1 - x) + x*(1 - x)*(1 - y)) + x*y*(1 - x)*(1 - y)*(-x*y*(1 - y) + y*(1 - x)*(1 - y)) - x*y*(1 - x) + x*(1 - x)*(1 - y) - (-2*x*(1 - x) - 2*y*(1 - y))*(x/(x^2 + 2*y^2 + 1) + 1)
 end
-
 
 function hfunc_(x,y)
     -x*y*(1 - x) - x*y*(1 - y) + x*(1 - x)*(1 - y) + y*(1 - x)*(1 - y)
@@ -108,11 +103,7 @@ H = h^2*eval_f_on_fvm_pts(hfunc_, m, n, h)
 B = constant(compute_interaction_matrix(m, n, h))
 
 # compute F
-nu_gauss_exact = eval_f_on_gauss_pts(nu_exact, m, n, h)
-xy = gauss_nodes(m, n, h)
-x, y = xy[:,1], xy[:,2]
-# nu_gauss = @. nu_nn(x, y); nu_gauss = stack(nu_gauss)
-nu_gauss = nu_nn(x, y)
+nu_gauss = eval_f_on_gauss_pts(nu_exact, m, n, h)
 Laplace = compute_fem_laplace_matrix1(nu_gauss, m, n, h)
 # Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
 heat_source = eval_f_on_gauss_pts(heat_source_func, m, n, h)
@@ -248,10 +239,15 @@ i = constant(2, dtype=Int32)
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n+(m+1)*(n+1)))
 
-u = S[NT+1, 1:(m+1)*(n+1)]
-v = S[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)]
+# u = S[NT+1, 1:(m+1)*(n+1)]
+# v = S[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)]
 p = S[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n]
 T = S[NT+1, 2*(m+1)*(n+1)+m*n+1:end]
+
+u = eval_f_on_fem_pts(u_exact, m, n, h)
+v = eval_f_on_fem_pts(v_exact, m, n, h)
+u = constant(u); v = constant(v)
+
 
 ## STEP 2: TRANSPORT EQUATION
 # pre-compute source term
@@ -286,51 +282,11 @@ function transport_body(i, w1_arr, w2_arr)
     i+1, write(w1_arr, i+1, w1), write(w2_arr, i+1, w2)
 end
 
-function plot_velocity_pressure_viscosity(k)
-    W1_computed, W2_computed = run(sess, [w1, w2])
-    figure(figsize=(14,4));
-    subplot(131)
-    visualize_scalar_on_fem_points(W1_data[end, :], m, n, h); 
-    title("Exact droplet x-velocity")
-    subplot(132)
-    visualize_scalar_on_fem_points(W1_computed[end, :], m, n, h);
-    title("Computed droplet x-velocity")
-    subplot(133)
-    visualize_scalar_on_fem_points(W1_data[end, :] .- W1_computed[end, :], m, n, h); 
-    title("Difference in droplet x-velocity")
-    tight_layout()
-    savefig("covid_figures5/covid_nn_w1_$k.png")
-
-    figure(figsize=(14,4));
-    subplot(131)
-    visualize_scalar_on_fem_points(W2_data[end, :], m, n, h); 
-    title("Exact droplet y-velocity")
-    subplot(132)
-    visualize_scalar_on_fem_points(W2_computed[end, :], m, n, h);
-    title("Computed droplet y-velocity")
-    subplot(133)
-    visualize_scalar_on_fem_points(W2_data[end, :] .- W2_computed[end, :], m, n, h); 
-    title("Difference in droplet y-velocity")
-    tight_layout()
-    savefig("covid_figures5/covid_nn_w2_$k.png")
-
-    figure(figsize=(14,4));
-    subplot(131)
-    visualize_scalar_on_gauss_points(nu_gauss_exact, m, n, h); title("viscosity exact");gca().invert_yaxis()
-    subplot(132)
-    visualize_scalar_on_gauss_points(run(sess, nu_gauss), m, n, h); title("viscosity prediction");gca().invert_yaxis()
-    subplot(133)
-    visualize_scalar_on_gauss_points(nu_gauss_exact.-run(sess, nu_gauss), m, n, h); title("viscosity difference");gca().invert_yaxis()
-    tight_layout()
-    savefig("covid_figures5/covid_nn_visc$k.png")
-end
-
 i = constant(1, dtype = Int32)
 w1_arr = TensorArray(NT_transport+1)
 w2_arr = TensorArray(NT_transport+1)
 w1_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
-# w2_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
-w2_0 = eval_f_on_fem_pts((x,y)->x^2*y^2*(1-x)*(1-y), m, n, h)
+w2_0 = eval_f_on_fem_pts((x,y)->x*y*(1-x)*(1-y), m, n, h)
 w1_arr = write(w1_arr, 1, w1_0)
 w2_arr = write(w2_arr, 1, w2_0)
 _, w1, w2 = while_loop(transport_condition, transport_body, [i, w1_arr, w2_arr])
@@ -338,28 +294,52 @@ w1, w2 = stack(w1), stack(w2)
 w1 = set_shape(w1, (NT_transport+1, (m+1)*(n+1)))
 w2 = set_shape(w2, (NT_transport+1, (m+1)*(n+1)))
 
-W1_data = matread("covid_figures5/covid_fn_data.mat")["W1"]
-W2_data = matread("covid_figures5/covid_fn_data.mat")["W2"]
-
-sample_size = 22
-idx = rand(1:(m+1)*(n+1), sample_size)
-
-matwrite("covid_figures5/idx.mat", Dict(
-        "idx"=>idx))
-
-loss = mean((w1[:,idx].- W1_data[:,idx])^2) + mean((w2[:,idx].- W2_data[:,idx])^2)
-loss = loss * 1e10
-
 sess = Session(); init(sess)
-@info run(sess, loss)
-max_iter = 100
+W1, W2, u_, v_, p_ = run(sess, [w1, w2, u, v, p])
 
-for k = 1:50
-    loss_ = BFGS!(sess, loss, max_iter)
-    matwrite("covid_figures5/loss$k.mat", Dict("L"=>loss_))
-    close("all"); semilogy(loss_); title("loss vs. iteration")
-    savefig("covid_figures5/nn_loss$k.png")
-    plot_velocity_pressure_viscosity(k)
-    ADCME.save(sess, "covid_figures5/nn$k.mat")
-end
+figure(figsize=(15,5))
+subplot(131)
+visualize_scalar_on_fem_points(W1[end,:], m, n, h)
+title("Computed droplet x-velocity")
+subplot(132)
+visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Exact droplet x-velocity")
+subplot(133)
+visualize_scalar_on_fem_points(W1[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Difference")
+tight_layout()
+savefig("covid_figures2/forward_soln1.png")
 
+figure(figsize=(15,5))
+subplot(131)
+visualize_scalar_on_fem_points(W2[end,:], m, n, h)
+title("Computed droplet y-velocity")
+subplot(132)
+visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Exact droplet y-velocity")
+subplot(133)
+visualize_scalar_on_fem_points(W2[end,:]-eval_f_on_fem_pts((x,y)->exp(-1)*(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Difference")
+tight_layout()
+savefig("covid_figures2/forward_soln2.png")
+
+# # S = output
+# # # out_v = output[:, 1:2*(m+1)*(n+1)]
+# # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
+
+matwrite("covid_figures2/covid_fn_data.mat", Dict(
+        "W1"=>W1, "W2"=>W2))
+
+
+figure(figsize=(15,5))
+subplot(131)
+visualize_scalar_on_fem_points(u_, m, n, h)
+title("Computed u-velocity")
+subplot(132)
+visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Exact u-velocity")
+subplot(133)
+visualize_scalar_on_fem_points(u_ .-eval_f_on_fem_pts((x,y)->(1-x)*x*(1-y)*y, m, n, h), m, n, h)
+title("Difference")
+tight_layout()
+# savefig("covid_figures2/forward_soln2.png")
