@@ -45,14 +45,25 @@ epsilon_k = 0.3
 
 function k_exact(x, y)
     # 3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
-    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
+    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 
+    # 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 
+    # 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
     k_mold + (rand() < 0.5) * ((1 - epsilon_k) + rand() * 2 * epsilon_k) * k_chipdie
+
 end
+
+function k_nn(x, y)
+    out = fc([x y], [20,20,20,1])^2 + 0.01 # N x 1 
+    squeeze(out)
+end
+
+
 
 m = 50
 n = 50
 h = 1/n
 NT = 10    # number of iterations for Newton's method, 8 is good for m=400
+
 
 # compute solid indices and chip indices
 solid_fem_idx = Array{Int64, 1}([])
@@ -89,10 +100,13 @@ for i = 1:m
 end
 
 # initialize space varying k and heat source
+
 xy = fem_nodes(m, n, h)
 chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
-k_chip = @. k_exact(chip_x, chip_y)
-# k_chip=stack(k_chip)
+# k_chip = @. k_nn(chip_x, chip_y); k_chip=stack(k_chip)
+k_chip = Variable(k_mold .* ones(length(chip_fem_idx)))
+k_chip_exact = @. k_exact(chip_x, chip_y)
+
 
 k_fem = k_air * constant(ones((m+1)*(n+1)))
 k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
@@ -110,11 +124,6 @@ Laplace = nu * constant(compute_fem_laplace_matrix1(m, n, h))
 heat_source = constant(compute_fem_source_term1(heat_source_gauss, m, n, h))
 
 LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, m, n, h))
-# xy = fem_nodes(m, n, h)
-# x, y = xy[:, 1], xy[:, 2]
-# k = @. k_nn(x, y); k=stack(k)
-# kgauss = fem_to_gauss_points(k, m, n, h)
-# LaplaceK = compute_fem_laplace_matrix1(kgauss, m, n, h)
 
 bd = bcnode("all", m, n, h)
 
@@ -239,6 +248,95 @@ function body(i, S_arr)
     return i+1, S_arr
 end
 
+function plot_velo_pres_temp_cond(k) 
+
+    S_true = V_data
+    S = run(sess, V_computed)
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact x velocity")
+    visualize_scalar_on_fem_points(S_true[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted x velocity")
+    visualize_scalar_on_fem_points(S[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in x velocity")
+    visualize_scalar_on_fem_points(S[1:(m+1)*(n+1)] .* u_std .- S_true[1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures$trialnum/pix/xzchipv0_pix_velox$k.png")
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact y velocity")
+    visualize_scalar_on_fem_points(S_true[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted y velocity")
+    visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in y velocity")
+    visualize_scalar_on_fem_points(S[(m+1)*(n+1)+1: 2*(m+1)*(n+1)]  .* u_std .- S_true[(m+1)*(n+1)+1: 2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures$trialnum/pix/xzchipv0_pix_veloy$k.png")
+
+
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact pressure")
+    visualize_scalar_on_fvm_points(S_true[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted pressure")
+    visualize_scalar_on_fvm_points(S[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n]  .* p_std, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in pressure")
+    visualize_scalar_on_fvm_points(S[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std .- S_true[ 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std,  m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures$trialnum/pix/xzchipv0_pix_pres$k.png")
+
+    
+    figure(figsize=(15,4))
+    subplot(131)
+    title("exact temperature")
+    visualize_scalar_on_fem_points(S_true[ 2*(m+1)*(n+1)+m*n+1:end] .* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
+    subplot(132)
+    title("predicted temperature")
+    visualize_scalar_on_fem_points(S[ 2*(m+1)*(n+1)+m*n+1:end] .* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
+    subplot(133)
+    title("difference in temperature")
+    visualize_scalar_on_fem_points(S[ 2*(m+1)*(n+1)+m*n+1:end]  .* T_infty .- S_true[2*(m+1)*(n+1)+m*n+1:end] .* T_infty, m, n, h);gca().invert_yaxis()
+    tight_layout()
+    savefig("xzchip_figures$trialnum/pix/xzchipv0_pix_temp$k.png")
+
+    figure(figsize=(15,4))
+    subplot(131)
+    xx = chip_left : h : chip_right
+    yy = chip_top : h : chip_bottom
+    k_chip_exact_2d = reshape(k_chip_exact, length(yy), length(xx))
+    pcolor(xx, yy, k_chip_exact_2d)
+    gca().set_aspect(1)
+    colorbar()
+    title("exact chip conductivity")
+    
+
+    subplot(132)
+    k_chip_ = run(sess, k_chip)
+    k_chip_2d = reshape(k_chip_, length(yy), length(xx))
+    pcolor(xx, yy, k_chip_2d)
+    gca().set_aspect(1)
+    colorbar()
+    title("predicted chip conductivity")
+
+    subplot(133)
+    pcolor(xx, yy, k_chip_2d .- k_chip_exact_2d)
+    gca().set_aspect(1)
+    colorbar()
+    title("difference in chip conductivity")
+
+    tight_layout()
+    savefig("xzchip_figures$trialnum/pix/xzchipv0_pix_cond$k.png")
+
+end
+
 S_arr = TensorArray(NT+1)
 S_arr = write(S_arr, 1, zeros(m*n+3*(m+1)*(n+1)))
 
@@ -247,45 +345,38 @@ i = constant(2, dtype=Int32)
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, 2*(m+1)*(n+1)+m*n+(m+1)*(n+1)))
 
+# sess = Session(); init(sess)
+# output = run(sess, S)
+V_computed = S[end, :]
+
+V_data = matread("xzchip_figures$trialnum/xzchipv0_fn_data_m$(m)_n$n.mat")["V"]
+
+# sample_size = 100
+# idx = rand(1:(m+1)*(n+1), sample_size)
+# idx = [idx; (m+1)*(n+1) .+ idx; 2*(m+1)*(n+1)+m*n .+ idx] # observe velocity and temperature
+# observed_data = V_data[idx]
+
+noise = false
+noise_level = 0.05
+if noise
+    noise_ratio = (1 - noise_level) .+ 2 * noise_level * rand(Float64, size(observed_data)) # uniform on (1-noise_level, 1+noise_level)
+    observed_data = observed_data .* noise_ratio
+end
+
+# loss = mean((V_computed[idx] .- observed_data)^2)
+loss = mean((V_computed .- V_data)^2)
+loss = loss * 1e10
+# ---------------------------------------------------
+# create a session and run 
+max_iter = 10
 sess = Session(); init(sess)
-output = run(sess, S)
 
+for k = 1:1000
+    loss_ = BFGS!(sess, loss, max_iter)
+    matwrite("xzchip_figures$trialnum/pix/loss$k.mat", Dict("L"=>loss_))
+    close("all"); semilogy(loss_); title("loss vs. iteration")
+    savefig("xzchip_figures$trialnum/pix/loss$k.png")
+    plot_velo_pres_temp_cond(k)
+    ADCME.save(sess, "xzchip_figures$trialnum/pix/sess$k.mat")
+end
 
-matwrite("xzchip_figures$trialnum/xzchipv0_fn_data_m$(m)_n$n.mat", 
-    Dict(
-        "V"=>output[end, :]
-    ))
-
-
-u0, v0, p0, t0 = zeros((m+1)*(n+1)), zeros((m+1)*(n+1)), zeros(m*n), zeros((m+1)*(n+1))
-
-
-
-figure(figsize=(10,10))
-subplot(221)
-title("u velocity")
-visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
-subplot(222)
-title("v velocity")
-visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
-subplot(223)
-visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);gca().invert_yaxis()
-title("pressure")
-subplot(224)
-title("temperature")
-visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
-tight_layout()
-savefig("xzchip_figures$trialnum/forward_soln.png")
-
-print("Solution range:",
-    "\n [u velocity] \t min:", minimum(output[NT+1, 1:(m+1)*(n+1)] .* u_std), ",\t max:", maximum(output[NT+1, 1:(m+1)*(n+1)] .* u_std),
-    "\n [v velocity] \t min:", minimum(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std), ",\t max:", maximum(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std),
-    "\n [pressure]   \t min:", minimum(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std), ",\t max:", maximum(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std),
-    "\n [temperature]\t min:", minimum(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty), ",\t\t\t max:", maximum(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty))
-
-
-# separate plots
-# figure();visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
-# figure();visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)] .* u_std, m, n, h);gca().invert_yaxis()
-# figure();visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:2*(m+1)*(n+1)+m*n] .* p_std, m, n, h);gca().invert_yaxis()
-# figure();visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()

@@ -6,24 +6,11 @@ using Random
 using SparseArrays
 Random.seed!(118)
 
-# trial number specifies a folder to store results
-trialnum = 6
-
 # geometry setup in domain [0,1]^2
 solid_left = 0.4
 solid_right = 0.6
 solid_top = 0.5
-solid_bottom = 0.6
-
-chip_left = 0.46
-chip_right = 0.54
-chip_top = 0.5
-chip_bottom = 0.52
-
-# solid_left = 0.45
-# solid_right = 0.55
-# solid_top = 0.5
-# solid_bottom = 0.52
+solid_bottom = 0.505
 
 # chip_left = 0.48
 # chip_right = 0.52
@@ -34,44 +21,41 @@ k_mold = 0.014531
 k_chipdie = 2.60475
 k_air = 0.64357
 nu = 0.47893 # equal to 1/Re
-power_source = 82.46295 #82.46295 = 1.0e6 / air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
+power_source = 0.8246295 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
 
 u_std = 0.001
 p_std = 0.000001225
 T_infty = 300
 
-epsilon_k = 0.3
 
 function k_exact(x, y)
-    # 3.0 + 100000 * (x - 0.5)^3 / (1 + y^2)
-    # 5 * exp((-(x-0.5)^2-(y-0.5)^2)/ 0.00002) + 3 * exp((-(x-0.48)^2-(y-0.505)^2)/ 0.00005) + 6 * exp((-(x-0.51)^2-(y-0.502)^2)/ 0.00001) + 2.604
-    k_mold + (rand() < 0.5) * ((1 - epsilon_k) + rand() * 2 * epsilon_k) * k_chipdie
+    1 + 1 / (1 + x^2)
 end
 
 m = 50
 n = 50
 h = 1/n
-NT = 10    # number of iterations for Newton's method, 8 is good for m=400
+NT = 7    # number of iterations for Newton's method, 8 is good for m=400
 
 # compute solid indices and chip indices
 solid_fem_idx = Array{Int64, 1}([])
 solid_fvm_idx = Array{Int64, 1}([])
-chip_fem_idx = Array{Int64, 1}([])
-chip_fvm_idx = Array{Int64, 1}([])
-chip_fem_top_idx = Array{Int64, 1}([])
+# chip_fem_idx = Array{Int64, 1}([])
+# chip_fvm_idx = Array{Int64, 1}([])
+# chip_fem_top_idx = Array{Int64, 1}([])
 
 for i = 1:(m+1)
     for j = 1:(n+1)
         if (i-1)*h >= solid_left-1e-9 && (i-1)*h <= solid_right+1e-9 && (j-1)*h >= solid_top-1e-9 && (j-1)*h <= solid_bottom+1e-9
             # print(i, j)
             global solid_fem_idx = [solid_fem_idx; (j-1)*(m+1)+i]
-            if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
-                global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
-            end
-            if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_top+1e-9
-                global chip_fem_top_idx = [chip_fem_top_idx; (j-1)*(m+1)+i]
-            end
+            # if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_bottom+1e-9
+            #     global chip_fem_idx = [chip_fem_idx; (j-1)*(m+1)+i]
+            # end
+            # if (i-1)*h >= chip_left-1e-9 && (i-1)*h <= chip_right+1e-9 && (j-1)*h >= chip_top-1e-9 && (j-1)*h <= chip_top+1e-9
+            #     global chip_fem_top_idx = [chip_fem_top_idx; (j-1)*(m+1)+i]
+            # end
         end
     end
 end
@@ -81,28 +65,37 @@ for i = 1:m
         if (i-1)*h + h/2 >= solid_left-1e-9 && (i-1)*h + h/2 <= solid_right+1e-9 && 
             (j-1)*h + h/2 >= solid_top-1e-9 && (j-1)*h + h/2 <= solid_bottom+1e-9
             global solid_fvm_idx = [solid_fvm_idx; (j-1)*m+i]
-            if (i-1)*h + h/2 >= chip_left-1e-9 && (i-1)*h + h/2 <= chip_right+1e-9 && (j-1)*h + h/2 >= chip_top-1e-9 && (j-1)*h + h/2<= chip_bottom+1e-9
-                global chip_fvm_idx = [chip_fvm_idx; (j-1)*m+i]
-            end
+            # if (i-1)*h + h/2 >= chip_left-1e-9 && (i-1)*h + h/2 <= chip_right+1e-9 && (j-1)*h + h/2 >= chip_top-1e-9 && (j-1)*h + h/2<= chip_bottom+1e-9
+            #     global chip_fvm_idx = [chip_fvm_idx; (j-1)*m+i]
+            # end
         end
     end
 end
 
 # initialize space varying k and heat source
 xy = fem_nodes(m, n, h)
-chip_x, chip_y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
-k_chip = @. k_exact(chip_x, chip_y)
-# k_chip=stack(k_chip)
+solid_x, solid_y = xy[solid_fem_idx, 1], xy[solid_fem_idx, 2]
+k_solid = @. k_exact(solid_x, solid_y)
+# k_solid=stack(k_solid)
 
 k_fem = k_air * constant(ones((m+1)*(n+1)))
-k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
-k_fem = scatter_update(k_fem, chip_fem_idx, k_chip)
+k_fem = scatter_update(k_fem, solid_fem_idx, k_solid)
+# k_fem = scatter_update(k_fem, chip_fem_idx, k_chip)
 kgauss = fem_to_gauss_points(k_fem, m, n, h)
 
 heat_source_fem = zeros((m+1)*(n+1))
-heat_source_fem[chip_fem_top_idx] .= power_source
+heat_source_fem[solid_fem_idx] .= power_source
+# heat_source_fem[chip_fem_top_idx] .= 82.46295
+
 heat_source_gauss = fem_to_gauss_points(heat_source_fem, m, n, h)
 
+# chip_gauss_idx = [ 4 .* chip_fvm_idx; 4 .* chip_fvm_idx .- 1; 4 .* chip_fvm_idx .- 2; 4 .* chip_fvm_idx .- 3]
+# heat_source_gauss = zeros(4*m*n)
+# heat_source_gauss[chip_gauss_idx] .= power_source
+
+# F1 = compute_fem_source_term1(eval_f_on_gauss_pts(ffunc_, m, n, h), m, n, h)
+# F2 = compute_fem_source_term1(eval_f_on_gauss_pts(gfunc_, m, n, h), m, n, h)
+# H = h^2*eval_f_on_fvm_pts(hfunc_, m, n, h)
 B = constant(compute_interaction_matrix(m, n, h))
 
 # compute F
@@ -251,7 +244,7 @@ sess = Session(); init(sess)
 output = run(sess, S)
 
 
-matwrite("xzchip_figures$trialnum/xzchipv0_fn_data_m$(m)_n$n.mat", 
+matwrite("xzchipv2_figures1/data_m$(m)_n$n.mat", 
     Dict(
         "V"=>output[end, :]
     ))
@@ -275,7 +268,7 @@ subplot(224)
 title("temperature")
 visualize_scalar_on_fem_points(output[NT+1, 2*(m+1)*(n+1)+m*n+1:end].* T_infty .+ T_infty, m, n, h);gca().invert_yaxis()
 tight_layout()
-savefig("xzchip_figures$trialnum/forward_soln.png")
+savefig("xzchipv2_figures1/forward_soln.png")
 
 print("Solution range:",
     "\n [u velocity] \t min:", minimum(output[NT+1, 1:(m+1)*(n+1)] .* u_std), ",\t max:", maximum(output[NT+1, 1:(m+1)*(n+1)] .* u_std),
