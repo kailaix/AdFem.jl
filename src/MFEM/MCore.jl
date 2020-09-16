@@ -78,3 +78,31 @@ function compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::U
     n = size(mesh.nodes, 1)
     RawSparseTensor(indices, vals, n, n)
 end
+
+"""
+    eval_grad_on_gauss_pts1(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+"""
+function eval_grad_on_gauss_pts1(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+    fem_grad_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_grad_mfem")
+    u = convert_to_tensor(Any[u], [Float64]); u = u[1]
+    out = fem_grad_mfem_(u)
+    m = size(gauss_nodes(mesh), 1)
+    set_shape(out, (m, 2))
+end
+
+"""
+    eval_grad_on_gauss_pts(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+"""
+
+function eval_grad_on_gauss_pts(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+    n = size(mesh.nodes, 1)
+    m = size(gauss_nodes(mesh), 1)
+    r1 = eval_grad_on_gauss_pts1(u[1:n], mesh)
+    r2 = eval_grad_on_gauss_pts1(u[n+1:end], mesh)
+    out = zeros(m, 2, 2)
+    for i = 1:m
+        out[i, 1, :] = r1[i,:]
+        out[i, 2, :] = r2[i,:] 
+    end
+    return out 
+end
