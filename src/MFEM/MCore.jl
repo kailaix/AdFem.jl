@@ -55,3 +55,15 @@ function compute_interaction_term(p::Union{PyObject,Array{Float64, 1}}, mesh::Me
     out = compute_interaction_term_mfem_(p)
     set_shape(out, (2*size(mesh.nodes, 1), ))
 end
+
+"""
+    compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh::Mesh)
+"""
+function compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh::Mesh)
+    compute_fem_mass_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_mass_matrix_mfem", multiple=true)
+    rho = convert_to_tensor(Any[rho], [Float64]); rho = rho[1]
+    indices, vals = compute_fem_mass_matrix_mfem_(rho)
+    n = size(mesh.nodes, 1)
+    A = RawSparseTensor(indices, vals, n, n)
+    A
+end
