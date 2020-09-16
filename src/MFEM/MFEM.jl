@@ -1,4 +1,4 @@
-export install_mfem, Mesh, get_ngauss, get_area
+export Mesh, get_ngauss, get_area
 
 
 LIBMFEM = joinpath(@__DIR__, "..", "..",  "deps", "MFEM", "build", get_library_name("nnfem_mfem"))

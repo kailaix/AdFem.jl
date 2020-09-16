@@ -252,6 +252,32 @@ end
 #     @info i, norm(residual)
 # end
 
+function plot_conductivity(i)
+    figure(figsize=(14,4));
+    subplot(131)
+    visualize_scalar_on_fem_points(k0, m, n, h); title("conductivity exact")
+    subplot(132)
+    visualize_scalar_on_fem_points(run(sess, k), m, n, h); title("conductivity prediction")
+    subplot(133)
+    visualize_scalar_on_fem_points(k0.-run(sess, k), m, n, h); title("conductivity difference")
+    savefig("Boussinesq_figures5/cond$i.png")
+
+    # interpolate NN to a finer grid
+    # m = 100
+    # n = 100
+    # h = 1/n
+    # xy = fem_nodes(m, n, h)
+    # x, y = xy[:, 1], xy[:, 2]
+    # k0 = @. k_exact(x,y)
+
+    # figure(figsize=(14,4));
+    # subplot(131)
+    # visualize_scalar_on_fem_points(k0, m, n, h); title("conductivity exact")
+    # subplot(132)
+    # visualize_scalar_on_fem_points(run(sess, k_nn(x,y)), m, n, h); title("conductivity prediction")
+    # subplot(133)
+    # visualize_scalar_on_fem_points(k0.-run(sess, k_nn(x,y)), m, n, h); title("conductivity difference")
+end
 
 xy = fem_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
@@ -280,6 +306,11 @@ idx = rand(1:(m+1)*(n+1), sample_size)
 idx = [idx; (m+1)*(n+1) .+ idx; 2*(m+1)*(n+1)+m*n .+ idx]
 observed_data = V_data[idx]
 
+matwrite("Boussinesq_figures5/idx.mat", 
+    Dict(
+        "idx"=>idx
+    ))
+
 noise = true
 noise_level = 0.05
 if noise
@@ -291,35 +322,18 @@ loss = mean((V_computed[idx] .- observed_data)^2)
 loss = loss * 1e10
 # ---------------------------------------------------
 # create a session and run 
-max_iter = 200
+max_iter = 100
 sess = Session(); init(sess)
-loss_ = BFGS!(sess, loss, max_iter)
-figure(); semilogy(loss_); savefig("SteadyStateBoussinesq_loss.png")
 
 xy = fem_nodes(m, n, h)
 x, y = xy[:, 1], xy[:, 2]
 k0 = @. k_exact(x,y)
 
-figure(figsize=(14,4));
-subplot(131)
-visualize_scalar_on_fem_points(k0, m, n, h); title("conductivity exact")
-subplot(132)
-visualize_scalar_on_fem_points(run(sess, k), m, n, h); title("conductivity prediction")
-subplot(133)
-visualize_scalar_on_fem_points(k0.-run(sess, k), m, n, h); title("conductivity difference")
-savefig("SteadyStateBoussinesq_k.png")
-
-m = 100
-n = 100
-h = 1/n
-xy = fem_nodes(m, n, h)
-x, y = xy[:, 1], xy[:, 2]
-k0 = @. k_exact(x,y)
-
-figure(figsize=(14,4));
-subplot(131)
-visualize_scalar_on_fem_points(k0, m, n, h); title("conductivity exact")
-subplot(132)
-visualize_scalar_on_fem_points(run(sess, k_nn(x,y)), m, n, h); title("conductivity prediction")
-subplot(133)
-visualize_scalar_on_fem_points(k0.-run(sess, k_nn(x,y)), m, n, h); title("conductivity difference")
+for i = 1:100
+    loss_ = BFGS!(sess, loss, max_iter)
+    matwrite("Boussinesq_figures5/loss$i.mat", Dict("L"=>loss_))
+    close("all"); semilogy(loss_); title("loss vs. iteration")
+    savefig("Boussinesq_figures5/loss$i.png")
+    plot_conductivity(i)
+    ADCME.save(sess, "Boussinesq_figures5/nn$i.mat")
+end

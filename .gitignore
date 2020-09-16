@@ -63,3 +63,10 @@ test/U_total/*.png
 docs/src/codes/*.mat
 *.png
 *.mat
+docs/src/codes/CHTCoupled/fluent/2D_chip_model_results_contour/*.jpg 
+docs/src/codes/CHTCoupled/fluent/2D_test_results_contour/*.jpg
+docs/src/codes/SteadyNavierStokes/figures6/*.jpg
+docs/src/codes/SteadyNavierStokes/figures6/*.mat
+docs/src/codes/CHTCoupled/fluent/2D_chip_model_results_lineplot/*.jpg
+docs/src/codes/SteadyNavierStokes/*.txt
+docs/src/codes/ChipUnstructured/*.txt
