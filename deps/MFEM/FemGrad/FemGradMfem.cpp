@@ -8,10 +8,10 @@
 
 
 using namespace tensorflow;
-#include "FemGrad.h"
+#include "FemGradMfem.h"
 
 
-REGISTER_OP("FemGrad")
+REGISTER_OP("FemGradMfem")
 .Input("u : double")
 .Output("grad : double")
 .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
@@ -23,7 +23,7 @@ REGISTER_OP("FemGrad")
     return Status::OK();
   });
 
-REGISTER_OP("FemGradGrad")
+REGISTER_OP("FemGradMfemGrad")
 .Input("grad_grad : double")
 .Input("grad : double")
 .Input("u : double")
@@ -31,11 +31,11 @@ REGISTER_OP("FemGradGrad")
 
 /*-------------------------------------------------------------------------------------*/
 
-class FemGradOp : public OpKernel {
+class FemGradMfemOp : public OpKernel {
 private:
   
 public:
-  explicit FemGradOp(OpKernelConstruction* context) : OpKernel(context) {
+  explicit FemGradMfemOp(OpKernelConstruction* context) : OpKernel(context) {
 
   }
 
@@ -55,7 +55,7 @@ public:
         
     // create output shape
     
-    TensorShape grad_shape({-1,2});
+    TensorShape grad_shape({mmesh.ngauss,2});
             
     // create output tensor
     
@@ -70,18 +70,19 @@ public:
     // implement your forward function here 
 
     // TODO:
+    MFEM::FemGradMfem_forward(grad_tensor, u_tensor);
 
   }
 };
-REGISTER_KERNEL_BUILDER(Name("FemGrad").Device(DEVICE_CPU), FemGradOp);
+REGISTER_KERNEL_BUILDER(Name("FemGradMfem").Device(DEVICE_CPU), FemGradMfemOp);
 
 
 
-class FemGradGradOp : public OpKernel {
+class FemGradMfemGradOp : public OpKernel {
 private:
   
 public:
-  explicit FemGradGradOp(OpKernelConstruction* context) : OpKernel(context) {
+  explicit FemGradMfemGradOp(OpKernelConstruction* context) : OpKernel(context) {
     
   }
   
@@ -124,10 +125,13 @@ public:
     // implement your backward function here 
 
     // TODO:
+    grad_u->flat<double>().setZero();
+    MFEM::FemGradMfem_backward(
+      grad_u_tensor, grad_grad_tensor, grad_tensor, u_tensor);
     
   }
 };
-REGISTER_KERNEL_BUILDER(Name("FemGradGrad").Device(DEVICE_CPU), FemGradGradOp);
+REGISTER_KERNEL_BUILDER(Name("FemGradMfemGrad").Device(DEVICE_CPU), FemGradMfemGradOp);
 
 
 /***************************************************************************************
@@ -136,11 +140,11 @@ REGISTER_KERNEL_BUILDER(Name("FemGradGrad").Device(DEVICE_CPU), FemGradGradOp);
 
 
 #ifdef GOOGLE_CUDA
-class FemGradOpGPU : public OpKernel {
+class FemGradMfemOpGPU : public OpKernel {
 private:
   
 public:
-  explicit FemGradOpGPU(OpKernelConstruction* context) : OpKernel(context) {
+  explicit FemGradMfemOpGPU(OpKernelConstruction* context) : OpKernel(context) {
 
   }
 
@@ -178,13 +182,13 @@ public:
 
   }
 };
-REGISTER_KERNEL_BUILDER(Name("FemGrad").Device(DEVICE_GPU), FemGradOpGPU);
+REGISTER_KERNEL_BUILDER(Name("FemGradMfem").Device(DEVICE_GPU), FemGradMfemOpGPU);
 
-class FemGradGradOpGPU : public OpKernel {
+class FemGradMfemGradOpGPU : public OpKernel {
 private:
   
 public:
-  explicit FemGradGradOpGPU(OpKernelConstruction* context) : OpKernel(context) {
+  explicit FemGradMfemGradOpGPU(OpKernelConstruction* context) : OpKernel(context) {
     
   }
   
@@ -230,6 +234,6 @@ public:
     
   }
 };
-REGISTER_KERNEL_BUILDER(Name("FemGradGrad").Device(DEVICE_GPU), FemGradGradOpGPU);
+REGISTER_KERNEL_BUILDER(Name("FemGradMfemGrad").Device(DEVICE_GPU), FemGradMfemGradOpGPU);
 
 #endif

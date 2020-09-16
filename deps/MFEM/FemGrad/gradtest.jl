@@ -3,33 +3,36 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using PoreFlow
 Random.seed!(233)
 
-function fem_grad(u)
-    fem_grad_ = load_op_and_grad("./build/libFemGrad","fem_grad")
+function fem_grad_mfem(u)
+    fem_grad_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_grad_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
-    fem_grad_(u)
+    fem_grad_mfem_(u)
 end
 
 # TODO: specify your input parameters
-u = fem_grad(u)
+mesh = Mesh(2, 2, 0.5)
+ipt = ones(size(mesh.nodes,1))
+u = fem_grad_mfem(ipt)
 sess = Session(); init(sess)
 @show run(sess, u)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(fem_grad(u)^2)
+function scalar_function(u)
+    return sum(fem_grad_mfem(u)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(size(mesh.nodes,1)))
+v_ = rand(size(mesh.nodes,1))
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -59,3 +62,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")
