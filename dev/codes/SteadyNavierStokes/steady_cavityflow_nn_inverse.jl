@@ -64,11 +64,13 @@ function nu_nn(x, y)
     # 1.5 + fc(x, [20,20,20,1])|>squeeze
 end
 
+using DelimitedFiles
 using LinearAlgebra
 using MAT
 using PoreFlow
 using PyPlot
 using SparseArrays
+using Statistics
 
 m = 20
 n = 20
@@ -90,9 +92,9 @@ v0 = @. v_exact(x,y)
 xy = fvm_nodes(m, n, h)
 x, y = xy[:,1], xy[:,2]
 p0 = @. p_exact(x,y)
-nu_fvm = nu_nn(x, y)
+nu_exact_fvm = @.nu_exact(x,y)
+nu_fvm = Variable(ones(m*n)) #nu_nn(x, y)
 nu_gauss = reshape(repeat(nu_fvm, 1, 4), (-1,))
-# nu_gauss = Variable(ones(4*m*n))
 
 Laplace = compute_fem_laplace_matrix1(nu_gauss, m, n, h)
 
@@ -212,7 +214,7 @@ function plot_velocity_pressure_viscosity(k)
     visualize_scalar_on_fem_points(run(sess, S[end,1:(m+1)*(n+1)]), m, n, h); title("velocity x prediction")
     subplot(133)
     visualize_scalar_on_fem_points(S_true[end, 1:(m+1)*(n+1)] - run(sess, S[end,1:(m+1)*(n+1)]), m, n, h); title("velocity x error")
-    savefig("figures6/steady_xy_nn_velox$k.png")
+    savefig("figures_pixel6/steady_xy_nn_velox$k.png")
     # savefig("steady_xy_ones_velox.png")
 
     figure(figsize=(14,4));
@@ -222,7 +224,7 @@ function plot_velocity_pressure_viscosity(k)
     visualize_scalar_on_fem_points(run(sess, S[end,(m+1)*(n+1)+1:2*(m+1)*(n+1)]), m, n, h); title("velocity y prediction")
     subplot(133)
     visualize_scalar_on_fem_points(S_true[end, (m+1)*(n+1)+1:2*(m+1)*(n+1)] - run(sess, S[end,(m+1)*(n+1)+1:2*(m+1)*(n+1)]), m, n, h); title("velocity y error")
-    savefig("figures6/steady_xy_nn_veloy$k.png")
+    savefig("figures_pixel6/steady_xy_nn_veloy$k.png")
     # savefig("steady_xy_ones_veloy.png")
 
 
@@ -233,18 +235,22 @@ function plot_velocity_pressure_viscosity(k)
     visualize_scalar_on_fvm_points(run(sess, S[end,2*(m+1)*(n+1)+1:end]), m, n, h); title("pressure prediction")
     subplot(133)
     visualize_scalar_on_fvm_points(S_true[end, 2*(m+1)*(n+1)+1:end] - run(sess, S[end,2*(m+1)*(n+1)+1:end]), m, n, h); title("pressure difference")
-    savefig("figures6/steady_xy_nn_pres$k.png")
+    savefig("figures_pixel6/steady_xy_nn_pres$k.png")
     # savefig("steady_xy_ones_pres.png")
 
-
+    xy = gauss_nodes(m, n, h)
+    x, y= xy[:, 1], xy[:, 1]
+    nu_gauss_exact = nu_exact.(x,y)
+    nu_gauss_computed = run(sess, nu_gauss)
+    
     figure(figsize=(14,4));
     subplot(131)
-    visualize_scalar_on_fvm_points(nu_exact.(x,y), m, n, h); title("viscosity exact")
+    visualize_scalar_on_gauss_points(nu_gauss_exact, m, n, h); title("viscosity exact");gca().invert_yaxis()
     subplot(132)
-    visualize_scalar_on_gauss_points(run(sess, nu_gauss), m, n, h); title("viscosity prediction");gca().invert_yaxis()
+    visualize_scalar_on_gauss_points(nu_gauss_computed, m, n, h); title("viscosity prediction");gca().invert_yaxis()
     subplot(133)
-    visualize_scalar_on_fvm_points(nu_exact.(x,y).-run(sess, nu_gauss)[1:4:end], m, n, h); title("viscosity difference")
-    savefig("figures6/steady_xy_nn_visc$k.png")
+    visualize_scalar_on_gauss_points(nu_gauss_exact.-nu_gauss_computed, m, n, h); ;gca().invert_yaxis(); title("viscosity difference")
+    savefig("figures_pixel6/steady_xy_nn_visc$k.png")
     # savefig("steady_xy_ones_visc.png")
 
 end
@@ -264,6 +270,7 @@ loss = mean((S[end,1:2*(m+1)*(n+1)] - S_true[end,1:2*(m+1)*(n+1)])^2)
 
 # loss = mean((S[end,:] - S_true[end,:])^2)
 loss = loss * 1e10
+visc_err = mean((nu_exact_fvm -nu_fvm)^2)
 
 sess = Session(); init(sess)
 @info run(sess, loss)
@@ -272,12 +279,20 @@ max_iter = 1000
 
 # ADCME.load(sess, "nn$k.mat")
 
+cb = (vs, iter, loss)->begin 
+    #   printstyled("[#iter $iter] θ1=$(vs[1]), θ2=$(vs[2]), loss=$loss\n", color=:green)
+      open("visc_err_pixel.txt","a") do io
+        writedlm(io, [iter vs[1]])
+      end
+end
+
+
 for k = 1:100
-    loss_ = BFGS!(sess, loss, max_iter)
-    matwrite("figures6/loss$k.mat", Dict("L"=>loss_))
+    loss_ = BFGS!(sess, loss, max_iter; vars=[visc_err], callback=cb)
+    matwrite("figures_pixel6/loss$k.mat", Dict("L"=>loss_))
     close("all"); semilogy(loss_); title("loss vs. iteration")
-    savefig("figures6/steady_xy_loss$k.png")
+    savefig("figures_pixel6/steady_xy_loss$k.png")
     plot_velocity_pressure_viscosity(k)
-    ADCME.save(sess, "figures6/nn$k.mat")
+    ADCME.save(sess, "figures_pixel6/nn$k.mat")
 end
 # savefig("steady_xy_ones_loss.png")
