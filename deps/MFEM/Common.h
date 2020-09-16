@@ -11,9 +11,9 @@ using namespace mfem;
 class NNFEM_Element{
 public:
     NNFEM_Element(int ngauss);
-    VectorXd h;
-    VectorXd hx;
-    VectorXd hy;
+    MatrixXd h;
+    MatrixXd hx;
+    MatrixXd hy;
     VectorXd w;
     double area;
     MatrixXd coord;

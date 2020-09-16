@@ -24,10 +24,10 @@ namespace MFEM{
         for (int i = 0; i < mmesh.nelem; i++){
             auto elem = mmesh.elements[i];
             for (int j = 0; j<elem->ngauss; j++){
-                // grad_u[elem->node[0]] += grad_out[k] * elem->h(0, j);
-                // grad_u[elem->node[1]] += grad_out[k] * elem->h(1, j);
-                // grad_u[elem->node[2]] += grad_out[k] * elem->h(2, j);
-                // k++;
+                grad_u[elem->node[0]] += grad_out[k] * elem->h(0, j);
+                grad_u[elem->node[1]] += grad_out[k] * elem->h(1, j);
+                grad_u[elem->node[2]] += grad_out[k] * elem->h(2, j);
+                k++;
             }
         }
     }
