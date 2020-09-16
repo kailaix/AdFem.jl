@@ -7,7 +7,6 @@ module PoreFlow
     using Parameters
     using Reexport
     using Statistics
- 
     @reexport using ADCME
 
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2

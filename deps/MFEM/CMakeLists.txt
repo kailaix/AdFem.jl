@@ -56,8 +56,9 @@ find_library(mfem mfem HINTS ${LIBDIR})
 add_library(nnfem_mfem SHARED Common.cpp 
         FemLaplace1/FemLaplaceScalar.cpp 
           FemSource1/FemSourceScalar.cpp
-          FemToGaussPoints/FemToGaussPointsMfem.cpp)
-
+          FemToGaussPoints/FemToGaussPointsMfem.cpp
+          ComputeInteractionTerm/ComputeInteractionTermMfem.cpp)
+          
 message("MFEM = ${mfem}")
 target_link_libraries(nnfem_mfem ${TF_LIB_FILE} ${mfem})
 set_property(TARGET nnfem_mfem PROPERTY POSITION_INDEPENDENT_CODE ON)
