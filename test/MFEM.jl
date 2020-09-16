@@ -56,3 +56,16 @@ Mesh("twoholes.stl")
     # visualize_scalar_on_fem_points(u, mesh)
     # savefig("test.png")
 end
+
+@testset "visualize_scalar_on_fvm_points" begin 
+    mesh = Mesh(10, 10, 1.0)
+    u = rand(size(mesh.elems, 1))
+    visualize_scalar_on_fvm_points(u, mesh)
+    # close("all")
+    # visualize_scalar_on_gauss_points(out1, mesh)
+    # savefig("test2.png")
+
+    # close("all")
+    # visualize_scalar_on_fem_points(u, mesh)
+    # savefig("test.png")
+end
