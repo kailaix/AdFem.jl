@@ -6,6 +6,10 @@ import numpy as np
 
 # Create mesh and define function space
 mesh = UnitSquareMesh(8, 8, "left")
+plot(mesh)
+plt.gca().invert_yaxis()
+plt.xlabel("x")
+plt.ylabel("y")
 plt.savefig("fenics/mesh.png")
 P = FunctionSpace(mesh, 'DG', 0)
 U = FunctionSpace(mesh, "CG", 1)

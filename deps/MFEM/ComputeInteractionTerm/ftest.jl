@@ -1,8 +1,5 @@
 using ADCME
-using PyCall
 using LinearAlgebra
-using PyPlot
-using Random
 using PoreFlow
 using DelimitedFiles
 
@@ -15,8 +12,3 @@ sess = Session(); init(sess)
 f1 = run(sess, f0)
 
 @show norm(f - f1)
-
-close("all")
-plot(f)
-plot(f1,"--")
-savefig("test.png")
