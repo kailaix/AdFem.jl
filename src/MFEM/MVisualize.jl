@@ -1,4 +1,10 @@
 export visualize_mesh
+
+"""
+    visualize_mesh(mesh::Mesh) 
+
+Visualizes the unstructured meshes. 
+"""
 function visualize_mesh(mesh::Mesh)
     nodes, elems = mesh.nodes, mesh.elems
     patches = PyObject[]
@@ -15,7 +21,16 @@ function visualize_mesh(mesh::Mesh)
     gca().invert_yaxis()
 end
 
-function visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+"""
+    visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...;
+        with_mesh::Bool = false, kwargs...)
+
+Visualizes the nodal values `u` on the unstructured mesh `mesh`.
+
+- `with_mesh`: if true, the unstructured mesh is also plotted. 
+"""
+function visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...;
+        with_mesh::Bool = false, kwargs...)
         # plots a finite element mesh
     function plot_fem_mesh(nodes_x, nodes_y)
         for i = 1:size(mesh.elems, 1)
@@ -38,7 +53,34 @@ function visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...
     triangulation = matplotlib.tri.Triangulation(nodes_x, nodes_y, elements_tris)
 
     # plot the finite element mesh
-    plot_fem_mesh(nodes_x, nodes_y)
+    if with_mesh
+        plot_fem_mesh(nodes_x, nodes_y)
+    end
+
+    # plot the contours
+    plt.tricontourf(triangulation, nodal_values)
+
+    # show
+    colorbar()
+    axis("scaled")
+end
+
+
+"""
+    visualize_scalar_on_gauss_points(u::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+"""
+function visualize_scalar_on_gauss_points(u::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+    # FEM data
+    xy = gauss_nodes(mesh)
+    nodes_x = xy[:,1]
+    nodes_y = xy[:,2]    
+    nodal_values = u
+
+    # create an unstructured triangular grid instance
+    triangulation = matplotlib.tri.Triangulation(nodes_x, nodes_y)
+
+    # # plot the finite element mesh
+    # plot_fem_mesh(nodes_x, nodes_y)
 
     # plot the contours
     plt.tricontourf(triangulation, nodal_values)

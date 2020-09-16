@@ -379,11 +379,21 @@ function fem_to_gauss_points(u::Array{Float64,1}, m::Int64, n::Int64, h::Float64
 end
 
 """
-    fem_to_gauss_points(u::Union{PyObject,Array{Float64,1}}, mesh::Mesh)
+    fem_to_gauss_points(u::PyObject, mesh::Mesh)
 """
-function fem_to_gauss_points(u::Union{PyObject,Array{Float64,1}}, mesh)
+function fem_to_gauss_points(u::PyObject, mesh)
     fem_to_gauss_points_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_to_gauss_points_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     out = fem_to_gauss_points_mfem_(u)
     set_shape(out, (get_ngauss(mesh),))
+end
+
+"""
+    fem_to_gauss_points(u::Array{Float64,1}, mesh::Mesh)
+"""
+function fem_to_gauss_points(u::Array{Float64,1}, mesh)
+    out = zeros(get_ngauss(mesh))
+    @eval ccall((:FemToGaussPointsMfem_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), 
+                $out, $u)
+    return out
 end

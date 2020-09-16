@@ -32,3 +32,16 @@ namespace MFEM{
         }
     }
 }
+
+extern "C" void FemToGaussPointsMfem_Julia(double *out, const double *u){
+    int k = 0;
+    for (int i = 0; i < mmesh.nelem; i++){
+        auto elem = mmesh.elements[i];
+        for (int j = 0; j<elem->ngauss; j++){
+            out[k] = u[elem->node[0]] * elem->h(0, j) + 
+                        u[elem->node[1]] * elem->h(1, j) + 
+                        u[elem->node[2]] * elem->h(2, j);
+            k++;
+        }
+    }
+}

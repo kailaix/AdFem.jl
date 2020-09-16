@@ -37,3 +37,22 @@ savefig("g.png")
 
 @PDATA
 Mesh("twoholes.stl")
+
+
+@testset "fem_to_gauss_points" begin 
+    mesh = Mesh(10, 10, 1.0)
+    x, y = mesh.nodes[:,1], mesh.nodes[:,2]
+    u = @. x^2 + y
+    out = fem_to_gauss_points(constant(u), mesh)
+    out2 = fem_to_gauss_points(u, mesh)
+    sess = Session(); init(sess)
+    out1 = run(sess, out)
+    @test out1≈out2
+    # close("all")
+    # visualize_scalar_on_gauss_points(out1, mesh)
+    # savefig("test2.png")
+
+    # close("all")
+    # visualize_scalar_on_fem_points(u, mesh)
+    # savefig("test.png")
+end
