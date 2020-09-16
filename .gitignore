@@ -63,3 +63,5 @@ test/U_total/*.png
 docs/src/codes/*.mat
 *.png
 *.mat
+
+*fenics*

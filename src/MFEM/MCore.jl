@@ -44,3 +44,14 @@ function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array
     L = scatter_update(L, idx, idx, spdiag(length(idx)))
     L, Lbd
 end
+
+
+"""
+    compute_interaction_term(p::Union{PyObject,Array{Float64, 1}}, mesh::Mesh)
+"""
+function compute_interaction_term(p::Union{PyObject,Array{Float64, 1}}, mesh::Mesh)
+    compute_interaction_term_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_interaction_term_mfem")
+    p = convert_to_tensor(Any[p], [Float64]); p = p[1]
+    out = compute_interaction_term_mfem_(p)
+    set_shape(out, (2*size(mesh.nodes, 1), ))
+end
