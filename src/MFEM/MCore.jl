@@ -67,3 +67,14 @@ function compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh:
     A = RawSparseTensor(indices, vals, n, n)
     A
 end
+
+"""
+    compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+"""
+function compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+    compute_fem_advection_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_advection_matrix_mfem", multiple=true)
+    u,v = convert_to_tensor(Any[u,v], [Float64,Float64])
+    indices, vals = compute_fem_advection_matrix_mfem_(u,v)
+    n = size(mesh.nodes, 1)
+    RawSparseTensor(indices, vals, n, n)
+end

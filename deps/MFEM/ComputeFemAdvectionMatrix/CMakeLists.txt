@@ -51,22 +51,28 @@ else()
   SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 endif()
 
-include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${LIBDIR}/../include)
-find_library(mfem mfem HINTS ${LIBDIR})
-add_library(nnfem_mfem SHARED Common.cpp 
-        FemLaplace1/FemLaplaceScalar.cpp 
-          FemSource1/FemSourceScalar.cpp
-          FemToGaussPoints/FemToGaussPointsMfem.cpp
-          ComputeInteractionTerm/ComputeInteractionTermMfem.cpp
-          ComputeFemMassMatrix1/ComputeFemMassMatrixMfem.cpp
-          ComputeFemAdvectionMatrix/ComputeFemAdvectionMatrixMfem.cpp)
-          
-message("MFEM = ${mfem}")
-target_link_libraries(nnfem_mfem ${TF_LIB_FILE} ${mfem})
-set_property(TARGET nnfem_mfem PROPERTY POSITION_INDEPENDENT_CODE ON)
+include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC})
 
+find_program(_nvidia_smi "nvidia-smi")
+if (_nvidia_smi)
+  find_package(CUDA QUIET REQUIRED)
+  SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-O3 ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-shared ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-fPIC ${CMAKE_CXX_FLAGS}")
+  SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};--expt-relaxed-constexpr)
+  SET(CUDA_PROPAGATE_HOST_FLAGS ON)
+  add_definitions(-DGOOGLE_CUDA)
+  message("Compiling GPU-compatible custom operator!")
+  cuda_add_library(ComputeFemAdvectionMatrixMfem SHARED ComputeFemAdvectionMatrixMfem.cpp ComputeFemAdvectionMatrixMfem.cu)
+else()
+  add_library(ComputeFemAdvectionMatrixMfem SHARED ComputeFemAdvectionMatrixMfem.cpp)
+endif()
+
+set_property(TARGET ComputeFemAdvectionMatrixMfem PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(ComputeFemAdvectionMatrixMfem ${TF_LIB_FILE})
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
-set_target_properties(nnfem_mfem PROPERTIES 
+set_target_properties(ComputeFemAdvectionMatrixMfem PROPERTIES 
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build 
                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build
                 ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build)
