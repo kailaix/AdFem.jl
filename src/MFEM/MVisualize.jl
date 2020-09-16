@@ -89,3 +89,24 @@ function visualize_scalar_on_gauss_points(u::Array{Float64,1}, mesh::Mesh, args.
     colorbar()
     axis("scaled")
 end
+
+"""
+    visualize_scalar_on_fvm_points(u::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+"""
+function visualize_scalar_on_fvm_points(u::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+    nodes_x, nodes_y = mesh.nodes[:,1], mesh.nodes[:,2]
+    verts = zeros(size(mesh.elems, 1), 3, 2)
+    for i = 1:size(mesh.elems, 1)
+        x = nodes_x[mesh.elems[i,:]]
+        y = nodes_y[mesh.elems[i,:]]
+        verts[i, :, :] = [x y]
+    end
+    # Make the collection and add it to the plot.
+    coll = matplotlib.collections.PolyCollection(verts, array=u, cmap=matplotlib.cm.jet, edgecolors="none")
+    gca().add_collection(coll)
+    gca().autoscale_view()
+    colorbar(coll, ax=gca())
+    xlabel("x")
+    ylabel("y")
+    axis("scaled")
+end
