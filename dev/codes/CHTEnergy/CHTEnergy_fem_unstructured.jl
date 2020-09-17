@@ -37,11 +37,15 @@ m = 20
 n = 20
 h = 1/n 
 
+mesh = Mesh(m, n, h)
+nnode = size(mesh.nodes, 1)
+nelem = size(mesh.elems, 1)
+
 #---------------------------------------------
 # discretized governing equation 
 #  J * u^{n+1} - J * u^n = - v ⋅ grad u + K * u^{n+1} + F^{n+1}
 #---------------------------------------------
-xy = fem_nodes(m, n, h)
+xy = mesh.nodes
 x, y = xy[:,1], xy[:,2]
 T0 = @. T_exact(x, y)
 u = @. u_exact(x,y)
@@ -52,18 +56,26 @@ k = @. k_exact(x, y)
 
 # ---------------------------------------------
 
-bd = bcnode("all", m, n, h)
+bd = Int64[]
+for j = 1:m+1
+    push!(bd, j)
+    push!(bd, n*(m+1)+j)
+end
+for i = 2:n
+    push!(bd, (i-1)*(m+1)+1)
+    push!(bd, (i-1)*(m+1)+m+1)
+end
 
-ugauss = fem_to_gauss_points(u, m, n, h)
-vgauss = fem_to_gauss_points(v, m, n, h)
-kgauss = fem_to_gauss_points(k, m, n, h)
-Qgauss = fem_to_gauss_points(Q, m, n, h)
+ugauss = fem_to_gauss_points(u, mesh)
+vgauss = fem_to_gauss_points(v, mesh)
+kgauss = fem_to_gauss_points(k, mesh)
+Qgauss = fem_to_gauss_points(Q, mesh)
 
-Advection = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), m, n, h))
-Laplace = constant(compute_fem_laplace_matrix1(kgauss, m, n, h))
+Advection = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), mesh))
+Laplace = constant(compute_fem_laplace_matrix1(constant(kgauss), mesh))
 A = Advection + Laplace
-A, _ = fem_impose_Dirichlet_boundary_condition1(A, bd, m, n, h)
-b = constant(compute_fem_source_term1(constant(Qgauss), m, n, h))
+A, _ = fem_impose_Dirichlet_boundary_condition1(A, bd, mesh)
+b = constant(compute_fem_source_term1(constant(Qgauss), mesh))
 b = scatter_update(b, bd, zeros(length(bd)))
 sol = A\b
 
@@ -76,8 +88,8 @@ T_computed = run(sess, sol)
 # visualize numerical solution and exact solution
 figure(figsize=(10,4))
 subplot(121)
-visualize_scalar_on_fem_points(T_computed, m, n, h)
+visualize_scalar_on_fem_points(T_computed, mesh, with_mesh=true)
 subplot(122)
-visualize_scalar_on_fem_points(T0, m, n, h)
-savefig("forward_solution.png")
+visualize_scalar_on_fem_points(T0, mesh, with_mesh=true)
+savefig("forward_solution_unstructured.png")
 close("all")
