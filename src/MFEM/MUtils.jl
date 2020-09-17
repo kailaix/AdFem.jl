@@ -19,7 +19,7 @@ function get_meshio()
 end
 
 """
-    Mesh(stlfile::String)
+    Mesh(filename::String; file_format::Union{String, Missing} = missing)
 
 Reads a mesh file and extracts element, coordinates and boundaries.
 
@@ -28,8 +28,12 @@ Reads a mesh file and extracts element, coordinates and boundaries.
 mesh = Mesh(joinpath(PDATA, "twoholes.stl"))
 ```
 """
-function Mesh(filename::String)
+function Mesh(filename::String; file_format::Union{String, Missing} = missing)
     meshio = get_meshio()
-    mesh = meshio.read(filename)
+    if !ismissing(file_format)
+        mesh = meshio.read(filename, file_format = file_format)
+    else
+        mesh = meshio.read(filename)
+    end
     Mesh(mesh.points[:,1:2], mesh.cells[1][2] .+ 1)
 end
