@@ -18,10 +18,15 @@ U = FunctionSpace(mesh, "CG", 1)
 u = TrialFunction(U)
 p = TestFunction(P)
 
-a = dot(p , (u.dx(0) + u.dx(1))) * dx 
+a = dot(p , u.dx(0)) * dx 
+b = dot(p , u.dx(1)) * dx 
 
 A = assemble(a).array()
 print(A.shape)
 DofToVert = vertex_to_dof_map(u.function_space())
-
 np.savetxt("fenics/A.txt", A[:, DofToVert])
+
+A = assemble(b).array()
+print(A.shape)
+DofToVert = vertex_to_dof_map(u.function_space())
+np.savetxt("fenics/B.txt", A[:, DofToVert])

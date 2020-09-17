@@ -9,7 +9,12 @@ extern "C" void ComputeInteractionMatrixMfem(int64 *ii, int64 *jj, double *vv){
             for (int k = 0; k < 3; k++){
                 ii[s] = i + 1;
                 jj[s] = elem->node[k] + 1;
-                vv[s] = (elem->hx(k, j) + elem->hy(k, j)) * elem->w[j];
+                vv[s] = elem->hx(k, j) * elem->w[j];
+                s++;
+                
+                ii[s] = i + 1;
+                jj[s] = mmesh.nnode + elem->node[k] + 1;
+                vv[s] = elem->hy(k, j) * elem->w[j];
                 s++;
             }
     }
