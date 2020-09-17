@@ -78,3 +78,16 @@ function compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::U
     n = size(mesh.nodes, 1)
     RawSparseTensor(indices, vals, n, n)
 end
+
+"""
+    compute_interaction_matrix(mesh::Mesh)
+"""
+function compute_interaction_matrix(mesh::Mesh)
+    ii = zeros(Int64, get_ngauss(mesh)*3)
+    jj = zeros(Int64, get_ngauss(mesh)*3)
+    vv = zeros(Float64, get_ngauss(mesh)*3)
+    @eval ccall((:ComputeInteractionMatrixMfem, $LIBMFEM), Cvoid, (Ptr{Int64}, Ptr{Int64}, Ptr{Cdouble}), $ii, $jj, $vv)
+    m = size(mesh.elems, 1)
+    n = size(mesh.nodes, 1)
+    sparse(ii, jj, vv, m, n)
+end

@@ -58,9 +58,10 @@ add_library(nnfem_mfem SHARED Common.cpp
           FemSource1/FemSourceScalar.cpp
           FemToGaussPoints/FemToGaussPointsMfem.cpp
           ComputeInteractionTerm/ComputeInteractionTermMfem.cpp
-          FemGrad/FemGradMfem.cpp)
+          FemGrad/FemGradMfem.cpp
           ComputeFemMassMatrix1/ComputeFemMassMatrixMfem.cpp
-          ComputeFemAdvectionMatrix/ComputeFemAdvectionMatrixMfem.cpp)
+          ComputeFemAdvectionMatrix/ComputeFemAdvectionMatrixMfem.cpp
+          ComputeInteractionMatrix/ComputeInteractionMatrixMfem.cpp)
           
 message("MFEM = ${mfem}")
 target_link_libraries(nnfem_mfem ${TF_LIB_FILE} ${mfem})
