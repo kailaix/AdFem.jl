@@ -1,5 +1,6 @@
 # Adding Custom Operators for Unstructured Meshes
 
+## Workflow
 This tutorial describes how to develop custom operators for unstructured meshes. 
 
 PoreFlow uses [MFEM](https://mfem.org/) as the backend for assembling finite element matrices. However, users, as well as custom operator developers, do not need to know how to use MFEM. PoreFlow has provided an easier interface to essential data structures for assembling finite element matrices. The data structure can be assessed in C++ (see [`Mesh`](@ref)) and the header files are located in `deps/MFEM/Common.h`. As the structured mesh utilties, we do not expose the APIs for Julia users, and therefore if some operators are lacking, users must modify the source codes of PoreFlow. 
@@ -13,6 +14,8 @@ The basic workflow is to go into `deps/MFEM` directory. Then
 5. Recompile PoreFlow or run `ninja` in `deps/MFEM/build`. 
 6. Test your code. Note you need to replace the library path in `load_op_and_grad` by `PoreFlow.libmfem` in order to share the same `mmesh` throughout the session. 
 
+
+## Verifying Implementation against FEniCS
 To test unstructured meshes, we can compare the results with [`fenics`](https://fenicsproject.org/). We can use the same mesh:
 ```julia
 mesh = Mesh(8, 8, 1/8)
@@ -79,4 +82,11 @@ f1 = run(sess, f0)
 We get the result:
 ```
 norm(f - f1) = 3.0847790632031627e-16
+```
+
+## Install FEniCS
+It is recommend to install FEniCS by creating a new conda environment. For example, on a Linux server, you can do 
+```bash
+conda create -n fenicsproject -c conda-forge fenics
+source activate fenicsproject
 ```
