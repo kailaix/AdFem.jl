@@ -2,7 +2,7 @@
 
 PoreFlow does not have its own mesh generator. This provides users with flexibility to user a third-party mesh generator. In general, users only need to provide the coordinates (`nodes`) and connectivity matrix (`elems`). As mentioned in [this page](https://kailaix.github.io/PoreFlow.jl/dev/tutorial_mfem/), PoreFlow does not use static condensation for tackling boundary conditions; therefore, we do not need to specify the boundary conditions for the mesh. 
 
-The `Mesh` function in PoreFlow can also parse `stl` files. In this article, we show an example how to generate a `stl` data file using [Gmsh](https://gmsh.info/). 
+The `Mesh` function in PoreFlow can also any any mesh files supported by [`meshio`](https://github.com/nschloe/meshio). In this article, we show an example how to generate a `stl` data file using [Gmsh](https://gmsh.info/). 
 
 After defining the geometry and generating the mesh in the Gmsh software, we export the mesh in the file menu:
 
