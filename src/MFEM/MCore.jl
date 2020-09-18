@@ -8,6 +8,11 @@ function eval_f_on_fem_pts(f::Function, mesh::Mesh)
     f.(xy[:,1], xy[:,2])
 end
 
+function eval_f_on_fvm_pts(f::Function, mesh::Mesh)
+    xy = fvm_nodes(mesh)
+    f.(xy[:,1], xy[:,2])
+end
+
 """
     compute_fem_source_term1(f::PyObject, mesh::Mesh)
 """

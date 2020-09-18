@@ -113,3 +113,18 @@ end
 function fem_nodes(mesh::Mesh)
     mesh.nodes
 end
+
+"""
+    fvm_nodes(mesh::Mesh)
+"""
+function fvm_nodes(mesh::Mesh)
+    nnode = size(mesh.nodes, 1)
+    nelem = size(mesh.elems, 1)
+    out = zeros(nelem, 2)
+    for i = 1:nelem
+        idx = mesh.elems[i, :]
+        out[i, 1] = mean(mesh.nodes[idx, 1])
+        out[i, 2] = mean(mesh.nodes[idx, 2])
+    end
+    return out
+end
