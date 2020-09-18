@@ -33,11 +33,19 @@ end
 
 #---------------------------------------------
 # grid setup
-m = 20
-n = 20
-h = 1/n 
 
-mesh = Mesh(m, n, h)
+######## mesh 1 ########
+# m = 20
+# n = 20
+# h = 1/n 
+# mesh = Mesh(m, n, h)
+
+######## mesh 2 ########
+filename = "CHT_2D.stl"
+file_format = "stl"
+mesh = Mesh(filename, file_format = file_format)
+mesh = Mesh(mesh.nodes ./ 0.0305, mesh.elems)
+
 nnode = size(mesh.nodes, 1)
 nelem = size(mesh.elems, 1)
 
@@ -56,14 +64,13 @@ k = @. k_exact(x, y)
 
 # ---------------------------------------------
 
-bd = Int64[]
-for j = 1:m+1
-    push!(bd, j)
-    push!(bd, n*(m+1)+j)
-end
-for i = 2:n
-    push!(bd, (i-1)*(m+1)+1)
-    push!(bd, (i-1)*(m+1)+m+1)
+bd = Array{Int64, 1}([])
+eps = 1e-6
+for j = 1:nnode
+    nodex, nodey = mesh.nodes[j, 1], mesh.nodes[j, 2]
+    if abs(nodex-0.0) <= eps || abs(nodex-1.0) <= eps || abs(nodey-0.0) <= eps || abs(nodey-1.0) <= eps
+        global bd = [bd; j]
+    end
 end
 
 ugauss = fem_to_gauss_points(u, mesh)
