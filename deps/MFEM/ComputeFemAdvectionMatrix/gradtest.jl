@@ -6,20 +6,13 @@ using PoreFlow
 using Random
 Random.seed!(233)
 
-function compute_fem_advection_matrix_mfem(u,v, mesh)
-    compute_fem_advection_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_advection_matrix_mfem", multiple=true)
-    u,v = convert_to_tensor(Any[u,v], [Float64,Float64])
-    indices, vals = compute_fem_advection_matrix_mfem_(u,v)
-    n = size(mesh.nodes, 1)
-    RawSparseTensor(indices, vals, n, n)
-end
 
 # TODO: specify your input parameters
-mesh = Mesh(10, 10, 0.1)
+mesh = Mesh(10, 10, 0.1, degree=2)
 ng = get_ngauss(mesh)
 u0 = ones(ng)
 v0 = ones(ng)
-u = compute_fem_advection_matrix_mfem(u0,v0, mesh)
+u = compute_fem_advection_matrix1(u0,v0, mesh)
 sess = Session(); init(sess)
 @show run(sess, u)
 
@@ -31,7 +24,7 @@ sess = Session(); init(sess)
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(x)
-    return sum(values(compute_fem_advection_matrix_mfem(x,v0,mesh))^2)
+    return sum(values(compute_fem_advection_matrix1(u0,x,mesh))^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
