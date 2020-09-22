@@ -90,3 +90,5 @@ It is recommend to install FEniCS by creating a new conda environment. For examp
 conda create -n fenicsproject -c conda-forge fenics
 source activate fenicsproject
 ```
+
+Please refer to built-in PoreFlow custom operators to see how FEniCS is used for validation. 
