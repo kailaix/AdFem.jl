@@ -8,9 +8,9 @@ namespace MFEM{
         for (int i = 0; i < mmesh.nelem; i++){
             auto elem = mmesh.elements[i];
             for (int j = 0; j<elem->ngauss; j++){
-                out[k] = u[elem->node[0]] * elem->h(0, j) + 
-                           u[elem->node[1]] * elem->h(1, j) + 
-                            u[elem->node[2]] * elem->h(2, j);
+                out[k] = u[elem->node[0]] * elem->hs(0, j) + 
+                           u[elem->node[1]] * elem->hs(1, j) + 
+                            u[elem->node[2]] * elem->hs(2, j);
                 k++;
             }
         }
@@ -24,9 +24,9 @@ namespace MFEM{
         for (int i = 0; i < mmesh.nelem; i++){
             auto elem = mmesh.elements[i];
             for (int j = 0; j<elem->ngauss; j++){
-                grad_u[elem->node[0]] += grad_out[k] * elem->h(0, j);
-                grad_u[elem->node[1]] += grad_out[k] * elem->h(1, j);
-                grad_u[elem->node[2]] += grad_out[k] * elem->h(2, j);
+                grad_u[elem->node[0]] += grad_out[k] * elem->hs(0, j);
+                grad_u[elem->node[1]] += grad_out[k] * elem->hs(1, j);
+                grad_u[elem->node[2]] += grad_out[k] * elem->hs(2, j);
                 k++;
             }
         }
@@ -38,9 +38,9 @@ extern "C" void FemToGaussPointsMfem_Julia(double *out, const double *u){
     for (int i = 0; i < mmesh.nelem; i++){
         auto elem = mmesh.elements[i];
         for (int j = 0; j<elem->ngauss; j++){
-            out[k] = u[elem->node[0]] * elem->h(0, j) + 
-                        u[elem->node[1]] * elem->h(1, j) + 
-                        u[elem->node[2]] * elem->h(2, j);
+            out[k] = u[elem->node[0]] * elem->hs(0, j) + 
+                        u[elem->node[1]] * elem->hs(1, j) + 
+                        u[elem->node[2]] * elem->hs(2, j);
             k++;
         }
     }

@@ -82,6 +82,9 @@ void NNFEM_Mesh::init(double *vertices, int num_vertices,
                 GaussPts(i_gp, 0) = x1 * ip.x + x2 * ip.y + x3 * (1-ip.x-ip.y);
                 GaussPts(i_gp, 1) = y1 * ip.x + y2 * ip.y + y3 * (1-ip.x-ip.y);
                 i_gp++;
+                element->hs(0, i) = ip.x; 
+                element->hs(1, i) = ip.y; 
+                element->hs(2, i) = 1 - ip.x - ip.y;
 
                 // set element weight
                 element->w[i] = ip.weight * element->area/0.5;
@@ -120,6 +123,7 @@ NNFEM_Element::NNFEM_Element(int ngauss, int ndof): ngauss(ngauss), ndof(ndof), 
     h.resize(ndof, ngauss);
     hx.resize(ndof, ngauss);
     hy.resize(ndof, ngauss);
+    hs.resize(3, ngauss);
     w.resize(ngauss);
     coord.resize(ngauss, 2);
 }
