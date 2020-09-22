@@ -177,3 +177,37 @@ end
 #     end
 #     return out 
 # end
+
+"""
+    compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
+    compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
+"""
+function compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
+    @assert size(kappa) == (get_ngauss(mesh), 3, 3)
+    compute_fem_stiffness_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_stiffness_matrix_mfem", multiple=true)
+    kappa = convert_to_tensor(Any[kappa], [Float64]); kappa = kappa[1]
+    kappa = reshape(kappa, (-1,))
+    indices, vv = compute_fem_stiffness_matrix_mfem_(kappa)
+    RawSparseTensor(indices, vv, 2mesh.ndof, 2mesh.ndof)
+end
+
+function compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
+    @assert size(kappa) == (get_ngauss(mesh), 3, 3)
+    K = zeros(length(kappa))
+    s = 1
+    for i = 1:size(kappa, 1)
+        for p = 1:3
+            for q = 1:3
+                K[s] = kappa[i, p, q]
+                s += 1
+            end
+        end
+    end
+    N = (size(mesh.conn, 2) * 2)^2 * get_ngauss(mesh);
+    indices = zeros(Int64, 2N)
+    vv = zeros(N)
+    @eval ccall((:ComputeFemStiffnessMatrixMfem_forward_Julia, $LIBMFEM), Cvoid, 
+            (Ptr{Clonglong}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $K)
+    indices = reshape(indices, 2, N)'|>Array 
+    sparse(indices[:,1] .+ 1, indices[:, 2] .+ 1, vv, 2mesh.ndof, 2mesh.ndof)
+end
