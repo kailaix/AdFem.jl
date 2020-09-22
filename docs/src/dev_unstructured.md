@@ -14,6 +14,32 @@ The basic workflow is to go into `deps/MFEM` directory. Then
 5. Recompile PoreFlow or run `ninja` in `deps/MFEM/build`. 
 6. Test your code. Note you need to replace the library path in `load_op_and_grad` by `PoreFlow.libmfem` in order to share the same `mmesh` throughout the session. 
 
+## Assembling Matrices and Vectors
+
+The main approach for assembling matrices and vectors in finite element methods is to loop over each element (triangles in our case), and computes contributions to the corresponding local degrees of freedom (DOF). For example, for P1 (linear) element, the local DOFs are three vertices; for P2 (quadratic) element, the local DOFs are both vertices and edges. 
+
+![](./assets/mfem/dof.png)
+
+Each finite element (triangle) is represented by `NNFEM_Element` in the C++ shared library of PoreFlow. The local DOFs are mapped to global DOFs via `dof` array, which is a 6-dimensional array. For P1 element, the last three components are redundant. For P2 elements, the global indices are arranged in a way such that all edge indices are after the nodal indices. The mapping between edge indices and vertices can be found in `edges` in the structure [`Mesh`](@ref). 
+
+When we loop over each element, each DOF is associated with a basis function $\phi_i(x, y)$, such that $\phi_i(x_j, y_j) = \delta_{ij}$, where $(x_j, y_j)$ is the nodes shown in the above plots. For convenience, an element (`NNFEM_Element`) provides the values of 
+
+$$\phi_i(\tilde x_k, \tilde y_k), \partial_x \phi_i(\tilde x_k, \tilde y_k), \partial_y \phi_i(\tilde x_k, \tilde y_k), \tilde\phi_i(\tilde x_k, \tilde y_k) \tag{1}$$
+
+Here $(\tilde x_k, \tilde y_k)$ is the $k$-th Guass points for the current element, and $\tilde \phi_i$ is the basis function for P1 element. The data are stored in `h`, `hx`, `hy`, `hs` respectively. Additionally, the element also contains a weight vector `w` that stores the quadrature weights (adjusted by triangle areas). Note Equation 1 are all **physical** shape functions. Therefore, we can conveniently compute many quantities. For example, if we want to compute $\int_A \nabla u \cdot \nabla v dx dy$ on the element $A$ ($u$ is the trial function, and $v$ is the test function), $\int_A \nabla \phi_i \cdot \nabla \phi_j dxdy$ can be expressed as 
+```c++
+double s = 0.0;
+for (int r = 0; r < elem->ngauss; r++){
+    s += ( elem->hx(i, r) * elem->hx(j, r) + elem->hy(i, r) * elem->hy(j, r)) * elem->w(r);
+}
+```
+
+The corresponding indices in the global sparse matrix is 
+```c++
+int I = elem->dof[i];
+int J = elem->dof[j];`
+```
+
 
 ## Verifying Implementation against FEniCS
 To test unstructured meshes, we can compare the results with [`fenics`](https://fenicsproject.org/). We can use the same mesh:
@@ -83,6 +109,7 @@ We get the result:
 ```
 norm(f - f1) = 3.0847790632031627e-16
 ```
+
 
 ## Install FEniCS
 It is recommend to install FEniCS by creating a new conda environment. For example, on a Linux server, you can do 

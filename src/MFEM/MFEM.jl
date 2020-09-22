@@ -19,22 +19,29 @@ Internally, the mesh `mmesh` is represented by a collection of `NNFEM_Element` o
 int nelem; // total number of elements
 int nnode; // total number of nodes
 int ngauss; // total number of Gauss points
+int ndof; // total number of dofs
 int order; // quadrature integration order
+int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element 
+int elem_ndof; // 3 for P1, 6 for P2
 MatrixXd GaussPts; // coordinates of Gauss quadrature points
 std::vector<NNFEM_Element*> elements; // array of elements
 ```
 
 The `NNFEM_Element` has data
 ```c++
-VectorXd h;   // basis functions, 3 × ng  
-VectorXd hx;  // x-directional basis functions, 3 × ng  
-VectorXd hy;  // y-directional basis functions, 3 × ng  
+VectorXd h;   // basis functions, elem_ndof × ng  
+VectorXd hx;  // x-directional basis functions, elem_ndof × ng  
+VectorXd hy;  // y-directional basis functions, elem_ndof × ng  
+MatrixXd hs;  // shape functions for linear element, 3 × ng
 VectorXd w;   // weight vectors, ng  
 double area;  // area of the triangle
 MatrixXd coord; // coordinates array, 3 × 2
-int node[3]; // global index of the vertices
 int nnode; // total number of nodes 
 int ngauss; // total number of Gauss points
+int dof[6]; // global indices for both nodes and edges, note that edge indices are offset by `nv`
+int node[3]; // global indices of local vertices
+int edge[3]; // global indices of local edges
+int ndof; // DOF, 3 for P1 element, 6 for P2 element 
 ```
 """
 mutable struct Mesh
