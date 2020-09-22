@@ -20,7 +20,8 @@
 # println(replace(replace(sympy.julia_code(simplify(h)), ".^"=>"^"), ".*"=>"*"))
 
 function u_exact(x,y)
-    if y == 0.0
+    # x*(1-x)*y*(1-y)
+    if y == 1.0
         return 1.0
     else
         return 0.0    
@@ -28,19 +29,21 @@ function u_exact(x,y)
 end
 
 function v_exact(x,y)
+    # x*(1-x)*y*(1-y)^2
     0.0
 end
 
 function p_exact(x,y)
+    # x*(1-x)*y*(1-y)
     0.0
 end
 
 function ffunc(x, y)
-    #-x^2*y*(x - 1)^2*(y - 1)^2*(2*y - 1) + x*y^2*(x - 1)*(2*x - 1)*(y - 1)^2 + x*y*(y - 1) - 2*x*(x - 1) + y*(x - 1)*(y - 1) - 2*y*(y - 1)
+    # -x^2*y*(x - 1)^2*(y - 1)^2*(2*y - 1) + x*y^2*(x - 1)*(2*x - 1)*(y - 1)^2 + x*y*(y - 1) - 2*x*(x - 1) + y*(x - 1)*(y - 1) - 2*y*(y - 1)
     0.0
 end
 function gfunc(x, y)
-    #x^2*y*(x - 1)^2*(y - 1)^3*(3*y - 1) - x*y^2*(x - 1)*(2*x - 1)*(y - 1)^3 + 3*x*y*(x - 1) + 5*x*(x - 1)*(y - 1) + 2*y*(y - 1)^2
+    # x^2*y*(x - 1)^2*(y - 1)^3*(3*y - 1) - x*y^2*(x - 1)*(2*x - 1)*(y - 1)^3 + 3*x*y*(x - 1) + 5*x*(x - 1)*(y - 1) + 2*y*(y - 1)^2
     0.0
 end
 
@@ -95,6 +98,7 @@ function compute_residual(S)
 
     R = [F;G;H0]
     return R
+    # return [F; G; constant(zeros(size(H0,1)))]
 end
 
 function compute_jacobian(S)
@@ -122,6 +126,8 @@ function compute_jacobian(S)
           Gu Gv]
     J = [J0 -B'
         -B spdiag(zeros(size(B,1)))]
+    # return [J0  constant(spzeros(size(B,2), size(B,1)))
+        # constant(spzeros(size(B,1), size(B,2))) spdiag(ones(size(B,1)))]
 end
 
 NT = 5    # number of iterations for Newton's method
@@ -215,7 +221,7 @@ subplot(325)
 visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:end], m, n, h)
 subplot(326)
 visualize_scalar_on_fvm_points(p0, m, n, h)
-
+savefig("steady_cavityflow_forward.png")
 # final_u=output[NT+1, 1:(1+m)*(1+n)]
 # final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
 # final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
