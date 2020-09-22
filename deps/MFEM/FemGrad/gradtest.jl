@@ -13,8 +13,8 @@ function fem_grad_mfem(u)
 end
 
 # TODO: specify your input parameters
-mesh = Mesh(2, 2, 0.5)
-ipt = ones(size(mesh.nodes,1))
+mesh = Mesh(2, 2, 0.5, degree=2)
+ipt = ones(mesh.ndof)
 u = fem_grad_mfem(ipt)
 sess = Session(); init(sess)
 @show run(sess, u)
@@ -31,8 +31,8 @@ function scalar_function(u)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(size(mesh.nodes,1)))
-v_ = rand(size(mesh.nodes,1))
+m_ = constant(rand(mesh.ndof))
+v_ = rand(mesh.ndof)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)

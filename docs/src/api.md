@@ -42,6 +42,7 @@ compute_fem_laplace_term1
 ## Evaluation Functions
 ```@docs
 eval_f_on_gauss_pts
+eval_f_on_dof_pts
 eval_f_on_boundary_node
 eval_f_on_boundary_edge
 eval_strain_on_gauss_pts

@@ -15,15 +15,6 @@ mesh = Mesh(2, 2, 0.5)
                 0.5  1.0
                 1.0  1.0]
 
-@test mesh.elems≈[ 1  2  4
-                2  4  5
-                2  3  5
-                3  5  6
-                4  5  7
-                5  7  8
-                5  6  8
-                6  8  9]
-
 @test get_ngauss(mesh)≈24
 
 

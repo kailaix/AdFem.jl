@@ -1,3 +1,5 @@
+export eval_f_on_dof_pts
+
 function eval_f_on_gauss_pts(f::Function, mesh::Mesh)
     xy = gauss_nodes(mesh)
     f.(xy[:,1], xy[:,2])
@@ -10,6 +12,29 @@ end
 
 function eval_f_on_fvm_pts(f::Function, mesh::Mesh)
     xy = fvm_nodes(mesh)
+    f.(xy[:,1], xy[:,2])
+end
+
+"""
+    eval_f_on_dof_pts(f::Function, mesh::Mesh)
+
+Evaluates `f` on the DOF points. 
+
+- For P1 element, the DOF points are FEM points and therefore `eval_f_on_dof_pts` is equivalent to `eval_on_on_fem_pts`.
+- For P2 element, the DOF points are FEM points plus the middle point for each edge. 
+
+Returns a vector of length `mesh.ndof`.
+"""
+function eval_f_on_dof_pts(f::Function, mesh::Mesh)
+    if size(mesh.conn, 2)==3
+        return eval_f_on_fem_pts(f, mesh)
+    end
+    xy = mesh.nodes 
+    xy2 = zeros(mesh.nedge, 2)
+    for i = 1:mesh.nedge
+        xy2[i,:] = (mesh.nodes[mesh.edges[i,1], :] + mesh.nodes[mesh.edges[i,2], :])/2
+    end
+    xy = [xy;xy2]
     f.(xy[:,1], xy[:,2])
 end
 
@@ -102,6 +127,7 @@ end
     eval_grad_on_gauss_pts1(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
 """
 function eval_grad_on_gauss_pts1(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+    @assert length(u)==mesh.ndof
     fem_grad_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_grad_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     out = fem_grad_mfem_(u)

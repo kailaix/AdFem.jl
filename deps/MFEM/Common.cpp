@@ -77,6 +77,12 @@ void NNFEM_Mesh::init(double *vertices, int num_vertices,
             for (int i = 0; i < rule.GetNPoints(); i++){
                 const IntegrationPoint &ip = rule.IntPoint(i);
 
+                // collect Gauss points
+                double x1 = coord1[0], y1 = coord1[1], x2 = coord2[0], y2 = coord2[1], x3 = coord3[0], y3 = coord3[1];
+                GaussPts(i_gp, 0) = x1 * ip.x + x2 * ip.y + x3 * (1-ip.x-ip.y);
+                GaussPts(i_gp, 1) = y1 * ip.x + y2 * ip.y + y3 * (1-ip.x-ip.y);
+                i_gp++;
+
                 // set element weight
                 element->w[i] = ip.weight * element->area/0.5;
 
@@ -89,12 +95,6 @@ void NNFEM_Mesh::init(double *vertices, int num_vertices,
                     element->hx(k, i) = dshape(k, 0);
                     element->hy(k, i) = dshape(k, 1);
                 }
-
-                // collect Gauss points
-                double x1 = coord1[0], y1 = coord1[1], x2 = coord2[0], y2 = coord2[1], x3 = coord3[0], y3 = coord3[1];
-                GaussPts(i_gp, 0) = x1 * shape[0] + x2 * shape[1] + x3 * shape[2];
-                GaussPts(i_gp, 1) = y1 * shape[0] + y2 * shape[1] + y3 * shape[2];
-                i_gp++;
                 
             }
             
