@@ -3,12 +3,12 @@ namespace MFEM{
   // integrate_T( f, phi ) = f(x_1) * phi(x_1) * w_1 + f(x_2) * phi(x_2) * w_2 + ...
   void FemSourceScalar_forward(double * rhs, const double *f){
     int k = 0;
+    int elem_ndof = mmesh.elem_ndof;
     for (int i = 0; i < mmesh.nelem; i++){
       auto elem = mmesh.elements[i];
       for (int j = 0; j<elem->ngauss; j++){
-        rhs[elem->node[0]] += f[k] * elem->h(0, j) * elem->w[j];
-        rhs[elem->node[1]] += f[k] * elem->h(1, j) * elem->w[j];
-        rhs[elem->node[2]] += f[k] * elem->h(2, j) * elem->w[j];
+        for(int r = 0; r<elem_ndof; r++)
+            rhs[elem->dof[r]] += f[k] * elem->h(r, j) * elem->w[j];
         k ++;
       }
     }
@@ -19,14 +19,19 @@ namespace MFEM{
     const double *grad_rhs, 
     const double *rhs, const double *f){
     int k = 0;
+    int elem_ndof = mmesh.elem_ndof;
     for (int i = 0; i < mmesh.nelem; i++){
       auto elem = mmesh.elements[i];
       for (int j = 0; j<elem->ngauss; j++){
-        grad_f[k] = elem->h(0, j) * elem->w[j] * grad_rhs[elem->node[0]] + 
-                    elem->h(1, j) * elem->w[j] * grad_rhs[elem->node[1]] + 
-                    elem->h(2, j) * elem->w[j] * grad_rhs[elem->node[2]];
+        grad_f[k] = 0.0;
+        for(int r = 0; r<elem_ndof; r++)
+          grad_f[k] += elem->h(r, j) * elem->w[j] * grad_rhs[elem->node[r]];
         k ++;
       }
     }
   }
+}
+
+extern "C" void FemSourceScalar_forward_Julia(double * rhs, const double *f){
+  MFEM::FemSourceScalar_forward(rhs, f);
 }
