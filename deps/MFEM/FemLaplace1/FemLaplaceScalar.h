@@ -54,3 +54,8 @@ namespace MFEM{
   }
 
 }
+
+
+extern "C" void FemLaplaceScalar_forward_Julia(int64 *indices, double *vv, const double *kappa){
+  MFEM::FemLaplaceScalar_forward(indices, vv, kappa);
+}

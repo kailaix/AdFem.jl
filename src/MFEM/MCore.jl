@@ -73,6 +73,18 @@ function compute_fem_laplace_matrix1(kappa::PyObject, mesh::Mesh)
     RawSparseTensor(indices, vv, n, n)
 end
 
+"""
+    compute_fem_laplace_matrix1(kappa::Array{Float64,1}, mesh::Mesh)
+"""
+function compute_fem_laplace_matrix1(kappa::Array{Float64,1}, mesh::Mesh)
+    @assert length(kappa) == get_ngauss(mesh)
+    N = get_ngauss(mesh) * size(mesh.conn, 2)^2
+    indices = zeros(Int64, 2N)
+    vv = zeros(N)
+    @eval ccall((:FemLaplaceScalar_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Int64}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $kappa)
+    indices = reshape(indices, 2, N)'|>Array
+    sparse(indices[:,1] .+ 1, indices[:,2] .+ 1, vv, mesh.ndof, mesh.ndof)
+end
 
 """
     fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, mesh::Mesh)
