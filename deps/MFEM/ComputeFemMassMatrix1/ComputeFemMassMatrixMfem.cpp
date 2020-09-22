@@ -57,7 +57,7 @@ public:
     // extra check
         
     // create output shape
-    int N = mmesh.ngauss * 9;
+    int N = mmesh.ngauss * mmesh.elem_ndof * mmesh.elem_ndof;
     TensorShape indices_shape({N,2});
     TensorShape vv_shape({N});
             

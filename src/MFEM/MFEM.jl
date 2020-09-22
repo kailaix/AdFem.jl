@@ -46,9 +46,16 @@ mutable struct Mesh
     nelem::Int64
     ndof::Int64
     conn::Array{Int64, 2}
-    function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 2, degree::Int64 = 1)
+    function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = -1, degree::Int64 = 1)
         if !(degree in [1, 2])
             error("Only degree = 1 or 2 is supported.")
+        end
+        if order==-1
+            if degree == 1
+                order = 2
+            elseif degree == 2
+                order = 4
+            end
         end
         nnode = size(coords, 1)
         nelem = size(elems,1)
@@ -77,7 +84,7 @@ end
 Constructs a mesh of a rectangular domain. The rectangle is split into $m\times n$ cells, and each cell is further split into two triangles. 
 `order` specifies the quadrature rule order. `degree` determines the degree for finite element basis functions.
 """
-function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Int64 = 1)
+function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1, degree::Int64 = 1)
     coords = zeros((m+1)*(n+1), 2)
     elems = zeros(Int64, 2*m*n, 3)
     for i = 1:n 

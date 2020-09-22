@@ -6,19 +6,11 @@ using Random
 using PoreFlow
 Random.seed!(233)
 
-function compute_fem_mass_matrix_mfem(rho, mesh)
-    compute_fem_mass_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_mass_matrix_mfem", multiple=true)
-    rho = convert_to_tensor(Any[rho], [Float64]); rho = rho[1]
-    indices, vals = compute_fem_mass_matrix_mfem_(rho)
-    n = size(mesh.nodes, 1)
-    A = RawSparseTensor(indices, vals, n, n)
-    A
-end
 
 # TODO: specify your input parameters
-mesh = Mesh(10,10,0.1)
+mesh = Mesh(10,10,0.1, degree=2)
 rho = ones(get_ngauss(mesh))
-u = compute_fem_mass_matrix_mfem(rho, mesh)
+u = compute_fem_mass_matrix1(rho, mesh)
 sess = Session(); init(sess)
 @show run(sess, u)
 
@@ -30,7 +22,7 @@ sess = Session(); init(sess)
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(x)
-    return sum(values(compute_fem_mass_matrix_mfem(x, mesh))^2)
+    return sum(values(compute_fem_mass_matrix1(x, mesh))^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
@@ -65,3 +57,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")

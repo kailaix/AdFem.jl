@@ -37,7 +37,7 @@ void NNFEM_Mesh::init(double *vertices, int num_vertices,
         H1_FECollection *fec = new H1_FECollection(_degree, 2);
         FiniteElementSpace fespace(&mesh, fec);
         
-        int elem_ndof = (_degree == 1) ? 3 : 6; // _degree == 1 or 2
+        elem_ndof = (_degree == 1) ? 3 : 6; // _degree == 1 or 2
         int nedges = mesh.GetNEdges();
         ndof = (_degree==1) ? nnode: (nnode + nedges);
         Vector shape(elem_ndof);

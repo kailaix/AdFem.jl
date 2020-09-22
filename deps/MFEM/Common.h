@@ -35,7 +35,8 @@ public:
     int ngauss;
     int ndof; // total number of dofs
     int order; // integration order 
-    int degree; // Degree of Polynomials, 0 - P0 element, 1 - P1 element, 2 - P2 element 
+    int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element 
+    int elem_ndof; // 3 for P1, 6 for P2
     MatrixXd GaussPts;
     std::vector<NNFEM_Element*> elements;
 };
