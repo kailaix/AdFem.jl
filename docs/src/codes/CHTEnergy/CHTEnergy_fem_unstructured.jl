@@ -79,7 +79,7 @@ kgauss = fem_to_gauss_points(k, mesh)
 Qgauss = fem_to_gauss_points(Q, mesh)
 
 Advection = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), mesh))
-Laplace = constant(compute_fem_laplace_matrix1(constant(kgauss), mesh))
+Laplace = compute_fem_laplace_matrix1(constant(kgauss), mesh)
 A = Advection + Laplace
 A, _ = fem_impose_Dirichlet_boundary_condition1(A, bd, mesh)
 b = constant(compute_fem_source_term1(constant(Qgauss), mesh))
