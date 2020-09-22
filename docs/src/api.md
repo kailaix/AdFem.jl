@@ -83,13 +83,11 @@ mantle_viscosity
 antiplane_viscosity
 ```
 
-## Misc
-
+## Mesh
 ```@docs
-get_ngauss
+get_edge_dof
 get_area
-trim_coupled
-coupled_impose_pressure
+get_ngauss
 bcnode
 bcedge
 interior_node
@@ -99,6 +97,13 @@ subdomain
 gauss_nodes
 fem_nodes
 fvm_nodes
+```
+
+## Misc
+
+```@docs
+trim_coupled
+coupled_impose_pressure
 cholesky_factorize
 cholesky_outproduct
 fem_to_fvm
