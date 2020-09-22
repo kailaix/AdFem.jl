@@ -6,16 +6,11 @@ using Random
 using PoreFlow
 Random.seed!(233)
 
-function compute_interaction_term_mfem(p)
-    compute_interaction_term_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_interaction_term_mfem")
-    p = convert_to_tensor(Any[p], [Float64]); p = p[1]
-    compute_interaction_term_mfem_(p)
-end
 
-mesh = Mesh(10,10,0.3)
+mesh = Mesh(10,10,0.3, degree=2)
 p = ones(size(mesh.elems,1))
 # TODO: specify your input parameters
-u = compute_interaction_term_mfem(p)
+u = compute_interaction_term(p, mesh)
 sess = Session(); init(sess)
 @show run(sess, u)
 
@@ -27,7 +22,7 @@ sess = Session(); init(sess)
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(p)
-    return sum(compute_interaction_term_mfem(p)^2)
+    return sum( compute_interaction_term(p, mesh)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
@@ -62,3 +57,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")

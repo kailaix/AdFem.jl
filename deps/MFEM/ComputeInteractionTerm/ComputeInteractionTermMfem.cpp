@@ -55,7 +55,7 @@ public:
         
     // create output shape
     
-    TensorShape out_shape({2*mmesh.nnode});
+    TensorShape out_shape({2*mmesh.ndof});
             
     // create output tensor
     
