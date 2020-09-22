@@ -58,8 +58,8 @@ public:
         
     // create output shape
     
-    TensorShape indices_shape({9*mmesh.ngauss,2});
-    TensorShape vv_shape({9*mmesh.ngauss});
+    TensorShape indices_shape({mmesh.elem_ndof * mmesh.elem_ndof * mmesh.ngauss,2});
+    TensorShape vv_shape({mmesh.elem_ndof * mmesh.elem_ndof * mmesh.ngauss});
             
     // create output tensor
     

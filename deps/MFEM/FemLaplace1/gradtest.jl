@@ -6,18 +6,11 @@ using Random
 using PoreFlow
 Random.seed!(233)
 
-function fem_laplace_scalar(kappa, mesh)
-    fem_laplace_scalar_ = load_op_and_grad(PoreFlow.libmfem,"fem_laplace_scalar", multiple=true)
-    kappa = convert_to_tensor(Any[kappa], [Float64]); kappa = kappa[1]
-    indices, vv = fem_laplace_scalar_(kappa)
-    n = size(mesh.nodes, 1)
-    RawSparseTensor(indices, vv, n, n)
-end
 
-mesh = Mesh(2,2,0.5)
+mesh = Mesh(2,2,0.5, degree=2)
 # TODO: specify your input parameters
-kappa = ones(get_ngauss(mesh))
-u = fem_laplace_scalar(kappa, mesh)
+kappa = constant(ones(get_ngauss(mesh)))
+u = compute_fem_laplace_matrix1(kappa, mesh)
 sess = Session(); init(sess)
 @show run(sess, u)
 
@@ -29,7 +22,7 @@ sess = Session(); init(sess)
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(x)
-    return sum(values(fem_laplace_scalar(x, mesh))^2)
+    return sum(values(compute_fem_laplace_matrix1(x, mesh))^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values

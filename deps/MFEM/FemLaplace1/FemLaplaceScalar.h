@@ -3,18 +3,20 @@ namespace MFEM{
   void FemLaplaceScalar_forward(int64 *indices, double *vv, const double *kappa){
     int s = 0;
     int nz = 0;
+    int elem_ndof = mmesh.elem_ndof;
     for(int i = 0; i<mmesh.nelem; i++){
         NNFEM_Element * elem = mmesh.elements[i];
-        Eigen::MatrixXd D(3, 2);
+        Eigen::MatrixXd D(elem_ndof, 2);
         for (int k = 0; k<elem->ngauss; k++){
-          D << elem->hx(0, k), elem->hy(0, k),
-             elem->hx(1, k), elem->hy(1, k),
-             elem->hx(2, k), elem->hy(2, k);
+          for (int r = 0; r < elem_ndof; r++){
+            D(r, 0) = elem->hx(r, k);
+            D(r, 1) = elem->hy(r, k);
+          }
           Eigen::MatrixXd N = D * D.transpose() * kappa[s++] * elem->w[k];
-          for (int p = 0; p < 3; p ++)
-            for (int q = 0; q<3; q++){
-              indices[2*nz] = elem->node[p];
-              indices[2*nz+1] = elem->node[q];
+          for (int p = 0; p < elem_ndof; p ++)
+            for (int q = 0; q< elem_ndof; q++){
+              indices[2*nz] = elem->dof[p];
+              indices[2*nz+1] = elem->dof[q];
               vv[nz] = N(p, q);
               nz ++;
             }
@@ -29,17 +31,19 @@ namespace MFEM{
     const int64 *indices, const double *vv, const double *kappa){
     int nz = 0;
     int s = 0;
+    int elem_ndof = mmesh.elem_ndof;
     for(int i = 0; i<mmesh.nelem; i++){
         NNFEM_Element * elem = mmesh.elements[i];
-        Eigen::MatrixXd D(3, 2);
+        Eigen::MatrixXd D(elem_ndof, 2);
         for (int k = 0; k<elem->ngauss; k++){
-          D << elem->hx(0, k), elem->hy(0, k),
-             elem->hx(1, k), elem->hy(1, k),
-             elem->hx(2, k), elem->hy(2, k);
+          for (int r = 0; r < elem_ndof; r++){
+            D(r, 0) = elem->hx(r, k);
+            D(r, 1) = elem->hy(r, k);
+          }
           Eigen::MatrixXd N = D * D.transpose() * elem->w[k];
           double v = 0.0;
-          for (int p = 0; p < 3; p ++)
-            for (int q = 0; q<3; q++){
+          for (int p = 0; p < elem_ndof; p ++)
+            for (int q = 0; q< elem_ndof; q++){
               v += grad_vv[nz] * N(p, q);
               nz ++;
             }
