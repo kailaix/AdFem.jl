@@ -1,4 +1,4 @@
-export eval_f_on_dof_pts
+export eval_f_on_dof_pts, get_bdedge_integration_pts
 
 function eval_f_on_gauss_pts(f::Function, mesh::Mesh)
     xy = gauss_nodes(mesh)
@@ -181,6 +181,7 @@ end
 """
     compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
     compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
+    compute_fem_stiffness_matrix(kappa::Array{Float64, 2}, mesh::Mesh)
 """
 function compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
     @assert size(kappa) == (get_ngauss(mesh), 3, 3)
@@ -189,6 +190,15 @@ function compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
     kappa = reshape(kappa, (-1,))
     indices, vv = compute_fem_stiffness_matrix_mfem_(kappa)
     RawSparseTensor(indices, vv, 2mesh.ndof, 2mesh.ndof)
+end
+
+function compute_fem_stiffness_matrix(kappa::Array{Float64, 2}, mesh::Mesh)
+    @assert size(kappa) == (3, 3)
+    K = zeros(get_ngauss(mesh), 3, 3)
+    for i = 1:get_ngauss(mesh)
+        K[i, :, :] = kappa 
+    end
+    compute_fem_stiffness_matrix(K, mesh)
 end
 
 function compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
@@ -210,4 +220,163 @@ function compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
             (Ptr{Clonglong}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $K)
     indices = reshape(indices, 2, N)'|>Array 
     sparse(indices[:,1] .+ 1, indices[:, 2] .+ 1, vv, 2mesh.ndof, 2mesh.ndof)
+end
+
+@doc raw"""
+    get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
+
+Returns Gauss quadrature points on the boundary edge as a $n\times 2$ matrix. Here $n$ is the number of rows for `bdedge`.
+"""
+function get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
+    bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mesh)
+    bdnode_x = bdnode_x'[:]
+    bdnode_y = bdnode_y'[:]
+    bdN = size(bdedge, 1)
+    ngauss = Int64(@eval ccall((:ComputeFemTractionTermMfem_forward_getNGauss, $LIBMFEM), Cint, 
+            (Cint,), Int32($order)))
+    x = zeros(ngauss * bdN)
+    y = zeros(ngauss * bdN)
+    @eval ccall((:ComputeFemTractionTermMfem_forward_getGaussPoints, $LIBMFEM), Cvoid, 
+    (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint), $x, $y, 
+        $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
+    [x y]
+end
+
+
+
+@doc raw"""
+    _traction_get_nodes(bdedge::Array{Int64, 2}, mesh::Mesh)
+
+Returns $x$ and $y$ coordinates for each element that contains `bdedge`.
+
+For example, if `bdedge = [2,4]`, this function finds the corresponding element, e.g., one that contains vertices
+2, 4, 5. Then two arrays are returned: 
+- `node_x`: $x$ coordinates of node 2, 4, and 5
+- `node_y`: $y$ coordinates of node 2, 4, and 5
+"""
+function _traction_get_nodes(bdedge::Array{Int64, 2}, mesh::Mesh)
+    nodes_x = zeros(size(bdedge, 1), 3)
+    nodes_y = zeros(size(bdedge, 1), 3)
+    _edge_to_elem_map = Dict{Tuple{Int64, Int64}, Int64}()
+    dic = (x,y)->(minimum([x,y]), maximum([x,y]))
+    add_dic = (e1, e2, e3)->begin 
+        if haskey(_edge_to_elem_map, dic(e1, e2))
+            delete!(_edge_to_elem_map, dic(e1, e2))
+        else
+            _edge_to_elem_map[dic(e1, e2)] = e3
+        end
+    end
+    for i = 1:mesh.nelem
+        e1, e2, e3 = mesh.elems[i,:]
+        add_dic(e1, e2, e3)
+        add_dic(e3, e2, e1)
+        add_dic(e1, e3, e2)
+    end
+    for i = 1:size(bdedge, 1)
+        idx = _edge_to_elem_map[dic(bdedge[i,1], bdedge[i,2])]
+        nodes_x[i, :] = [mesh.nodes[bdedge[i,1], 1]; mesh.nodes[bdedge[i,2], 1]; mesh.nodes[idx, 1]]
+        nodes_y[i, :] = [mesh.nodes[bdedge[i,1], 2]; mesh.nodes[bdedge[i,2], 2]; mesh.nodes[idx, 2]]
+    end
+    nodes_x, nodes_y
+end
+
+@doc raw"""
+    bcedge(mesh::Mesh)
+
+Returns all boundary edges as a set of integer pairs (edge vertices).
+"""
+function bcedge(mesh::Mesh)
+    _edge_to_elem_map = Set{Tuple{Int64, Int64}}()
+    dic = (x,y)->(minimum([x,y]), maximum([x,y]))
+    add_dic = (e1, e2)->begin 
+        if dic(e1, e2) in _edge_to_elem_map
+            delete!(_edge_to_elem_map, dic(e1, e2))
+        else
+            push!(_edge_to_elem_map, dic(e1, e2))
+        end
+    end
+    for i = 1:mesh.nelem
+        e1, e2, e3 = mesh.elems[i,:]
+        add_dic(e1, e2)
+        add_dic(e3, e2)
+        add_dic(e1, e3)
+    end
+    out = zeros(Int64, length(_edge_to_elem_map), 2)
+    for (k,s) in enumerate(_edge_to_elem_map)
+        out[k,:] = [s[1] s[2]]
+    end
+    out
+end
+
+
+@doc raw"""
+    bcnode(mesh::Mesh)
+
+Returns all boundary node indices.
+"""
+function bcnode(mesh::Mesh)
+    bdedge = bcedge(mesh)
+    collect(Set(bdedge[:]))
+end
+
+@doc raw"""
+    compute_fem_traction_term1(t::Array{Float64, 1},
+    bdedge::Array{Int64,2}, mesh::Mesh; order::Int64 = 2)
+
+Computes the boundary integral 
+
+$$\int_{\Gamma} t(x, y) \delta u dx$$
+
+Returns a vector of size `dof`.
+"""
+function compute_fem_traction_term1(t::Array{Float64, 1},
+            bdedge::Array{Int64,2}, mesh::Mesh; order::Int64 = 2)
+    D = _edge_dict(mesh)
+    node_x = zeros(size(bdedge, 1))
+    node_y = zeros(size(bdedge, 1))
+    ngauss = Int64(@eval ccall((:ComputeFemTractionTermMfem_forward_getNGauss, $LIBMFEM), Cint, 
+            (Cint,), Int32($order)))
+    bdN = size(bdedge, 1)
+    @assert length(t) == ngauss * bdN
+    if size(mesh.conn, 2)==3
+        dofs = zeros(Int64, 2bdN)
+        for i = 1:bdN 
+            dofs[2*i-1] = bdedge[i,1] - 1
+            dofs[2*i] = bdedge[i,2] - 1
+        end
+    else
+        dofs = zeros(Int64, 3bdN)
+        for i = 1:bdN 
+            dofs[3*i-2] = bdedge[i,1] - 1
+            dofs[3*i-1] = bdedge[i,2] - 1
+            dofs[3*i] = D[(bdedge[i,1], bdedge[i,2])] + mesh.nnode - 1
+        end
+    end
+    out = zeros(mesh.ndof)
+    bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mesh)
+    bdnode_x = bdnode_x'[:]
+    bdnode_y = bdnode_y'[:]
+    @eval ccall((:ComputeFemTractionTermMfem_forward_Julia, $LIBMFEM), Cvoid, 
+        (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint), 
+            $out, $t, Int32.($dofs), $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
+    return out 
+end
+
+
+"""
+    eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
+
+Evaluates `f` on the boundary **Gauss points**. `order` specifies the integration order
+"""
+function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
+    pts = get_bdedge_integration_pts(bdedge, mesh; order = order)
+    f.(pts[:,1], pts[:,2])
+end
+
+
+"""
+    eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, mesh::Mesh)
+"""
+function eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, mesh::Mesh)
+    f.(mesh.nodes[bdnode, 1], mesh.nodes[bdnode, 2])
 end

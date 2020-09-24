@@ -37,6 +37,7 @@ compute_fem_viscoelasticity_strain_energy_term
 compute_fvm_advection_term
 compute_interaction_term
 compute_fem_laplace_term1
+compute_fem_traction_term1
 ```
 
 ## Evaluation Functions
@@ -57,6 +58,7 @@ eval_grad_on_gauss_pts
 ```@docs
 fem_impose_Dirichlet_boundary_condition
 fem_impose_Dirichlet_boundary_condition1
+impose_Dirichlet_boundary_conditions
 ```
 
 
@@ -86,6 +88,7 @@ antiplane_viscosity
 
 ## Mesh
 ```@docs
+get_bdedge_integration_point
 get_edge_dof
 get_area
 get_ngauss

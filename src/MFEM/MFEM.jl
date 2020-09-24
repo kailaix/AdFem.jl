@@ -1,9 +1,5 @@
 export Mesh, get_ngauss, get_area
 
-
-LIBMFEM = joinpath(@__DIR__, "..", "..",  "deps", "MFEM", "build", get_library_name("nnfem_mfem"))
-libmfem = missing 
-
 @doc raw"""
 `Mesh` holds data structures for an unstructured mesh. 
 
@@ -70,7 +66,6 @@ mutable struct Mesh
         edges = zeros(Int64, nedges*2)
         c = [coords zeros(size(coords, 1))]'[:]
         e = Int32.(elems'[:].- 1) 
-        global libmfem = tf.load_op_library(LIBMFEM) # load for tensorflow first
         @eval ccall((:init_nnfem_mesh, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Cint, 
                 Ptr{Cint}, Cint, Cint, Cint, Ptr{Clonglong}), $c, Int32(size($coords, 1)), $e, Int32(size($elems,1)), 
                 Int32($order), Int32($degree), $edges)
@@ -169,4 +164,13 @@ function fvm_nodes(mesh::Mesh)
         out[i, 2] = mean(mesh.nodes[idx, 2])
     end
     return out
+end
+
+function _edge_dict(mesh::Mesh)
+    D = Dict{Tuple{Int64, Int64}, Int64}()
+    for i = 1:mesh.nedge 
+        D[(mesh.edges[i,1], mesh.edges[i,2])] = i 
+        D[(mesh.edges[i,2], mesh.edges[i,1])] = i 
+    end
+    D
 end
