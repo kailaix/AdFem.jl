@@ -306,7 +306,8 @@ subplot(248)
 visualize_scalar_on_fem_points(t0, m, n, h)
 
 tight_layout()
-
+savefig("Boussinesq_control.png")
+close("all")
 # final_u=output[NT+1, 1:(1+m)*(1+n)]
 # final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
 # final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
