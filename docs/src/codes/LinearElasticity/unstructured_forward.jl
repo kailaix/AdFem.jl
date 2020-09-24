@@ -46,10 +46,8 @@ rhs = T - F
 bdval = [eval_f_on_boundary_node((x,y)->x^2+y^2, bdnode, mesh);
         eval_f_on_boundary_node((x,y)->x^2-y^2, bdnode, mesh)]
 DOF = [bdnode;bdnode .+ mesh.ndof]
-rhs[DOF] = bdval
-K, Kbd = fem_impose_Dirichlet_boundary_condition1(K, DOF, mesh)
-u = K\(rhs-Kbd*bdval)
-
+K, rhs = impose_Dirichlet_boundary_conditions(K, rhs, DOF, bdval)
+u = K\rhs 
 sess = Session(); init(sess)
 S = run(sess, u)
 

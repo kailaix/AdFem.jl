@@ -3,33 +3,37 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using PoreFlow
+using SparseArrays
 Random.seed!(233)
 
-function impose_dirichlet(indices,vv,bd,rhs,bdval)
-    impose_dirichlet_ = load_op_and_grad("./build/libImposeDirichlet","impose_dirichlet", multiple=true)
-    indices,vv,bd,rhs,bdval = convert_to_tensor(Any[indices,vv,bd,rhs,bdval], [Int64,Float64,Int64,Float64,Float64])
-    impose_dirichlet_(indices,vv,bd,rhs,bdval)
-end
 
 # TODO: specify your input parameters
-u = impose_dirichlet(indices,vv,bd,rhs,bdval)
+A = sparse(rand(10,10))
+rhs = rand(10)
+bdnode = rand(1:10, 3)
+bdval = rand(3)
+A1, b = impose_Dirichlet_boundary_conditions(constant(A), rhs, bdnode, bdval)
 sess = Session(); init(sess)
-@show run(sess, u)
+@show run(sess, A1)
 
+A = constant(A)
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(impose_dirichlet(indices,vv,bd,rhs,bdval)^2)
+function scalar_function(x)
+    A1 = RawSparseTensor(A.o.indices, x, size(A)...)
+    A0, b0 = impose_Dirichlet_boundary_conditions(A1,rhs,bdnode,bdval)
+    return sum(values(A0)^2) + sum(b0^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(100))
+v_ = rand(100)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -59,3 +63,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")
