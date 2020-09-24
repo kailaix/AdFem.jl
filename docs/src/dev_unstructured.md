@@ -40,6 +40,20 @@ int I = elem->dof[i];
 int J = elem->dof[j];`
 ```
 
+For the quadratic element, it has 6 DOFs for each element
+
+![](./assets/quadraticelem.png)
+
+Here $x_{ij} = x_i - x_j$, $y_{ij} = y_i - y_j$. We can use this information to assemble linear or bilinear forms. For example, in the course of implementing [`compute_fem_traction_term1`](@ref), we can first extract quadrature rules using 
+
+```c++
+IntegrationRules rule_;
+IntegrationRule rule = rule_.Get(Element::Type::SEGMENT, order);
+const IntegrationPoint &ip = rule.IntPoint(i)
+```
+
+Then we have access to `ip.weight` and `ip.x`. 
+
 
 ## Verifying Implementation against FEniCS
 To test unstructured meshes, we can compare the results with [`fenics`](https://fenicsproject.org/). We can use the same mesh:

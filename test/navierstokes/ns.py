@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 # Create mesh and define function space
-mesh = UnitSquareMesh(8, 8, "left")
+mesh = UnitSquareMesh(50, 50, "left")
 
 # V = VectorElement("Lagrange",triangle, 2)
 # Q = FiniteElement("Lagrange",triangle, 1)
