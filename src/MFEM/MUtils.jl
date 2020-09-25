@@ -5,7 +5,7 @@ export PDATA, get_edge_dof, impose_Dirichlet_boundary_conditions
 
 The folder where built-in meshes are stored. 
 """
-PDATA = joinpath(@__DIR__, "..", "..",  "deps", "MFEM", "MeshData")
+PDATA = abspath(joinpath(@__DIR__, "..", "..",  "deps", "MFEM", "MeshData"))
 
 
 function get_meshio()
@@ -29,14 +29,14 @@ mesh = Mesh(joinpath(PDATA, "twoholes.stl"))
 ```
 """
 function Mesh(filename::String; file_format::Union{String, Missing} = missing, 
-                order::Int64 = 2, degree::Int64 = 1)
+                order::Int64 = 2, degree::Int64 = 1, lorder::Int64 = 2)
     meshio = get_meshio()
     if !ismissing(file_format)
         mesh = meshio.read(filename, file_format = file_format)
     else
         mesh = meshio.read(filename)
     end
-    Mesh(Float64.(mesh.points[:,1:2]), Int64.(mesh.cells[1][2]) .+ 1, order, degree)
+    Mesh(Float64.(mesh.points[:,1:2]), Int64.(mesh.cells[1][2]) .+ 1, order, degree, lorder)
 end
 
 """

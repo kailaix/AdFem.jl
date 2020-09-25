@@ -317,6 +317,26 @@ function bcedge(mesh::Mesh)
     out
 end
 
+@doc raw"""
+    bcedge(f::Function, mesh::Mesh)
+
+Returns all edge indices that satisfies `f(x1, y1, x2, y2) = true`
+Here the edge endpoints are given by $(x_1, y_1)$ and $(x_2, y_2)$.
+"""
+function bcedge(f::Function, mesh::Mesh)
+    out = bcedge(mesh)
+    edges = []
+    for i = 1:size(out, 1)
+        e1, e2 = out[i,:]
+        x1, y1 = mesh.nodes[e1, :]
+        x2, y2 = mesh.nodes[e2, :]
+        if f(x1, y1, x2, y2)
+            push!(edges, [e1 e2])
+        end
+    end
+    vcat(edges...)
+end
+
 
 @doc raw"""
     bcnode(mesh::Mesh; with_edge::Bool = true)
@@ -331,6 +351,30 @@ function bcnode(mesh::Mesh; with_edge::Bool = true)
     else
         collect(Set(bdedge[:]))
     end
+end
+
+"""
+    bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
+
+Returns the boundary node DOFs that satisfies `f(x,y) = true`
+"""
+function bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
+    nd = bcnode(mesh, with_edge=with_edge)
+    out = Int64[]
+    for i = 1:length(nd)
+        if nd[i]<=mesh.nnode
+            if f(mesh.nodes[nd[i], 1], mesh.nodes[nd[i],2])
+                push!(out, nd[i])
+            end
+        else
+            a, b = mesh.edges[nd[i]-mesh.nnode, :]
+            xy = (mesh.nodes[a, :] + mesh.nodes[b, :])/2
+            if f(xy[:,1], xy[:,2])
+                push!(out, nd[i])
+            end
+        end
+    end
+    out
 end
 
 @doc raw"""

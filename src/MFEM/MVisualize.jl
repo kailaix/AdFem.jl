@@ -110,3 +110,13 @@ function visualize_scalar_on_fvm_points(u::Array{Float64,1}, mesh::Mesh, args...
     ylabel("y")
     axis("scaled")
 end
+
+"""
+    visualize_displacement(u::Array{Float64, 1}, mmesh::Mesh)
+"""
+function visualize_displacement(u::Array{Float64, 1}, mmesh::Mesh)
+    mesh0 = copy(mmesh)
+    mesh0.nodes[:,1] = mesh0.nodes[:,1] + u[1:mmesh.nnode]
+    mesh0.nodes[:,2] = mesh0.nodes[:,2] + u[mmesh.ndof+1:mmesh.ndof+mmesh.nnode]
+    visualize_mesh(mesh0)
+end

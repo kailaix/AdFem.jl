@@ -51,44 +51,55 @@ mutable struct Mesh
     ndof::Int64
     conn::Array{Int64, 2}
     lorder::Int64
-    function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = -1, degree::Int64 = 1, lorder::Int64 = -1)
-        if !(degree in [1, 2])
-            error("Only degree = 1 or 2 is supported.")
-        end
-        if order==-1
-            if degree == 1
-                order = 2
-            elseif degree == 2
-                order = 4
-            end
-        end
-
-        if lorder==-1
-            if degree == 1
-                lorder = 2
-            elseif degree == 2
-                lorder = 4
-            end
-        end
-        nnode = size(coords, 1)
-        nelem = size(elems,1)
-        nedges = nnode + nelem - 1
-        edges = zeros(Int64, nedges*2)
-        c = [coords zeros(size(coords, 1))]'[:]
-        e = Int32.(elems'[:].- 1) 
-        @eval ccall((:init_nnfem_mesh, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Cint, 
-                Ptr{Cint}, Cint, Cint, Cint, Ptr{Clonglong}), $c, Int32(size($coords, 1)), $e, Int32(size($elems,1)), 
-                Int32($order), Int32($degree), $edges)
-        edges = reshape(edges, nedges, 2)
-        elem_dof = Int64(@eval ccall((:mfem_get_elem_ndof, $LIBMFEM), Cint, ()))
-        conn = zeros(Int64, elem_dof * size(elems, 1))
-        @eval ccall((:mfem_get_connectivity, $LIBMFEM), Cvoid, (Ptr{Cint}, ), $conn)
-        ndof = Int64(@eval ccall((:mfem_get_ndof, $LIBMFEM), Cint, ()))
-        conn = reshape(conn, elem_dof, size(elems, 1))'|>Array
-        elems = conn[:, 1:3]
-        new(coords, edges,  elems, nnode, nedges, nelem, ndof, conn, lorder)
-    end
 end
+
+function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = -1, degree::Int64 = 1, lorder::Int64 = -1)
+    if !(degree in [1, 2])
+        error("Only degree = 1 or 2 is supported.")
+    end
+    if order==-1
+        if degree == 1
+            order = 2
+        elseif degree == 2
+            order = 4
+        end
+    end
+
+    if lorder==-1
+        if degree == 1
+            lorder = 2
+        elseif degree == 2
+            lorder = 4
+        end
+    end
+    nnode = size(coords, 1)
+    nelem = size(elems,1)
+    nedges = nnode + nelem - 1
+    edges = zeros(Int64, nedges*2)
+    c = [coords zeros(size(coords, 1))]'[:]
+    e = Int32.(elems'[:].- 1) 
+    @eval ccall((:init_nnfem_mesh, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Cint, 
+            Ptr{Cint}, Cint, Cint, Cint, Ptr{Clonglong}), $c, Int32(size($coords, 1)), $e, Int32(size($elems,1)), 
+            Int32($order), Int32($degree), $edges)
+    edges = reshape(edges, nedges, 2)
+    elem_dof = Int64(@eval ccall((:mfem_get_elem_ndof, $LIBMFEM), Cint, ()))
+    conn = zeros(Int64, elem_dof * size(elems, 1))
+    @eval ccall((:mfem_get_connectivity, $LIBMFEM), Cvoid, (Ptr{Cint}, ), $conn)
+    ndof = Int64(@eval ccall((:mfem_get_ndof, $LIBMFEM), Cint, ()))
+    conn = reshape(conn, elem_dof, size(elems, 1))'|>Array
+    elems = conn[:, 1:3]
+    Mesh(coords, edges,  elems, nnode, nedges, nelem, ndof, conn, lorder)
+end
+
+Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),
+                            copy(mesh.edges),
+                            copy(mesh.elems),
+                            copy(mesh.nnode),
+                            copy(mesh.nedge),
+                            copy(mesh.nelem),
+                            copy(mesh.ndof),
+                            copy(mesh.conn),
+                            copy(mesh.lorder))
 
 @doc raw"""
     Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Int64 = 1)
