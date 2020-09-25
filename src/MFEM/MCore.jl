@@ -95,6 +95,24 @@ function compute_fem_laplace_matrix1(kappa::Array{Float64,1}, mesh::Mesh)
 end
 
 """
+    compute_fem_laplace_matrix(kappa::Union{PyObject, Array{Float64, 1}}, mesh::Mesh)
+"""
+function compute_fem_laplace_matrix(kappa::Union{PyObject, Array{Float64, 1}}, mesh::Mesh)
+    Z = compute_fem_laplace_matrix1(kappa, mesh)
+    if isa(Z, SparseMatrixCSC)
+        [Z spzeros(mesh.ndof, mesh.ndof)
+        spzeros(mesh.ndof, mesh.ndof) Z]
+    else
+        [Z spzero(mesh.ndof) 
+        spzero(mesh.ndof) Z]
+    end
+end
+
+compute_fem_laplace_matrix1(mesh::Mesh) = compute_fem_laplace_matrix1(ones(get_ngauss(mesh)), mesh)
+compute_fem_laplace_matrix(mesh::Mesh) = compute_fem_laplace_matrix(ones(get_ngauss(mesh)), mesh)
+
+
+"""
     fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, mesh::Mesh)
 
 A differentiable kernel for imposing the Dirichlet boundary of a scalar-valued function. 
