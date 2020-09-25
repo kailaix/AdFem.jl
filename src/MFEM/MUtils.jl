@@ -44,6 +44,7 @@ end
     get_edge_dof(edges::Array{Int64, 1}, mesh::Mesh)
 
 Returns the DOFs for `edges`, which is a `K × 2` array containing vertex indices. 
+The DOFs are not offset by `nnode`, i.e., the smallest edge DOF could be 1. 
 """
 function get_edge_dof(edges::Array{Int64, 2}, mesh::Mesh)
     d = Dict{Tuple{Int64, Int64}, Int64}()
@@ -98,6 +99,9 @@ function impose_Dirichlet_boundary_conditions(A::SparseTensor, rhs::Union{Array{
     bdval::Union{Array{Float64,1}, PyObject})
     indices = A.o.indices 
     vv = A.o.values 
+    @assert size(A, 1) == size(A, 2) == length(rhs)
+    @assert length(bdnode)==length(bdval)
+    @assert length(bdnode)<=length(rhs)
     impose_dirichlet_ = load_op_and_grad(PoreFlow.libmfem,"impose_dirichlet", multiple=true)
     indices,vv,bd,rhs,bdval = convert_to_tensor(Any[indices,vv,bdnode,rhs,bdval], [Int64,Float64,Int64,Float64,Float64])
     indices, vv, rhs = impose_dirichlet_(indices,vv,bd,rhs,bdval)

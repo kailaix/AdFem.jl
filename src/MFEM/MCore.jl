@@ -51,14 +51,22 @@ function compute_fem_source_term1(f::PyObject, mesh::Mesh)
 end
 
 """
-    compute_fem_source_term1(f::Array{Float64}, mesh::Mesh)
+    compute_fem_source_term1(f::Array{Float64,1}, mesh::Mesh)
 """
-function compute_fem_source_term1(f::Array{Float64}, mesh::Mesh)
+function compute_fem_source_term1(f::Array{Float64,1}, mesh::Mesh)
     @assert length(f)==get_ngauss(mesh)
     out = zeros(mesh.ndof)
     @eval ccall((:FemSourceScalar_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $out, $f)
     out
 end
+
+"""
+    compute_fem_source_term(f1::Union{PyObject,Array{Float64,2}}, f2::Union{PyObject,Array{Float64,2}}, mesh::Mesh)
+"""
+function compute_fem_source_term(f1::Union{PyObject,Array{Float64,1}}, f2::Union{PyObject,Array{Float64,1}}, mesh::Mesh)
+    [compute_fem_source_term1(f1, mesh); compute_fem_source_term1(f2, mesh)]
+end
+
 
 
 """
@@ -223,11 +231,12 @@ function compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
 end
 
 @doc raw"""
-    get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
+    get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh)
 
 Returns Gauss quadrature points on the boundary edge as a $n\times 2$ matrix. Here $n$ is the number of rows for `bdedge`.
 """
-function get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
+function get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh)
+    order = mesh.lorder
     bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mesh)
     bdnode_x = bdnode_x'[:]
     bdnode_y = bdnode_y'[:]
@@ -310,18 +319,23 @@ end
 
 
 @doc raw"""
-    bcnode(mesh::Mesh)
+    bcnode(mesh::Mesh; with_edge::Bool = true)
 
-Returns all boundary node indices.
+Returns all boundary node indices. If `with_edge = true` **and** the `mesh` uses P2 element, the edge DOFs are also returned
 """
-function bcnode(mesh::Mesh)
+function bcnode(mesh::Mesh; with_edge::Bool = true)
     bdedge = bcedge(mesh)
-    collect(Set(bdedge[:]))
+    if with_edge && size(mesh.conn,2)==6 
+        edgedof = get_edge_dof(bdedge, mesh) .+ mesh.nnode
+        [collect(Set(bdedge[:])); edgedof]
+    else
+        collect(Set(bdedge[:]))
+    end
 end
 
 @doc raw"""
     compute_fem_traction_term1(t::Array{Float64, 1},
-    bdedge::Array{Int64,2}, mesh::Mesh; order::Int64 = 2)
+    bdedge::Array{Int64,2}, mesh::Mesh)
 
 Computes the boundary integral 
 
@@ -330,7 +344,8 @@ $$\int_{\Gamma} t(x, y) \delta u dx$$
 Returns a vector of size `dof`.
 """
 function compute_fem_traction_term1(t::Array{Float64, 1},
-            bdedge::Array{Int64,2}, mesh::Mesh; order::Int64 = 2)
+            bdedge::Array{Int64,2}, mesh::Mesh)
+    order = mesh.lorder
     D = _edge_dict(mesh)
     node_x = zeros(size(bdedge, 1))
     node_y = zeros(size(bdedge, 1))
@@ -362,14 +377,35 @@ function compute_fem_traction_term1(t::Array{Float64, 1},
     return out 
 end
 
+"""
+    compute_fem_traction_term(t::Array{Float64, 2},
+    bdedge::Array{Int64,2}, mesh::Mesh)
+"""
+function compute_fem_traction_term(t::Array{Float64, 2},
+    bdedge::Array{Int64,2}, mesh::Mesh)
+    @assert size(t,2)==2
+    [compute_fem_traction_term1(t[:,1], bdedge, mesh);
+    compute_fem_traction_term1(t[:,2], bdedge, mesh)]
+end
 
 """
-    eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
-
-Evaluates `f` on the boundary **Gauss points**. `order` specifies the integration order
+    compute_fem_traction_term(t1::Array{Float64, 1}, t2::Array{Float64, 1},
+    bdedge::Array{Int64,2}, mesh::Mesh)
 """
-function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh; order::Int64 = 2)
-    pts = get_bdedge_integration_pts(bdedge, mesh; order = order)
+function compute_fem_traction_term(t1::Array{Float64, 1}, t2::Array{Float64, 1},
+    bdedge::Array{Int64,2}, mesh::Mesh)
+    [compute_fem_traction_term1(t1, bdedge, mesh);
+    compute_fem_traction_term1(t2, bdedge, mesh)]
+end
+
+
+"""
+    eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh)
+
+Evaluates `f` on the boundary **Gauss points**. 
+"""
+function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh)
+    pts = get_bdedge_integration_pts(bdedge, mesh)
     f.(pts[:,1], pts[:,2])
 end
 
@@ -378,5 +414,16 @@ end
     eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, mesh::Mesh)
 """
 function eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, mesh::Mesh)
-    f.(mesh.nodes[bdnode, 1], mesh.nodes[bdnode, 2])
+    out = zeros(length(bdnode))
+    for i = 1:length(bdnode)
+        if bdnode[i]>mesh.nnode 
+            a, b = mesh.edges[bdnode[i]-mesh.nnode, :]
+            xy = (mesh.nodes[a, :] + mesh.nodes[b, :])/2
+            out[i] = f(xy[1], xy[2])
+        else
+            a = bdnode[i]
+            out[i] = f(mesh.nodes[a, 1], mesh.nodes[a, 2])
+        end
+    end
+    out
 end
