@@ -471,3 +471,33 @@ function eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, mesh::Mesh)
     end
     out
 end
+
+
+"""
+    compute_von_mises_stress_term(K::Array{Float64, 3}, u::Array{Float64, 1}, mesh::Mesh)
+    compute_von_mises_stress_term(K::Array{Float64, 2}, u::Array{Float64, 1}, mesh::Mesh)
+"""
+function compute_von_mises_stress_term(K::Array{Float64, 3}, u::Array{Float64, 1}, mesh::Mesh)
+    @assert length(u) == 2mesh.ndof
+    @assert size(K) == (get_ngauss(mesh), 3, 3)
+    hmat = zeros(9*get_ngauss(mesh))
+    for i = 1:get_ngauss(mesh)
+        for j = 1:3
+            for k = 1:3
+                hmat[(i-1)*9+(j-1)*3+k] = K[i, j, k]
+            end
+        end
+    end
+    out = zeros(get_ngauss(mesh))
+    @eval ccall((:mfem_compute_von_mises_stress_term, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), 
+                $out, $hmat, $u)
+    out
+end
+
+function compute_von_mises_stress_term(K::Array{Float64, 2}, u::Array{Float64, 1}, mesh::Mesh)
+    Ks = zeros(get_ngauss(mesh), 3, 3)
+    for i = 1:get_ngauss(mesh)
+        Ks[i,:,:] = K 
+    end
+    compute_von_mises_stress_term(Ks, u, mesh)
+end

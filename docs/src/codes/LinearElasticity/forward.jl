@@ -21,6 +21,16 @@ u = K\rhs
 sess = Session(); init(sess)
 S = run(sess, u)
 
+# close("all")
+# visualize_displacement(S*1e3, mmesh)
+# savefig("test.png")
+
 close("all")
-visualize_displacement(S*1e3, mmesh)
+figure(figsize=(10,20))
+subplot(311)
+visualize_scalar_on_fem_points(S[1:mmesh.nnode], mmesh)
+subplot(312)
+visualize_scalar_on_fem_points(S[1+mmesh.ndof:mmesh.nnode + mmesh.ndof], mmesh)
+subplot(313)
+visualize_von_mises_stress(D, S, mmesh)
 savefig("test.png")

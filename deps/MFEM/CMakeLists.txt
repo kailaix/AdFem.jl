@@ -53,7 +53,7 @@ endif()
 
 include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${LIBDIR}/../include)
 find_library(mfem mfem HINTS ${LIBDIR})
-add_library(nnfem_mfem SHARED Common.cpp 
+add_library(nnfem_mfem SHARED Common.cpp API.cpp Mechanics.cpp
         FemLaplace1/FemLaplaceScalar.cpp 
           FemSource1/FemSourceScalar.cpp
           FemToGaussPoints/FemToGaussPointsMfem.cpp
