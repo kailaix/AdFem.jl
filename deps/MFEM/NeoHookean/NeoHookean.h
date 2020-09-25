@@ -19,7 +19,7 @@ idi, iv, jdi, jv : ngauss * (2*elem_ndof)^2
 namespace had { threadDefine ADGraph* g_ADGraph = 0; }
 void NH_forward(double *ic, double *jc, 
     int64 *idi, double *iv, int64 *jdi, double *jv, 
-    const double *ui){
+    const double *ui, const double *icoeff, const double *jcoeff){
     ADGraph adGraph;
     int elem_ndof = mmesh.elem_ndof;
     int k1 = 0, k2 = 0;
@@ -50,8 +50,8 @@ void NH_forward(double *ic, double *jc,
                 SetAdjoint(icc, 1.0);
                 PropagateAdjoint();
                 for (int r = 0; r < elem_ndof; r++){
-                    ic[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j];
-                    ic[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j];
+                    ic[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j] * icoeff[i * elem->ngauss + j];
+                    ic[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j] * icoeff[i * elem->ngauss + j];
                 }
 
                 for(int r = 0; r < 2*elem_ndof; r++){
@@ -89,8 +89,8 @@ void NH_forward(double *ic, double *jc,
                 SetAdjoint(jln, 1.0);
                 PropagateAdjoint();
                 for (int r = 0; r < elem_ndof; r++){
-                    jc[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j];
-                    jc[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j];
+                    jc[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j] * jcoeff[i * elem->ngauss + j];;
+                    jc[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j] * jcoeff[i * elem->ngauss + j];;
                 }
 
                 for(int r = 0; r < 2*elem_ndof; r++){
@@ -122,6 +122,6 @@ void NH_backward(
 
 extern "C" void NH_forward_Julia(double *ic, double *jc, 
     int64 *idi, double *iv, int64 *jdi, double *jv, 
-    const double *ui){
-    NH_forward(ic, jc, idi, iv, jdi, jv, ui);
+    const double *ui, const double *icoeff, const double *jcoeff){
+    NH_forward(ic, jc, idi, iv, jdi, jv, ui, icoeff, jcoeff);
 }

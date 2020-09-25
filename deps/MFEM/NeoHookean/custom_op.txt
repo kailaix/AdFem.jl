@@ -1,5 +1,7 @@
 NeoHookean
 double u(?)
+double mu(?)
+double lamb(?)
 double ic(?) -> output
 double jc(?) -> output
 int64 indices1(?) -> output

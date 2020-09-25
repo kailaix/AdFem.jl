@@ -13,6 +13,8 @@ using namespace tensorflow;
 
 REGISTER_OP("NeoHookean")
 .Input("u : double")
+.Input("mu : double")
+.Input("lamb : double")
 .Output("ic : double")
 .Output("jc : double")
 .Output("indices1 : int64")
@@ -23,6 +25,10 @@ REGISTER_OP("NeoHookean")
     
         shape_inference::ShapeHandle u_shape;
         TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &u_shape));
+        shape_inference::ShapeHandle mu_shape;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 1, &mu_shape));
+        shape_inference::ShapeHandle lamb_shape;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(2), 1, &lamb_shape));
 
         c->set_output(0, c->Vector(-1));
         c->set_output(1, c->Vector(-1));
@@ -45,7 +51,11 @@ REGISTER_OP("NeoHookeanGrad")
 .Input("indices2 : int64")
 .Input("vv2 : double")
 .Input("u : double")
-.Output("grad_u : double");
+.Input("mu : double")
+.Input("lamb : double")
+.Output("grad_u : double")
+.Output("grad_mu : double")
+.Output("grad_lamb : double");
 
 /*-------------------------------------------------------------------------------------*/
 
@@ -58,23 +68,27 @@ public:
   }
 
   void Compute(OpKernelContext* context) override {    
-    DCHECK_EQ(1, context->num_inputs());
+    DCHECK_EQ(3, context->num_inputs());
     
     
     const Tensor& u = context->input(0);
+    const Tensor& mu = context->input(1);
+    const Tensor& lamb = context->input(2);
     
     
     const TensorShape& u_shape = u.shape();
+    const TensorShape& mu_shape = mu.shape();
+    const TensorShape& lamb_shape = lamb.shape();
     
     
     DCHECK_EQ(u_shape.dims(), 1);
+    DCHECK_EQ(mu_shape.dims(), 1);
+    DCHECK_EQ(lamb_shape.dims(), 1);
 
     // extra check
         
     // create output shape
-    //     ic, jc : 2 * ndof 
-    //     idi, iv, jdi, jv : ngauss * (2*elem_ndof)^2
-
+    
     TensorShape ic_shape({2*mmesh.ndof});
     TensorShape jc_shape({2*mmesh.ndof});
     TensorShape indices1_shape({mmesh.ngauss * (2*mmesh.elem_ndof) * (2*mmesh.elem_ndof), 2});
@@ -100,6 +114,8 @@ public:
     // get the corresponding Eigen tensors for data access
     
     auto u_tensor = u.flat<double>().data();
+    auto mu_tensor = mu.flat<double>().data();
+    auto lamb_tensor = lamb.flat<double>().data();
     auto ic_tensor = ic->flat<double>().data();
     auto jc_tensor = jc->flat<double>().data();
     auto indices1_tensor = indices1->flat<int64>().data();
@@ -110,7 +126,9 @@ public:
     // implement your forward function here 
 
     // TODO:
-    NH_forward(ic_tensor, jc_tensor, indices1_tensor, vv1_tensor, indices2_tensor, vv2_tensor, u_tensor);
+    NH_forward(ic_tensor, jc_tensor, indices1_tensor, vv1_tensor, indices2_tensor, vv2_tensor, u_tensor,
+            mu_tensor, lamb_tensor);
+
 
   }
 };
@@ -140,6 +158,8 @@ public:
     const Tensor& indices2 = context->input(8);
     const Tensor& vv2 = context->input(9);
     const Tensor& u = context->input(10);
+    const Tensor& mu = context->input(11);
+    const Tensor& lamb = context->input(12);
     
     
     const TensorShape& grad_ic_shape = grad_ic.shape();
@@ -153,6 +173,8 @@ public:
     const TensorShape& indices2_shape = indices2.shape();
     const TensorShape& vv2_shape = vv2.shape();
     const TensorShape& u_shape = u.shape();
+    const TensorShape& mu_shape = mu.shape();
+    const TensorShape& lamb_shape = lamb.shape();
     
     
     DCHECK_EQ(grad_ic_shape.dims(), 1);
@@ -166,6 +188,8 @@ public:
     DCHECK_EQ(indices2_shape.dims(), 1);
     DCHECK_EQ(vv2_shape.dims(), 1);
     DCHECK_EQ(u_shape.dims(), 1);
+    DCHECK_EQ(mu_shape.dims(), 1);
+    DCHECK_EQ(lamb_shape.dims(), 1);
 
     // extra check
     // int m = Example.dim_size(0);
@@ -173,15 +197,23 @@ public:
     // create output shape
     
     TensorShape grad_u_shape(u_shape);
+    TensorShape grad_mu_shape(mu_shape);
+    TensorShape grad_lamb_shape(lamb_shape);
             
     // create output tensor
     
     Tensor* grad_u = NULL;
     OP_REQUIRES_OK(context, context->allocate_output(0, grad_u_shape, &grad_u));
+    Tensor* grad_mu = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(1, grad_mu_shape, &grad_mu));
+    Tensor* grad_lamb = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(2, grad_lamb_shape, &grad_lamb));
     
     // get the corresponding Eigen tensors for data access
     
     auto u_tensor = u.flat<double>().data();
+    auto mu_tensor = mu.flat<double>().data();
+    auto lamb_tensor = lamb.flat<double>().data();
     auto grad_ic_tensor = grad_ic.flat<double>().data();
     auto grad_jc_tensor = grad_jc.flat<double>().data();
     auto grad_vv1_tensor = grad_vv1.flat<double>().data();
@@ -192,7 +224,9 @@ public:
     auto vv1_tensor = vv1.flat<double>().data();
     auto indices2_tensor = indices2.flat<int64>().data();
     auto vv2_tensor = vv2.flat<double>().data();
-    auto grad_u_tensor = grad_u->flat<double>().data();   
+    auto grad_u_tensor = grad_u->flat<double>().data();
+    auto grad_mu_tensor = grad_mu->flat<double>().data();
+    auto grad_lamb_tensor = grad_lamb->flat<double>().data();   
 
     // implement your backward function here 
 
@@ -218,16 +252,22 @@ public:
   }
 
   void Compute(OpKernelContext* context) override {    
-    DCHECK_EQ(1, context->num_inputs());
+    DCHECK_EQ(3, context->num_inputs());
     
     
     const Tensor& u = context->input(0);
+    const Tensor& mu = context->input(1);
+    const Tensor& lamb = context->input(2);
     
     
     const TensorShape& u_shape = u.shape();
+    const TensorShape& mu_shape = mu.shape();
+    const TensorShape& lamb_shape = lamb.shape();
     
     
     DCHECK_EQ(u_shape.dims(), 1);
+    DCHECK_EQ(mu_shape.dims(), 1);
+    DCHECK_EQ(lamb_shape.dims(), 1);
 
     // extra check
         
@@ -258,6 +298,8 @@ public:
     // get the corresponding Eigen tensors for data access
     
     auto u_tensor = u.flat<double>().data();
+    auto mu_tensor = mu.flat<double>().data();
+    auto lamb_tensor = lamb.flat<double>().data();
     auto ic_tensor = ic->flat<double>().data();
     auto jc_tensor = jc->flat<double>().data();
     auto indices1_tensor = indices1->flat<int64>().data();
@@ -295,6 +337,8 @@ public:
     const Tensor& indices2 = context->input(8);
     const Tensor& vv2 = context->input(9);
     const Tensor& u = context->input(10);
+    const Tensor& mu = context->input(11);
+    const Tensor& lamb = context->input(12);
     
     
     const TensorShape& grad_ic_shape = grad_ic.shape();
@@ -308,6 +352,8 @@ public:
     const TensorShape& indices2_shape = indices2.shape();
     const TensorShape& vv2_shape = vv2.shape();
     const TensorShape& u_shape = u.shape();
+    const TensorShape& mu_shape = mu.shape();
+    const TensorShape& lamb_shape = lamb.shape();
     
     
     DCHECK_EQ(grad_ic_shape.dims(), 1);
@@ -321,6 +367,8 @@ public:
     DCHECK_EQ(indices2_shape.dims(), 1);
     DCHECK_EQ(vv2_shape.dims(), 1);
     DCHECK_EQ(u_shape.dims(), 1);
+    DCHECK_EQ(mu_shape.dims(), 1);
+    DCHECK_EQ(lamb_shape.dims(), 1);
 
     // extra check
     // int m = Example.dim_size(0);
@@ -328,15 +376,23 @@ public:
     // create output shape
     
     TensorShape grad_u_shape(u_shape);
+    TensorShape grad_mu_shape(mu_shape);
+    TensorShape grad_lamb_shape(lamb_shape);
             
     // create output tensor
     
     Tensor* grad_u = NULL;
     OP_REQUIRES_OK(context, context->allocate_output(0, grad_u_shape, &grad_u));
+    Tensor* grad_mu = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(1, grad_mu_shape, &grad_mu));
+    Tensor* grad_lamb = NULL;
+    OP_REQUIRES_OK(context, context->allocate_output(2, grad_lamb_shape, &grad_lamb));
     
     // get the corresponding Eigen tensors for data access
     
     auto u_tensor = u.flat<double>().data();
+    auto mu_tensor = mu.flat<double>().data();
+    auto lamb_tensor = lamb.flat<double>().data();
     auto grad_ic_tensor = grad_ic.flat<double>().data();
     auto grad_jc_tensor = grad_jc.flat<double>().data();
     auto grad_vv1_tensor = grad_vv1.flat<double>().data();
@@ -347,7 +403,9 @@ public:
     auto vv1_tensor = vv1.flat<double>().data();
     auto indices2_tensor = indices2.flat<int64>().data();
     auto vv2_tensor = vv2.flat<double>().data();
-    auto grad_u_tensor = grad_u->flat<double>().data();   
+    auto grad_u_tensor = grad_u->flat<double>().data();
+    auto grad_mu_tensor = grad_mu->flat<double>().data();
+    auto grad_lamb_tensor = grad_lamb->flat<double>().data();   
 
     // implement your backward function here 
 

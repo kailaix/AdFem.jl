@@ -5,14 +5,14 @@ using PyPlot
 using Random
 Random.seed!(233)
 
-function neo_hookean(u)
+function neo_hookean(u,mu,lamb)
     neo_hookean_ = load_op_and_grad("./build/libNeoHookean","neo_hookean", multiple=true)
-    u = convert_to_tensor(Any[u], [Float64]); u = u[1]
-    neo_hookean_(u)
+    u,mu,lamb = convert_to_tensor(Any[u,mu,lamb], [Float64,Float64,Float64])
+    neo_hookean_(u,mu,lamb)
 end
 
 # TODO: specify your input parameters
-u = neo_hookean(u)
+u = neo_hookean(u,mu,lamb)
 sess = Session(); init(sess)
 @show run(sess, u)
 
@@ -24,7 +24,7 @@ error()
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(m)
-    return sum(neo_hookean(u)^2)
+    return sum(neo_hookean(u,mu,lamb)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
