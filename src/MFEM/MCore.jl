@@ -192,6 +192,9 @@ end
     compute_fem_stiffness_matrix(kappa::Array{Float64, 2}, mesh::Mesh)
 """
 function compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
+    if length(size(kappa))==2
+        kappa = reshape(repeat(reshape(kappa, (-1,)), get_ngauss(mesh)), (get_ngauss(mesh), 3, 3))
+    end
     @assert size(kappa) == (get_ngauss(mesh), 3, 3)
     compute_fem_stiffness_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_stiffness_matrix_mfem", multiple=true)
     kappa = convert_to_tensor(Any[kappa], [Float64]); kappa = kappa[1]
@@ -369,7 +372,7 @@ function bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
         else
             a, b = mesh.edges[nd[i]-mesh.nnode, :]
             xy = (mesh.nodes[a, :] + mesh.nodes[b, :])/2
-            if f(xy[:,1], xy[:,2])
+            if f(xy[1], xy[2])
                 push!(out, nd[i])
             end
         end

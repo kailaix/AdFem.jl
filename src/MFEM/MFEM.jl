@@ -139,7 +139,7 @@ end
 Return the total number of Gauss points. 
 """
 function get_ngauss(mesh::Mesh)
-    return @eval ccall((:mfem_get_ngauss, $LIBMFEM), Cint, ())
+    return Int64(@eval ccall((:mfem_get_ngauss, $LIBMFEM), Cint, ()))
 end
 
 """
