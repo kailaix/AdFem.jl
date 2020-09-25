@@ -51,6 +51,7 @@ mutable struct Mesh
     ndof::Int64
     conn::Array{Int64, 2}
     lorder::Int64
+    elem_ndof::Int64
 end
 
 function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = -1, degree::Int64 = 1, lorder::Int64 = -1)
@@ -88,7 +89,7 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
     ndof = Int64(@eval ccall((:mfem_get_ndof, $LIBMFEM), Cint, ()))
     conn = reshape(conn, elem_dof, size(elems, 1))'|>Array
     elems = conn[:, 1:3]
-    Mesh(coords, edges,  elems, nnode, nedges, nelem, ndof, conn, lorder)
+    Mesh(coords, edges,  elems, nnode, nedges, nelem, ndof, conn, lorder, elem_dof)
 end
 
 Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),

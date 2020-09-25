@@ -24,8 +24,14 @@ set_property(TARGET mfem PROPERTY POSITION_INDEPENDENT_CODE ON)""")
     cd(PWD)
 end
 
+function install_had()
+    change_directory()
+    git_repository("https://github.com/kailaix/had", "had")
+end
+
 install_adept()
 install_mfem()
+install_had()
 
 change_directory(joinpath(@__DIR__, "build"))
 require_file("build.ninja") do 
