@@ -74,6 +74,7 @@ visualize_von_mises_stress
 visualize_scalar_on_gauss_points
 visualize_scalar_on_fem_points
 visualize_scalar_on_fvm_points
+visualize_vector_on_fem_points
 ```
 
 ## Modeling Tools

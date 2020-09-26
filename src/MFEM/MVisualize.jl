@@ -1,4 +1,4 @@
-export visualize_mesh
+export visualize_mesh, visualize_vector_on_fem_points
 
 """
     visualize_mesh(mesh::Mesh) 
@@ -120,4 +120,13 @@ end
 function visualize_von_mises_stress(K::Array{Float64}, u::Array{Float64, 1}, mmesh::Mesh, args...; kwargs...)
     VonMisesStress = compute_von_mises_stress_term(K, u, mmesh)
     visualize_scalar_on_gauss_points(VonMisesStress, mmesh, args...; kwargs...)
+end
+
+"""
+    visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+"""
+function visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+    @assert length(u1)==mesh.nnode
+    @assert length(u2)==mesh.nnode
+    quiver(mesh.nodes[:,1], mesh.nodes[:,2], u1, u2, args...;kwargs...)
 end
