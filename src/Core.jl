@@ -766,6 +766,33 @@ function compute_plane_stress_matrix(E::Float64, ν::Float64)
 end
 
 
+"""
+    compute_plane_strain_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
+"""
+function compute_plane_strain_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
+    mode = 0
+    N = length(nu)
+    @assert length(E)==N
+    plane_strain_and_stress_ = load_op_and_grad(PoreFlow.libmfem,"plane_strain_and_stress")
+    e,nu,mode = convert_to_tensor(Any[E,nu,mode], [Float64,Float64,Int32])
+    out = plane_strain_and_stress_(e,nu,mode)
+    set_shape(out, (N, 3, 3))
+end
+
+"""
+    compute_plane_stress_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
+"""
+function compute_plane_stress_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
+    mode = 1
+    N = length(nu)
+    @assert length(E)==N
+    plane_strain_and_stress_ = load_op_and_grad(PoreFlow.libmfem,"plane_strain_and_stress")
+    e,nu,mode = convert_to_tensor(Any[E,nu,mode], [Float64,Float64,Int32])
+    out = plane_strain_and_stress_(e,nu,mode)
+    set_shape(out, (N, 3, 3))
+end
+
+
 
 """
     compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)

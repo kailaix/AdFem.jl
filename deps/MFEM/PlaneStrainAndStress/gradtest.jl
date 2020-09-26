@@ -3,33 +3,31 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using PoreFlow
 Random.seed!(233)
 
-function plane_strain_and_stress(e,nu,mode)
-    plane_strain_and_stress_ = load_op_and_grad("./build/libPlaneStrainAndStress","plane_strain_and_stress")
-    e,nu,mode = convert_to_tensor(Any[e,nu,mode], [Float64,Float64,Int32])
-    plane_strain_and_stress_(e,nu,mode)
-end
 
 # TODO: specify your input parameters
-u = plane_strain_and_stress(e,nu,mode)
+e = rand(10)
+nu = 0.3*rand(10)
+u = compute_plane_stress_matrix(e,nu)
 sess = Session(); init(sess)
 @show run(sess, u)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(plane_strain_and_stress(e,nu,mode)^2)
+function scalar_function(x)
+    return sum(compute_plane_stress_matrix(e, x)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(10))
+v_ = rand(10)
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -59,3 +57,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")

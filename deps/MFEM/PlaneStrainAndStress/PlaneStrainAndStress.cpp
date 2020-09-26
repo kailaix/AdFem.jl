@@ -70,8 +70,8 @@ public:
     // extra check
         
     // create output shape
-    
-    TensorShape hmat_shape({-1,3,3});
+    int N = e_shape.dim_size(0);
+    TensorShape hmat_shape({N,3,3});
             
     // create output tensor
     
@@ -88,6 +88,10 @@ public:
     // implement your forward function here 
 
     // TODO:
+    if (*mode_tensor == 0)
+      PlaneStrainMatrix_forward(hmat_tensor, e_tensor, nu_tensor, N);
+    else if (*mode_tensor == 1)
+      PlaneStressMatrix_forward(hmat_tensor, e_tensor, nu_tensor, N);
 
   }
 };
@@ -157,6 +161,11 @@ public:
     // implement your backward function here 
 
     // TODO:
+    int N = e_shape.dim_size(0);
+    if (*mode_tensor == 0)
+      PlaneStrainMatrix_backward(grad_nu_tensor, grad_e_tensor, grad_hmat_tensor,  e_tensor, nu_tensor, N);
+    else if (*mode_tensor == 1)
+      PlaneStressMatrix_backward(grad_nu_tensor, grad_e_tensor, grad_hmat_tensor,  e_tensor, nu_tensor, N);
     
   }
 };

@@ -67,7 +67,8 @@ add_library(nnfem_mfem SHARED Common.cpp API.cpp Mechanics.cpp
           ImposeDirichlet/ImposeDirichlet.cpp
           NeoHookean/NeoHookean.cpp
           DofToGaussPoints/DofToGaussPointsMfem.cpp
-          ComputeLaplaceTermMfem/ComputeLaplaceTermMfem.cpp)
+          ComputeLaplaceTermMfem/ComputeLaplaceTermMfem.cpp
+          PlaneStrainAndStress/PlaneStrainAndStress.cpp)
           
 message("MFEM = ${mfem}")
 target_link_libraries(nnfem_mfem ${TF_LIB_FILE} ${mfem})
