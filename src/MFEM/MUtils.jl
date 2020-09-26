@@ -1,4 +1,4 @@
-export PDATA, get_edge_dof, impose_Dirichlet_boundary_conditions
+export PDATA, get_edge_dof, impose_Dirichlet_boundary_conditions, dof_to_gauss_points
 
 """
     PDATA
@@ -106,4 +106,49 @@ function impose_Dirichlet_boundary_conditions(A::SparseTensor, rhs::Union{Array{
     indices,vv,bd,rhs,bdval = convert_to_tensor(Any[indices,vv,bdnode,rhs,bdval], [Int64,Float64,Int64,Float64,Float64])
     indices, vv, rhs = impose_dirichlet_(indices,vv,bd,rhs,bdval)
     RawSparseTensor(indices, vv, size(A)...), set_shape(rhs, (size(A,2),))
+end
+
+
+"""
+    fem_to_gauss_points(u::PyObject, mesh::Mesh)
+"""
+function fem_to_gauss_points(u::PyObject, mesh::Mesh)
+    fem_to_gauss_points_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_to_gauss_points_mfem")
+    u = convert_to_tensor(Any[u], [Float64]); u = u[1]
+    out = fem_to_gauss_points_mfem_(u)
+    set_shape(out, (get_ngauss(mesh),))
+end
+
+"""
+    fem_to_gauss_points(u::Array{Float64,1}, mesh::Mesh)
+"""
+function fem_to_gauss_points(u::Array{Float64,1}, mesh::Mesh)
+    out = zeros(get_ngauss(mesh))
+    @eval ccall((:FemToGaussPointsMfem_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), 
+                $out, $u)
+    return out
+end
+
+
+"""
+    dof_to_gauss_points(u::PyObject, mesh::Mesh)
+    dof_to_gauss_points(u::Array{Float64,1}, mesh::Mesh)
+
+Similar to [`fem_to_gauss_points`](@ref). The only difference is that the function uses all DOFs---which means, 
+for quadratic elements, the nodal values on the edges are also used. 
+"""
+function dof_to_gauss_points(u::PyObject, mesh::Mesh)
+    @assert length(u)==mesh.ndof
+    dof_to_gauss_points_mfem_ = load_op_and_grad(PoreFlow.libmfem,"dof_to_gauss_points_mfem")
+    u = convert_to_tensor(Any[u], [Float64]); u = u[1]
+    out = dof_to_gauss_points_mfem_(u)
+    set_shape(out, (get_ngauss(mesh),))
+end
+
+function dof_to_gauss_points(u::Array{Float64,1}, mesh::Mesh)
+    @assert length(u)==mesh.ndof
+    out = zeros(get_ngauss(mesh))
+    @eval ccall((:DofToGaussPointsMfem_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), 
+                $out, $u)
+    return out
 end
