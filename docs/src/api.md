@@ -89,7 +89,6 @@ antiplane_viscosity
 
 ## Mesh
 ```@docs
-get_bdedge_integration_point
 get_edge_dof
 get_area
 get_ngauss

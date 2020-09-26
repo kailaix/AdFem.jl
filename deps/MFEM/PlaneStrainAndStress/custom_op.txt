@@ -1,0 +1,5 @@
+PlaneStrainAndStress
+double e(?)
+double nu(?)
+int32 mode()
+double hmat(?,3,3) -> output

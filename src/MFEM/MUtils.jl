@@ -36,7 +36,17 @@ function Mesh(filename::String; file_format::Union{String, Missing} = missing,
     else
         mesh = meshio.read(filename)
     end
-    Mesh(Float64.(mesh.points[:,1:2]), Int64.(mesh.cells[1][2]) .+ 1, order, degree, lorder)
+    elem = nothing 
+    for (mkr, dat) in mesh.cells
+        if mkr == "triangle"
+            elem = dat 
+            break 
+        end
+    end
+    if isnothing(elem)
+        error("No triangles found in the mesh file.")
+    end
+    Mesh(Float64.(mesh.points[:,1:2]), Int64.(elem) .+ 1, order, degree, lorder)
 end
 
 """

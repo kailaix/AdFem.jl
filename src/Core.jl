@@ -33,7 +33,8 @@ compute_plane_strain_matrix,
 compute_fem_laplace_matrix1,
 compute_fem_laplace_matrix,
 eval_grad_on_gauss_pts1,
-eval_grad_on_gauss_pts
+eval_grad_on_gauss_pts,
+compute_plane_stress_matrix
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -725,23 +726,46 @@ function get_gauss_points(m, n, h)
     vcat(pts_...)
 end
 
-"""
+@doc raw"""
     compute_plane_strain_matrix(E::Float64, ν::Float64)
 
-Computes the elasticity matrix for 2D plane strain
+Computes the stiffness matrix for 2D plane strain. The matrix is given by 
+
+$$\frac{E(1-\nu)}{(1+\nu)(1-2\nu)}\begin{bmatrix}
+1 & \frac{\nu}{1-\nu} & \frac{\nu}{1-\nu}\\ 
+\frac{\nu}{1-\nu} & 1 & \frac{\nu}{1-\nu} \\ 
+\frac{\nu}{1-\nu} & \frac{\nu}{1-\nu} & 1
+\end{bmatrix}$$
 """
 function compute_plane_strain_matrix(E::Float64, ν::Float64)
     E*(1-ν)/(1+ν)/(1-2ν)*[
     1 ν/(1-ν) ν/(1-ν)
     ν/(1-ν) 1 ν/(1-ν)
     ν/(1-ν) ν/(1-ν) 1
-    ]
-    # E/(1+ν)/(1-2ν)*[
-    #     1-ν ν 0.0
-    #     ν 1-ν 0.0
-    #     0.0 0.0 (1-2ν)/2
-    # ]
+    ] 
 end
+
+
+@doc raw"""
+    compute_plane_stress_matrix(E::Float64, ν::Float64)
+
+Computes the stiffness matrix for 2D plane stress. The matrix is given by 
+
+$$\frac{E}{(1+\nu)(1-2\nu)}\begin{bmatrix}
+1-\nu & \nu & 0\\ 
+\nu & 1 & 0 \\ 
+0 & 0 & \frac{1-2\nu}{2}
+\end{bmatrix}$$
+"""
+function compute_plane_stress_matrix(E::Float64, ν::Float64)
+    E/(1+ν)/(1-2ν)*[
+        1-ν ν 0.0
+        ν 1-ν 0.0
+        0.0 0.0 (1-2ν)/2
+    ]
+end
+
+
 
 """
     compute_von_mises_stress_term(K::Array{Float64}, u::Array{Float64}, m::Int64, n::Int64, h::Float64)
