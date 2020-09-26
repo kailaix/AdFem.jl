@@ -538,3 +538,31 @@ function compute_von_mises_stress_term(K::Array{Float64, 2}, u::Array{Float64, 1
     end
     compute_von_mises_stress_term(Ks, u, mesh)
 end
+
+"""
+    compute_fem_laplace_term1(u::Array{Float64, 1},nu::Array{Float64, 1}, mesh::Mesh)
+"""
+function compute_fem_laplace_term1(u::Array{Float64, 1},nu::Array{Float64, 1}, mesh::Mesh)
+    @assert length(u) == mesh.ndof
+    @assert length(nu) == get_ngauss(mesh)
+    out = zeros(mesh.ndof)
+    @eval ccall((:ComputeLaplaceTermMfem_forward_Julia, $LIBMFEM), Cvoid, 
+            (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), $out, $nu, $u)
+    out
+end
+
+"""
+    compute_fem_laplace_term1(u::Union{PyObject, Array{Float64, 1}},
+                                nu::Union{PyObject, Array{Float64, 1}},
+                                mesh::Mesh)
+"""
+function compute_fem_laplace_term1(u::Union{PyObject, Array{Float64, 1}},
+                                   nu::Union{PyObject, Array{Float64, 1}},
+                                   mesh::Mesh)
+    @assert length(u) == mesh.ndof
+    @assert length(nu) == get_ngauss(mesh)
+    compute_laplace_term_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_laplace_term_mfem")
+    u,nu = convert_to_tensor(Any[u,nu], [Float64,Float64])
+    out = compute_laplace_term_mfem_(u,nu)
+    set_shape(out, (mesh.ndof,))
+end
