@@ -67,3 +67,9 @@ namespace MFEM{
         }
     }
 }
+
+
+extern "C" void ComputeFemAdvectionMatrixMfem_forward_Julia(int64 *indices, double *vv, 
+        const double *u, const double *v){
+    MFEM::ComputeFemAdvectionMatrix_forward(indices, vv, u, v);
+}

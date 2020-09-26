@@ -151,14 +151,30 @@ end
 
 """
     compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+    compute_fem_advection_matrix1(u::Array{Float64,1}, v::Array{Float64,1}, mesh::Mesh)
 """
 function compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
+    @assert length(u)==length(v)==get_ngauss(mesh)
     compute_fem_advection_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_advection_matrix_mfem", multiple=true)
     u,v = convert_to_tensor(Any[u,v], [Float64,Float64])
     indices, vals = compute_fem_advection_matrix_mfem_(u,v)
     n = mesh.ndof
     RawSparseTensor(indices, vals, n, n)
 end
+
+function compute_fem_advection_matrix1(u::Array{Float64,1}, v::Array{Float64,1}, mesh::Mesh)
+    @assert length(u)==length(v)==get_ngauss(mesh)
+    N = get_ngauss(mesh) * mesh.elem_ndof^2
+    indices = zeros(Int64, 2N)
+    vv = zeros(N)
+    @eval ccall((:ComputeFemAdvectionMatrixMfem_forward_Julia, $LIBMFEM), 
+        Cvoid, (Ptr{Clonglong}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $u, $v)
+    sparse(indices[1:2:end] .+ 1, indices[2:2:end] .+ 1, vv, mesh.ndof, mesh.ndof)
+end
+
+
+
+
 
 """
     compute_interaction_matrix(mesh::Mesh)
