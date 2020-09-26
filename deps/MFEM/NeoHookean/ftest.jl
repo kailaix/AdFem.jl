@@ -14,8 +14,8 @@ u = readdlm("fenics/u.txt")[:]
 u = u[DOF]
 # u = ones(2mmesh.ndof)
 
-μ = ones(get_ngauss(mmesh))
-λ = ones(get_ngauss(mmesh))
+μ = 10.0*ones(get_ngauss(mmesh))
+λ = 3.0*ones(get_ngauss(mmesh))
 ψ, J = neo_hookean(u, μ, λ, mmesh)
 
 

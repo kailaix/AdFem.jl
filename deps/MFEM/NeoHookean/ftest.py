@@ -48,8 +48,8 @@ J  = det(C)
 # mu, lmbda = Constant(E/(2*(1 + nu))), Constant(E*nu/((1 + nu)*(1 - 2*nu)))
 
 # Stored strain energy density (compressible neo-Hookean model)
-mu = Constant(1.0)
-lmbda = Constant(1.0)
+mu = Constant(10.0)
+lmbda = Constant(3.0)
 psi = (mu/2)*(Ic - 2) - mu*ln(J)/2.0 + (lmbda/2)*1/4.0*ln(J)**2
 
 # Total potential energy
