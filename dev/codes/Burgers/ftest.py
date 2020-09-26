@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 n = 30
 mesh = UnitSquareMesh(n, n)
-V = VectorFunctionSpace(mesh, "CG", 2)
+V = VectorFunctionSpace(mesh, "CG", 1)
 
 u = project(Expression(("sin(2*pi*x[0])", "cos(2*pi*x[1])"), degree=2),  V)
 
@@ -27,6 +27,19 @@ while (t <= end):
     u.assign(u_next)
     t += float(timestep)
 
+
 plt.close("all")
-plot(u)
+c = plot(u)
 plt.savefig("test.png")
+
+
+plt.close("all")
+c = plot(u.sub(0))
+plt.colorbar(c)
+plt.savefig("test_u.png")
+
+
+plt.close("all")
+c = plot(u.sub(1))
+plt.colorbar(c)
+plt.savefig("test_v.png")
