@@ -100,7 +100,8 @@ Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),
                             copy(mesh.nelem),
                             copy(mesh.ndof),
                             copy(mesh.conn),
-                            copy(mesh.lorder))
+                            copy(mesh.lorder),
+                            copy(mesh.elem_ndof))
 
 @doc raw"""
     Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Int64 = 1)

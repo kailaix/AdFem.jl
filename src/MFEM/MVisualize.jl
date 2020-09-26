@@ -18,7 +18,7 @@ function visualize_mesh(mesh::Mesh)
     axis("scaled")
     xlabel("x")
     ylabel("y")
-    gca().invert_yaxis()
+    
 end
 
 """

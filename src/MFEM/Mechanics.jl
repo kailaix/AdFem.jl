@@ -5,6 +5,7 @@ export neo_hookean
         μ::Union{Array{Float64, 1}, PyObject},
         λ::Union{Array{Float64, 1}, PyObject},
         mesh::Mesh)
+    neo_hookean(u::Array{Float64, 1}, μ::Array{Float64, 1}, λ::Array{Float64, 1}, mesh::Mesh)
 
 Computes the elastic stored energy density for  a common neo-Hookean stored energy model.
 
