@@ -17,9 +17,9 @@ ic, jc : 2 * ndof
 idi, iv, jdi, jv : ngauss * (2*elem_ndof)^2
 */
 namespace had { threadDefine ADGraph* g_ADGraph = 0; }
-void NH_forward(double *ic, double *jc, 
-    int64 *idi, double *iv, int64 *jdi, double *jv, 
-    const double *ui, const double *icoeff, const double *jcoeff){
+void NH_forward(double *psi, 
+    int64 *indices, double *vv, 
+    const double *ui, const double *mu, const double *lamb){
     ADGraph adGraph;
     int elem_ndof = mmesh.elem_ndof;
     int k1 = 0, k2 = 0;
@@ -27,84 +27,47 @@ void NH_forward(double *ic, double *jc,
         auto elem = mmesh.elements[i];
         for (int j = 0; j < elem->ngauss; j++){
 
-            {
-                AReal ux = 0.0, uy = 0.0, vx = 0.0, vy = 0.0;
-                std::vector<AReal> u(2*elem_ndof);
-                for (int s = 0; s<elem_ndof; s++){
-                    u[s] = ui[elem->dof[s]];
-                    u[s+elem_ndof] = ui[mmesh.ndof + elem->dof[s]];
-                }
-
-                for (int r = 0; r < elem_ndof; r++){
-                    ux += u[r] * elem->hx(r, j);
-                    uy += u[r] * elem->hy(r, j);
-                    vx += u[r + elem_ndof] * elem->hx(r, j);
-                    vy += u[r + elem_ndof] * elem->hy(r, j);
-                }
-                AReal c11 = (ux + 1.0) * (ux + 1.0) + vx * vx;
-                AReal c12 = (ux + 1.0) * uy + vx * (vy + 1.0);
-                AReal c21 = uy * (ux + 1.0) + (vy + 1.0) * vx;
-                AReal c22 = (vy + 1.0) * (vy + 1.0) + uy * uy;
-
-                AReal icc = c11 + c22;
-                SetAdjoint(icc, 1.0);
-                PropagateAdjoint();
-                for (int r = 0; r < elem_ndof; r++){
-                    ic[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j] * icoeff[i * elem->ngauss + j];
-                    ic[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j] * icoeff[i * elem->ngauss + j];
-                }
-
-                for(int r = 0; r < 2*elem_ndof; r++){
-                    for(int s = 0; s < 2*elem_ndof; s++){
-                        double val = GetAdjoint(u[r], u[s]) * elem->w[j];
-                        idi[2*k1] = r>=elem_ndof ? elem->dof[r-elem_ndof]+mmesh.ndof : elem->dof[r];
-                        idi[2*k1+1] = s>=elem_ndof ? elem->dof[s-elem_ndof]+mmesh.ndof : elem->dof[s];
-                        iv[k1] = val;
-                        k1++;
-                    }
-                }
-
-                adGraph.Clear();
+            
+            AReal ux = 0.0, uy = 0.0, vx = 0.0, vy = 0.0;
+            std::vector<AReal> u(2*elem_ndof);
+            for (int s = 0; s<elem_ndof; s++){
+                u[s] = ui[elem->dof[s]];
+                u[s+elem_ndof] = ui[mmesh.ndof + elem->dof[s]];
             }
 
-            {
-                AReal ux = 0.0, uy = 0.0, vx = 0.0, vy = 0.0;
-                std::vector<AReal> u(2*elem_ndof);
-                for (int s = 0; s<elem_ndof; s++){
-                    u[s] = ui[elem->dof[s]];
-                    u[s+elem_ndof] = ui[mmesh.ndof + elem->dof[s]];
-                }
-
-                for (int r = 0; r < elem_ndof; r++){
-                    ux += u[r] * elem->hx(r, j);
-                    uy += u[r] * elem->hy(r, j);
-                    vx += u[r + elem_ndof] * elem->hx(r, j);
-                    vy += u[r + elem_ndof] * elem->hy(r, j);
-                }
-                AReal c11 = (ux + 1.0) * (ux + 1.0) + vx * vx;
-                AReal c12 = (ux + 1.0) * uy + vx * (vy + 1.0);
-                AReal c21 = uy * (ux + 1.0) + (vy + 1.0) * vx;
-                AReal c22 = (vy + 1.0) * (vy + 1.0) + uy * uy;
-                AReal jln = log(c11 * c22 - c12 * c21);
-                SetAdjoint(jln, 1.0);
-                PropagateAdjoint();
-                for (int r = 0; r < elem_ndof; r++){
-                    jc[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j] * jcoeff[i * elem->ngauss + j];;
-                    jc[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j] * jcoeff[i * elem->ngauss + j];;
-                }
-
-                for(int r = 0; r < 2*elem_ndof; r++){
-                    for(int s = 0; s < 2*elem_ndof; s++){
-                        double val = GetAdjoint(u[r], u[s]) * elem->w[j];
-                        jdi[2*k2] = r>=elem_ndof ? elem->dof[r-elem_ndof]+mmesh.ndof : elem->dof[r];
-                        jdi[2*k2+1] = s>=elem_ndof ? elem->dof[s-elem_ndof]+mmesh.ndof : elem->dof[s];
-                        jv[k2] = val;
-                        k2 ++;
-                    }
-                }
-
-                adGraph.Clear();
+            for (int r = 0; r < elem_ndof; r++){
+                ux += u[r] * elem->hx(r, j);
+                uy += u[r] * elem->hy(r, j);
+                vx += u[r + elem_ndof] * elem->hx(r, j);
+                vy += u[r + elem_ndof] * elem->hy(r, j);
             }
+            AReal c11 = (ux + 1.0) * (ux + 1.0) + vx * vx;
+            AReal c12 = (ux + 1.0) * uy + vx * (vy + 1.0);
+            AReal c21 = uy * (ux + 1.0) + (vy + 1.0) * vx;
+            AReal c22 = (vy + 1.0) * (vy + 1.0) + uy * uy;
+
+            AReal Ic = c11 + c22;
+            AReal J = ((1+ux) * (1+vy) - uy * vx)*((1+ux) * (1+vy) - uy * vx);    
+            AReal PSI = mu[i * elem->ngauss + j]/2.0 * (Ic - 2.0) - mu[i * elem->ngauss + j] * log(J)/2.0 + lamb[i * elem->ngauss + j]/2.0 * log(J) * log(J)/4.0;
+
+            SetAdjoint(PSI, 1.0);
+            PropagateAdjoint();
+            for (int r = 0; r < elem_ndof; r++){
+                psi[elem->dof[r]] += GetAdjoint(u[r]) * elem->w[j];
+                psi[elem->dof[r] + mmesh.ndof] += GetAdjoint(u[r+elem_ndof]) * elem->w[j];
+            }
+
+            for(int r = 0; r < 2*elem_ndof; r++){
+                for(int s = 0; s < 2*elem_ndof; s++){
+                    double val = GetAdjoint(u[r], u[s]) * elem->w[j];
+                    indices[2*k1] = r>=elem_ndof ? elem->dof[r-elem_ndof]+mmesh.ndof : elem->dof[r];
+                    indices[2*k1+1] = s>=elem_ndof ? elem->dof[s-elem_ndof]+mmesh.ndof : elem->dof[s];
+                    vv[k1] = val;
+                    k1++;
+                }
+            }
+
+            adGraph.Clear();
 
         }
     }
@@ -112,16 +75,8 @@ void NH_forward(double *ic, double *jc,
 }
 
 
-void NH_backward(
-    double *grad_ui, 
-    const double *grad_ic, const double *grad_jc, 
-    const double *grad_iv, const double *grad_jv, 
-    const double *ic, const double *jc, const double *ui){
-    
-}
-
-extern "C" void NH_forward_Julia(double *ic, double *jc, 
-    int64 *idi, double *iv, int64 *jdi, double *jv, 
-    const double *ui, const double *icoeff, const double *jcoeff){
-    NH_forward(ic, jc, idi, iv, jdi, jv, ui, icoeff, jcoeff);
+extern "C" void NH_forward_Julia(double *psi, 
+    int64 *indices, double *vv, 
+    const double *ui, const double *mu, const double *lamb){
+    NH_forward(psi, indices, vv, ui, mu, lamb);
 }

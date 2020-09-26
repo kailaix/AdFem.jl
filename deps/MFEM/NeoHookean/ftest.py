@@ -41,15 +41,16 @@ C = F.T*F                   # Right Cauchy-Green tensor
 
 # Invariants of deformation tensors
 Ic = tr(C)
-J  = ln(det(C))
+J  = det(C)
 
 # # Elasticity parameters
 # E, nu = 10.0, 0.3
 # mu, lmbda = Constant(E/(2*(1 + nu))), Constant(E*nu/((1 + nu)*(1 - 2*nu)))
 
 # Stored strain energy density (compressible neo-Hookean model)
-# psi = (mu/2)*(Ic - 2) - mu*J/2 + (lmbda/2)*J
-psi = Ic
+mu = Constant(1.0)
+lmbda = Constant(1.0)
+psi = (mu/2)*(Ic - 2) - mu*ln(J)/2.0 + (lmbda/2)*1/4.0*ln(J)**2
 
 # Total potential energy
 Pi = psi*dx
@@ -66,24 +67,3 @@ Svalue = assemble(J).array()[DofToVert, :][:, DofToVert]
 np.savetxt("fenics/F.txt", Fvalue)
 np.savetxt("fenics/S.txt", Svalue)
 np.savetxt("fenics/u.txt", u.vector()[:][DofToVert])
-
-
-# Stored strain energy density (compressible neo-Hookean model)
-# psi = (mu/2)*(Ic - 2) - mu*J/2 + (lmbda/2)*J
-psi = ln(det(C))
-
-
-# Total potential energy
-Pi = psi*dx
-
-# Compute first variation of Pi (directional derivative about u in the direction of v)
-F = derivative(Pi, u, v)
-
-# Compute Jacobian of F
-J = derivative(F, u, du)
-
-DofToVert = vertex_to_dof_map(u.function_space())
-Fvalue = assemble(F)[DofToVert]
-Svalue = assemble(J).array()[DofToVert, :][:, DofToVert]
-np.savetxt("fenics/F1.txt", Fvalue)
-np.savetxt("fenics/S1.txt", Svalue)

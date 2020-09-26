@@ -16,17 +16,15 @@ u = u[DOF]
 
 μ = ones(get_ngauss(mmesh))
 λ = ones(get_ngauss(mmesh))
-Ic, DIc, Jc, DJc = neo_hookean(u, μ, λ, mmesh)
+ψ, J = neo_hookean(u, μ, λ, mmesh)
 
 
 F = readdlm("fenics/F.txt")
 S = readdlm("fenics/S.txt")
-@info maximum(abs.(Ic - F[DOF]))
-@info maximum(abs.(DIc - S[DOF, DOF]))
+@info maximum(abs.(ψ - F[DOF]))
+@info maximum(abs.(J - S[DOF, DOF]))
 
-
-
-F = readdlm("fenics/F1.txt")
-S = readdlm("fenics/S1.txt")
-@info maximum(abs.(Jc - F[DOF]))
-@info maximum(abs.(DJc - S[DOF, DOF]))
+ψ, J = neo_hookean(constant(u), μ, λ, mmesh)
+sess = Session(); init(sess)
+@info maximum(abs.(run(sess, ψ) - F[DOF]))
+@info maximum(abs.(run(sess, J) - S[DOF, DOF]))
