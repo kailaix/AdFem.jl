@@ -470,7 +470,7 @@ end
 Computes the Laplace term for a scalar function $u$
 
 ```math
-\int_\Omega K\nabla u \cdot \nabla \nabla(\delta u) \mathrm{d}x
+\int_\Omega K\nabla u \cdot \nabla (\delta u) \mathrm{d}x
 ```
 
 Here `κ` is a vector of length $4mn$, and `u` is a vector of length $(m+1)(n+1)$. 
@@ -478,7 +478,7 @@ Here `κ` is a vector of length $4mn$, and `u` is a vector of length $(m+1)(n+1)
 When `κ` is not provided, the following term is calculated:
 
 ```math
-\int_\Omega \nabla u \cdot \nabla \nabla(\delta u) \mathrm{d}x
+\int_\Omega \nabla u \cdot \nabla (\delta u) \mathrm{d}x
 ```
 """
 function compute_fem_laplace_term1(u::PyObject,κ::PyObject,m::Int64,n::Int64,h::Float64)

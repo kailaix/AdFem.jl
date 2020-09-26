@@ -24,7 +24,7 @@ jobs:
       - name: Install ADCME
         run: julia --project=docs/ --color=yes -e 'using Pkg;  Pkg.add(PackageSpec(url="https://github.com/kailaix/ADCME.jl", rev="master")); Pkg.build("ADCME")'
       - name: Install dependencies
-        run: julia --project=docs/ --color=yes -e 'using Pkg;  Pkg.add("Documenter"); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.build("ADCME")'
+        run: julia --project=docs/ --color=yes -e 'using Pkg;  Pkg.add("Documenter"); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.build("PoreFlow")'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
