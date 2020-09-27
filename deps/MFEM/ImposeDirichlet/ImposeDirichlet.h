@@ -67,7 +67,6 @@ namespace MFEM{
             const double *rhs_ipt, const double *bdval, int N, int bdN, int sN){
         std::map<int64, double> bdMap;
         std::map<int64, int64> bdMapIdx;
-        for (int i = 0; i < N; i++) rhs.push_back(rhs_ipt[i]);
         for(int i = 0; i < bdN; i++) bdMap[bd[i]-1] = bdval[i];
         for(int i = 0; i < bdN; i++) bdMapIdx[bd[i]-1] = i;
         int z = 0;
@@ -79,9 +78,13 @@ namespace MFEM{
 
             if (bdMap.count(i)==0 && bdMap.count(j)>0){
                 // rhs[i] = rhs[i] - v_ipt[k] * bdMap[j];
-                grad_rhs_ipt[i] = grad_rhs[i];
                 grad_vv_ipt[k] -= bdMap[j] * grad_rhs[i];
                 grad_bdval[bdMapIdx[j]] -= v_ipt[k] * grad_rhs[i];
+            }
+        }
+        for (int i = 0; i<N; i++){
+            if (bdMap.count(i)==0){
+                grad_rhs_ipt[i] = grad_rhs[i];
             }
         }
         for(auto &it: bdMapIdx){

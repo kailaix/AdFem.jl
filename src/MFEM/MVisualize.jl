@@ -58,8 +58,10 @@ function visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...
     end
 
     # plot the contours
-    plt.tricontourf(triangulation, nodal_values)
+    plt.tricontourf(triangulation, nodal_values, levels=100)
 
+    xlabel("x")
+    ylabel("y")
     # show
     colorbar()
     axis("scaled")

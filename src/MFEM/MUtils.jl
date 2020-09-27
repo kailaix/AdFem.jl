@@ -59,7 +59,9 @@ The DOFs are not offset by `nnode`, i.e., the smallest edge DOF could be 1.
 function get_edge_dof(edges::Array{Int64, 2}, mesh::Mesh)
     d = Dict{Tuple{Int64, Int64}, Int64}()
     for i = 1:mesh.nedge
-        d[(mesh.edges[i, 1], mesh.edges[i, 2])] = i 
+        m = minimum(mesh.edges[i,:])
+        M = maximum(mesh.edges[i,:])
+        d[(m, M)] = i 
     end
     idx = Int64[]
     for i = 1:size(edges, 1)

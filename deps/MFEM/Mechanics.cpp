@@ -23,7 +23,7 @@ extern "C" void mfem_compute_von_mises_stress_term(double *sigma, const double *
                     K(p, q) = hmat[k0++];
                 
             
-            Eigen::MatrixXd NN = B.transpose() * K * B * elem->w[j];
+            Eigen::MatrixXd NN = K * B;
             Eigen::VectorXd ulocal(2*elem_ndof);
             for(int p = 0; p < elem_ndof; p++){
                 ulocal[p] = u[elem->dof[p]];
