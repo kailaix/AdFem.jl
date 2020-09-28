@@ -131,4 +131,7 @@ function visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,
     @assert length(u1)==mesh.nnode
     @assert length(u2)==mesh.nnode
     quiver(mesh.nodes[:,1], mesh.nodes[:,2], u1, u2, args...;kwargs...)
+    xlabel("x")
+    ylabel("y")
+    axis("scaled")
 end

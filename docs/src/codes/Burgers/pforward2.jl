@@ -1,40 +1,45 @@
+include("common.jl")
 
 
-ADCME.options.newton_raphson.verbose = true
+function f(x, y)
+    0.0001*(10/(1+x^2) + x * y + 10*y^2)
+end
+
+
 Δt = 0.01
 mmesh = Mesh(30, 30, 1/30)
 bdnode = bcnode(mmesh)
 bdnode = [bdnode; bdnode .+ mmesh.ndof]
-nu = constant(0.0001ones(get_ngauss(mmesh)))
+
+nu = constant(eval_f_on_gauss_pts(f, mmesh))
+
 nodes = fem_nodes(mmesh)
 u = @. sin(2π * nodes[:,1])
-v = @. cos(2π * nodes[:,2])
+v = @. sin(2π * nodes[:,2])
 u0 = [u;v]
 u0[bdnode] .= 0.0
-us = solve_burgers(u0, 10)
-
+us = solve_burgers(u0, 10, nu)
 
 sess = Session(); init(sess)
 U = run(sess, us)
-figure(figsize=(10,5))
+
+
+matwrite("fenics/fwd2.mat", Dict("U"=>U))
 close("all")
+figure(figsize=(10,3))
 subplot(121)
+title("u displacement")
 visualize_scalar_on_fem_points(U[end,1:mmesh.nnode], mmesh)
 subplot(122)
+title("v displacement")
 visualize_scalar_on_fem_points(U[end,mmesh.ndof + 1:mmesh.ndof + mmesh.nnode], mmesh)
-savefig("test_mfem.png")
+savefig("fenics/fwd2.png")
 
 close("all")
 visualize_vector_on_fem_points(U[end,1:mmesh.nnode], U[end,mmesh.ndof + 1:mmesh.ndof + mmesh.nnode], mmesh)
-savefig("mfem_quiver.png")
-# function ff(x)
-#     unext = constant(x[1:mmesh.ndof])
-#     vnext = constant(x[mmesh.ndof+1:end])
-#     r, J = calc_residual_and_jacobian(unext, vnext, u, v, mmesh)
-#     run(sess, r), run(sess, J)
-# end
+savefig("fenics/fwd2_quiver.png")
 
-# ff(rand(2mmesh.ndof))
-# sess = Session(); init(sess)
-# test Jacobian 
-# test_jacobian(ff, rand(2mmesh.ndof))
+
+close("all")
+visualize_scalar_on_gauss_points(run(sess, nu), mmesh)
+savefig("fenics/nu.png")
