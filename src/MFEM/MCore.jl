@@ -360,13 +360,13 @@ end
 Returns all edge indices that satisfies `f(x1, y1, x2, y2) = true`
 Here the edge endpoints are given by $(x_1, y_1)$ and $(x_2, y_2)$.
 """
-function bcedge(f::Function, mesh::Mesh)
-    out = bcedge(mesh)
+function bcedge(f::Function, mmesh::Mesh)
+    out = bcedge(mmesh)
     edges = []
     for i = 1:size(out, 1)
         e1, e2 = out[i,:]
-        x1, y1 = mesh.nodes[e1, :]
-        x2, y2 = mesh.nodes[e2, :]
+        x1, y1 = mmesh.nodes[e1, :]
+        x2, y2 = mmesh.nodes[e2, :]
         if f(x1, y1, x2, y2)
             push!(edges, [e1 e2])
         end
@@ -380,10 +380,10 @@ end
 
 Returns all boundary node indices. If `with_edge = true` **and** the `mesh` uses P2 element, the edge DOFs are also returned
 """
-function bcnode(mesh::Mesh; with_edge::Bool = true)
-    bdedge = bcedge(mesh)
-    if with_edge && size(mesh.conn,2)==6 
-        edgedof = get_edge_dof(bdedge, mesh) .+ mesh.nnode
+function bcnode(mmesh::Mesh; with_edge::Bool = true)
+    bdedge = bcedge(mmesh)
+    if with_edge && size(mmesh.conn,2)==6 
+        edgedof = get_edge_dof(bdedge, mmesh) .+ mmesh.nnode
         [collect(Set(bdedge[:])); edgedof]
     else
         collect(Set(bdedge[:]))

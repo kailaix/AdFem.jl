@@ -30,8 +30,8 @@ public:
 
 class NNFEM_Mesh{
 public:
-    void init(double *vertices, int num_vertices, 
-                int *element_indices, int num_elements, int _order, int _degree, long long *edges);
+    long long* init(double *vertices, int num_vertices, 
+                int *element_indices, int num_elements, int _order, int _degree, long long *nedges_ptr);
     ~NNFEM_Mesh();
     int nelem;
     int nnode;

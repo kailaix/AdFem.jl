@@ -8,8 +8,13 @@ using MAT
 mmesh = Mesh(joinpath(PDATA, "twoholes_large.stl"))
 mmesh = Mesh(mmesh.nodes * 10, mmesh.elems, -1, 2)
 
-ν = constant(0.001)
-K = ν*constant(compute_fem_laplace_matrix(mmesh))
+
+function f(x, y)
+    0.0001*(10/(1+x^2) + x * y + 10*y^2)
+end
+
+ν = eval_f_on_gauss_pts(f, mmesh)
+K = constant(compute_fem_laplace_matrix(ν, mmesh))
 B = constant(compute_interaction_matrix(mmesh))
 Z = [K -B'
     -B spzero(size(B,1))]
@@ -29,7 +34,7 @@ sol = Z\rhs
 sess = Session(); init(sess)
 S = run(sess, sol)
 
-matwrite("fenics/fwd1.mat", Dict("u"=>S))
+matwrite("fenics/fwd2.mat", Dict("u"=>S))
 
 
 close("all")
@@ -43,9 +48,13 @@ title("y displacement")
 subplot(133)
 visualize_scalar_on_fvm_points(S[2mmesh.ndof+1:end], mmesh)
 title("Pressure")
-savefig("fenics/fwd1.png")
+savefig("fenics/fwd2.png")
 
 close("all")
 visualize_vector_on_fem_points(S[1:mmesh.nnode], S[1+mmesh.ndof:mmesh.nnode + mmesh.ndof], mmesh)
 axis("scaled")
-savefig("fenics/fwd1_quiver.png")
+savefig("fenics/fwd2_quiver.png")
+
+close("all")
+visualize_scalar_on_gauss_points(ν, mmesh)
+savefig("fenics/fw2_nu.png")

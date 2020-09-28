@@ -75,13 +75,14 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
     end
     nnode = size(coords, 1)
     nelem = size(elems,1)
-    nedges = nnode + nelem - 1
-    edges = zeros(Int64, nedges*2)
+    nedges = zeros(Int64, 1)
     c = [coords zeros(size(coords, 1))]'[:]
     e = Int32.(elems'[:].- 1) 
-    @eval ccall((:init_nnfem_mesh, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Cint, 
+    edges_ptr = @eval ccall((:init_nnfem_mesh, $LIBMFEM), Ptr{Clonglong}, (Ptr{Cdouble}, Cint, 
             Ptr{Cint}, Cint, Cint, Cint, Ptr{Clonglong}), $c, Int32(size($coords, 1)), $e, Int32(size($elems,1)), 
-            Int32($order), Int32($degree), $edges)
+            Int32($order), Int32($degree), $nedges)
+    nedges = nedges[1]
+    edges = unsafe_wrap(Array{Int64,1}, edges_ptr, (2nedges,), own=true)
     edges = reshape(edges, nedges, 2)
     elem_dof = Int64(@eval ccall((:mfem_get_elem_ndof, $LIBMFEM), Cint, ()))
     conn = zeros(Int64, elem_dof * size(elems, 1))

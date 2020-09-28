@@ -16,8 +16,8 @@ double heron(const MatrixXd& coord){
 
 // _order: integration order
 // _degree: element degrees, 1 for linear element, 2 for quadratic element
-void NNFEM_Mesh::init(double *vertices, int num_vertices, 
-                int *element_indices, int num_elements, int _order, int _degree, long long *edges)
+long long*  NNFEM_Mesh::init(double *vertices, int num_vertices, 
+                int *element_indices, int num_elements, int _order, int _degree, long long *nedges_ptr)
     {
         order = _order;
         degree = _degree;
@@ -39,6 +39,7 @@ void NNFEM_Mesh::init(double *vertices, int num_vertices,
         
         elem_ndof = (_degree == 1) ? 3 : 6; // _degree == 1 or 2
         int nedges = mesh.GetNEdges();
+        *nedges_ptr = nedges;
         ndof = (_degree==1) ? nnode: (nnode + nedges);
         Vector shape(elem_ndof);
         DenseMatrix dshape(elem_ndof, 2); // elem_ndof is the number of basis functions
@@ -107,11 +108,13 @@ void NNFEM_Mesh::init(double *vertices, int num_vertices,
         }
 
         Array<int> vert;
+        long long * edges = new long long[2*nedges];
         for (int i = 0; i < nedges; i++){
             mesh.GetEdgeVertices(i, vert);
             edges[i] = std::min(vert[0], vert[1]) + 1;
             edges[nedges+i] = std::max(vert[0], vert[1]) + 1;
         }
+        return edges;
     
 }
 
