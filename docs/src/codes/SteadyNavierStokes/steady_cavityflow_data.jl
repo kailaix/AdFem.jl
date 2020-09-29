@@ -21,10 +21,10 @@
 
 function u_exact(x,y)
     # x*(1-x)*y*(1-y)
-    if y == 1.0
+    if y == 0.0
         return 1.0
     else
-        return 0.0    
+        return 0.0
     end
 end
 
@@ -52,7 +52,7 @@ function hfunc(x,y)
     0.0
 end
 
-
+using ADCME
 using LinearAlgebra
 using MAT
 using PoreFlow
@@ -201,27 +201,57 @@ output = run(sess, S)
 # # out_v = output[:, 1:2*(m+1)*(n+1)]
 # # out_p = output[:, 2*(m+1)*(n+1)+1:end]
 
-matwrite("steady_cavityflow_param_data.mat", 
-    Dict(
-        "V"=>output[end, 1:2*(m+1)*(n+1)]
-    ))
+# matwrite("steady_cavityflow_param_data.mat", 
+#     Dict(
+#         "V"=>output[end, 1:2*(m+1)*(n+1)]
+#     ))
 
-figure(figsize=(20,10))
-subplot(321)
-visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
-subplot(322)
-visualize_scalar_on_fem_points(u0, m, n, h)
+# figure(figsize=(20,10))
+# subplot(321)
+# visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h)
+# subplot(322)
+# visualize_scalar_on_fem_points(u0, m, n, h)
 
-subplot(323)
-visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
-subplot(324)
-visualize_scalar_on_fem_points(v0, m, n, h)
+# subplot(323)
+# visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h)
+# subplot(324)
+# visualize_scalar_on_fem_points(v0, m, n, h)
 
-subplot(325)
-visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:end], m, n, h)
-subplot(326)
-visualize_scalar_on_fvm_points(p0, m, n, h)
-savefig("steady_cavityflow_forward.png")
+# subplot(325)
+# visualize_scalar_on_fvm_points(output[NT+1, 2*(m+1)*(n+1)+1:end], m, n, h)
+# subplot(326)
+# visualize_scalar_on_fvm_points(p0, m, n, h)
+# savefig("steady_cavityflow_forward.png")
+
+# for slides
+sample_size = 20
+idx = rand(1:(m+1)*(n+1), sample_size)
+xy = fem_nodes(m, n, h)
+obs_x, obs_y = xy[idx, 1], xy[idx, 2]
+
+SMALL_SIZE = 12
+MEDIUM_SIZE = 14
+BIGGER_SIZE = 24
+
+plt.rc("font", size=SMALL_SIZE)          # controls default text sizes
+plt.rc("axes", titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc("axes", labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc("xtick", labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc("ytick", labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc("legend", fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+figure()
+visualize_scalar_on_fem_points(output[NT+1, 1:(m+1)*(n+1)], m, n, h);
+scatter(obs_x, obs_y, s=100, marker="^", c="#ff0000", zorder=999)
+savefig("steady_cavityflow_forward_u.png")
+
+figure()
+visualize_scalar_on_fem_points(output[NT+1, (m+1)*(n+1)+1:2*(m+1)*(n+1)], m, n, h);
+scatter(obs_x, obs_y, s=100, marker="^", c="#ff0000", zorder=999)
+savefig("steady_cavityflow_forward_v.png")
+
+
 # final_u=output[NT+1, 1:(1+m)*(1+n)]
 # final_v=output[NT+1, (1+m)*(1+n)+1:2*(m+1)*(n+1)]
 # final_p=output[NT+1, 2*(m+1)*(n+1)+1:end]
