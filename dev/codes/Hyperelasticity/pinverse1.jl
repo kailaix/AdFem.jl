@@ -24,7 +24,7 @@ mmesh = Mesh(joinpath(PDATA, "twoholes_large.stl"))
 mmesh = Mesh(mmesh.nodes * 10, mmesh.elems)
 
 
-θ = Variable([1.0; 0.0])
+θ = Variable([1.0; 0.3])
 bdnode = bcnode((x,y)->(x<1e-5) || (x>0.49-1e-5), mmesh)
 bdnode = [bdnode; bdnode .+ mmesh.ndof]
 nr = newton_raphson_with_grad(calc_residual_and_jacobian, zeros(2mmesh.ndof), θ)
