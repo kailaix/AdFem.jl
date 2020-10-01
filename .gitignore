@@ -73,3 +73,4 @@ docs/src/codes/ChipUnstructured/*.txt
 docs/src/codes/ChipUnstructured/mesh
 
 *fenics*
+!docs/src/assets/*.png

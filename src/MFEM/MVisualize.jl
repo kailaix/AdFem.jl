@@ -99,7 +99,6 @@ function visualize_scalar_on_fvm_points(u::Array{Float64,1}, mesh::Mesh, args...
     # Make the collection and add it to the plot.
     coll = matplotlib.collections.PolyCollection(verts, array=u, cmap=matplotlib.cm.jet, edgecolors="none")
     gca().add_collection(coll)
-    gca().autoscale_view()
     colorbar(coll, ax=gca())
     xlabel("x")
     ylabel("y")
