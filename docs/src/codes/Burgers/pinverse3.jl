@@ -33,10 +33,11 @@ cb = (vs, iter, loss)->begin
     push!(_loss, loss)
     printstyled("[#iter $iter] loss=$loss\n", color=:green)
     if mod(iter, 10)==1
+        @info iter
         close("all")
         visualize_scalar_on_gauss_points(vs[1], mmesh)
         matwrite("fenics/bwd3-$iter.mat", Dict("iter"=>iter,"loss"=>_loss, "nu"=>vs[1]))
-        savefig("fenics/bwd3_nn$iter.png")
+        savefig("fenics/bwd3_pixel$iter.png")
     end
 end
 
