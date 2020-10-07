@@ -54,6 +54,17 @@ function Mesh(filename::String; file_format::Union{String, Missing} = missing,
 end
 
 """
+    save(filename::String, mesh::Mesh)
+
+Saves the mesh to the file `filename`.
+"""
+function Base.:save(filename::String, mesh::Mesh)
+    matwrite(filename, Dict(
+        "nodes"=>mesh.nodes, "elems"=>mesh.elems
+    ))
+end
+
+"""
     get_edge_dof(edges::Array{Int64, 2}, mesh::Mesh)
     get_edge_dof(edges::Array{Int64, 1}, mesh::Mesh)
 
