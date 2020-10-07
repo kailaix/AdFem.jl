@@ -30,20 +30,24 @@ mesh = Mesh(joinpath(PDATA, "twoholes.stl"))
 """
 function Mesh(filename::String; file_format::Union{String, Missing} = missing, 
                 order::Int64 = 2, degree::Int64 = 1, lorder::Int64 = 2)
+    if splitext(filename)[2] == ".mat"
+        d = matread(filename)
+        return Mesh(Float64.(d["nodes"]), Int64.(d["elems"]), order, degree, lorder)
+    end
     meshio = get_meshio()
     if !ismissing(file_format)
         mesh = meshio.read(filename, file_format = file_format)
     else
         mesh = meshio.read(filename)
     end
-    elem = nothing 
+    elem = []
     for (mkr, dat) in mesh.cells
         if mkr == "triangle"
-            elem = dat 
-            break 
+            push!(elem, dat)
         end
     end
-    if isnothing(elem)
+    elem = vcat(elem...)
+    if length(elem)==0
         error("No triangles found in the mesh file.")
     end
     Mesh(Float64.(mesh.points[:,1:2]), Int64.(elem) .+ 1, order, degree, lorder)
