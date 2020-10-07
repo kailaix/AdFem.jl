@@ -58,7 +58,7 @@ end
 
 Saves the mesh to the file `filename`.
 """
-function Base.:save(filename::String, mesh::Mesh)
+function save(filename::String, mesh::Mesh)
     matwrite(filename, Dict(
         "nodes"=>mesh.nodes, "elems"=>mesh.elems
     ))
