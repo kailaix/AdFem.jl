@@ -29,7 +29,7 @@ mesh = Mesh(joinpath(PDATA, "twoholes.stl"))
 ```
 """
 function Mesh(filename::String; file_format::Union{String, Missing} = missing, 
-                order::Int64 = 2, degree::Int64 = 1, lorder::Int64 = 2)
+                order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = 2)
     if splitext(filename)[2] == ".mat"
         d = matread(filename)
         return Mesh(Float64.(d["nodes"]), Int64.(d["elems"]), order, degree, lorder)

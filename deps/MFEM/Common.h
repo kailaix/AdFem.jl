@@ -17,6 +17,11 @@ public:
     MatrixXd hy;
     // 3 x ngauss matrix
     MatrixXd hs; 
+    // BDM basis functions and div functions
+    MatrixXd BDMx;
+    MatrixXd BDMy;
+    MatrixXd BDMdiv;
+     
     VectorXd w;
     double area;
     MatrixXd coord;
@@ -32,13 +37,15 @@ class NNFEM_Mesh{
 public:
     long long* init(double *vertices, int num_vertices, 
                 int *element_indices, int num_elements, int _order, int _degree, long long *nedges_ptr);
+    long long* init_BDM1(double *vertices, int num_vertices, 
+                int *element_indices, int num_elements, int _order, long long *nedges_ptr);
     ~NNFEM_Mesh();
     int nelem;
     int nnode;
     int ngauss;
     int ndof; // total number of dofs
     int order; // integration order 
-    int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element 
+    int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element, -1 - BDM1
     int elem_ndof; // 3 for P1, 6 for P2
     MatrixXd GaussPts;
     std::vector<NNFEM_Element*> elements;
