@@ -6,7 +6,7 @@ using SparseArrays
 
 ADCME.options.sparse.auto_reorder = false
 
-function compute_residual_and_jacobian(S)
+function compute_residual_and_jacobian(k_chip, S)
     # compute r and J in Jx=r for Newton's method
     # read in current step solution
     u, v, p, T = S[1:ndof], 
@@ -81,18 +81,18 @@ function compute_residual_and_jacobian(S)
 
 end
 
-function solve_one_step(S)
-    function f(S)
-        r, J = compute_residual_and_jacobian(S)
+function solve_one_step(θ, S)
+    function f(θ, S)
+        r, J = compute_residual_and_jacobian(θ, S)
         J, r = impose_Dirichlet_boundary_conditions(J, r, bd, zeros(length(bd)))
         return r, J
     end
 
-    S_new = newton_raphson_with_grad(f, S)
+    S_new = newton_raphson_with_grad(f, S, θ)
     return S_new
 end
 
-function solve_navier_stokes(S0, NT)
+function solve_navier_stokes(S0, NT, θ)
     function condition(i, S_arr)
         i <= NT
     end
@@ -101,14 +101,14 @@ function solve_navier_stokes(S0, NT)
         S = read(S_arr, i)
         op = tf.print("i=",i)
         i = bind(i, op)
-        S_new = solve_one_step(S)
+        S_new = solve_one_step(θ, S)
         S_arr = write(S_arr, i+1, S_new)
         return i+1, S_arr
     end
 
     i = constant(1, dtype=Int32)
     S_arr = TensorArray(NT+1)
-    S_arr = write(S_arr, 1, zeros(nelem+3*ndof))
+    S_arr = write(S_arr, 1, S0)
     _, S = while_loop(condition, body, [i, S_arr])
-    S = set_shape(stack(S), (NT+1, nelem+3*ndof))
+    S = set_shape(stack(S), NT+1, length(S0))
 end

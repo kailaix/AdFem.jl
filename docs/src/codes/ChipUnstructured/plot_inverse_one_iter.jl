@@ -1,6 +1,6 @@
 using PoreFlow
 
-function plot_velo_pres_temp_cond(k) 
+function plot_velo_pres_temp_cond(iter) 
 
     S = run(sess, S_computed)
     u_out, v_out, p_out, T_out = S[1:nnode], 
@@ -25,7 +25,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in x velocity")
     visualize_scalar_on_fem_points(u_out .* u_std .- u_obs .* u_std, mesh)
     tight_layout()
-    savefig("fn$trialnum/nn_velox$k.png")
+    savefig("fn$trialnum/nn_velox$iter.png")
 
     figure(figsize=(15,4))
     subplot(131)
@@ -38,7 +38,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in y velocity")
     visualize_scalar_on_fem_points(v_out .* u_std .- v_obs .* u_std, mesh)
     tight_layout()
-    savefig("fn$trialnum/nn_veloy$k.png")
+    savefig("fn$trialnum/nn_veloy$iter.png")
 
 
     figure(figsize=(15,4))
@@ -52,7 +52,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in pressure")
     visualize_scalar_on_fvm_points(p_out .* p_std .- p_obs .* p_std,  mesh)
     tight_layout()
-    savefig("fn$trialnum/nn_pres$k.png")
+    savefig("fn$trialnum/nn_pres$iter.png")
 
     
     figure(figsize=(15,4))
@@ -66,7 +66,7 @@ function plot_velo_pres_temp_cond(k)
     title("difference in temperature")
     visualize_scalar_on_fem_points(T_out  .* T_infty .- T_obs .* T_infty, mesh)
     tight_layout()
-    savefig("fn$trialnum/nn_temp$k.png")
+    savefig("fn$trialnum/nn_temp$iter.png")
 
     #---------------------------------------------------------------------------
     k_chip_nodes = eval_f_on_fem_pts(k_exact,mesh)[chip_fem_idx_nodes]
@@ -108,6 +108,6 @@ function plot_velo_pres_temp_cond(k)
     title("difference in solid conductivity")
 
     tight_layout()
-    savefig("fn$trialnum/nn_cond$k.png")
+    savefig("fn$trialnum/nn_cond$iter.png")
 
 end
