@@ -20,7 +20,8 @@ delta=1e-5
 delta2=1e-5
 
 k_mold = 0.014531
-k_chip = 2.60475
+# k_chip = 2.60475
+k_chip = Variable(1.0)
 k_air = 0.64357
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
@@ -47,7 +48,7 @@ ndof = mesh.ndof
 nelem = mesh.nelem
 ngauss = get_ngauss(mesh)
 
-NT = 1    # number of iterations for Newton's method, 8 is good for m=400
+NT = 14    # number of iterations for Newton's method, 8 is good for m=400
 
 
 # compute solid indices and chip indices
@@ -257,7 +258,8 @@ function solve_one_step(S)
     residual = compute_residual(S)
     J = compute_jacobian(S)
     
-    J, residual = impose_Dirichlet_boundary_conditions(J, residual, bd, zeros(length(bd)))
+    J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
+    residual = scatter_update(residual, bd, zeros(length(bd)))    # residual[bd] .= 0.0 in Tensorflow syntax
 
     d = J\residual
     residual_norm = norm(residual)
@@ -289,42 +291,26 @@ i = constant(2, dtype=Int32)
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, nelem+3*ndof))
 
+S_computed = S[end, :]
+S_data = matread("xz_chip_unstructured_data.mat")["V"]
+
+sample_size = 20
+idx = rand(1:ndof, sample_size)
+idx = [idx; ndof .+ idx; 2*ndof+nelem .+ idx] # observe velocity and temperature
+observed_data = S_data[idx]
+
+noise = false
+noise_level = 0.05
+if noise
+    noise_ratio = (1 - noise_level) .+ 2 * noise_level * rand(Float64, size(observed_data)) # uniform on (1-noise_level, 1+noise_level)
+    observed_data = observed_data .* noise_ratio
+end
+
+loss = mean((S_computed[idx] .- observed_data)^2)
+loss = loss * 1e10
+# ---------------------------------------------------
+# create a session and run 
+max_iter = 20
 sess = Session(); init(sess)
-output = run_profile(sess, S)
-save_profile("test.json")
-error()
-# J = run(sess, J); rank(J)
-# J1 = run(sess, J1); rank(J1)
-# J0 = run(sess, J0); rank(J0)
-
-matwrite("xz_chip_unstructured_data.mat", 
-    Dict(
-        "V"=>output[end, :]
-    ))
-
-
-# TODO: fix plot
-u_out, v_out, p_out, T_out = output[NT+1,1:nnode], output[NT+1,ndof+1:ndof+nnode], 
-                             output[NT+1,2*ndof+1:2*ndof+nelem],output[NT+1,2*ndof+nelem+1:2*ndof+nelem+nnode]
-
-figure(figsize=(10,10))
-subplot(221)
-title("u velocity")
-visualize_scalar_on_fem_points(u_out .* u_std, mesh);#gca().invert_yaxis()
-subplot(222)
-title("v velocity")
-visualize_scalar_on_fem_points(v_out .* u_std, mesh);#gca().invert_yaxis()
-subplot(223)
-visualize_scalar_on_fvm_points(p_out .* p_std, mesh);#gca().invert_yaxis()
-title("pressure")
-subplot(224)
-title("temperature")
-visualize_scalar_on_fem_points(T_out.* T_infty .+ T_infty, mesh);#gca().invert_yaxis()
-tight_layout()
-savefig("forward_solution_unstructured.pdf")
-
-print("Solution range:",
-    "\n [u velocity] \t min:", minimum(u_out .* u_std), ",\t max:", maximum(u_out .* u_std),
-    "\n [v velocity] \t min:", minimum(v_out .* u_std), ",\t max:", maximum(v_out .* u_std),
-    "\n [pressure]   \t min:", minimum(p_out .* p_std), ",\t max:", maximum(p_out .* p_std),
-    "\n [temperature]\t min:", minimum(T_out.* T_infty .+ T_infty), ",\t\t\t max:", maximum(T_out.* T_infty .+ T_infty))
+loss_ = BFGS!(sess, loss, max_iter)
+figure(); semilogy(loss_); savefig("xzchipv0_loss.png")
