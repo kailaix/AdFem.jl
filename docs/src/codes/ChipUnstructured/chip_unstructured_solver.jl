@@ -1,10 +1,14 @@
-using Revise
-using PyPlot 
-using PoreFlow
+using LinearAlgebra
 using MAT
+using PoreFlow
+using PyPlot; matplotlib.use("agg")
+using SparseArrays
+
+ADCME.options.sparse.auto_reorder = false
 
 function compute_residual_and_jacobian(S)
-    # read in current step
+    # compute r and J in Jx=r for Newton's method
+    # read in current step solution
     u, v, p, T = S[1:ndof], 
         S[ndof+1:2*ndof], 
         S[2*ndof+1:2*ndof+nelem],
@@ -21,14 +25,14 @@ function compute_residual_and_jacobian(S)
     M1 = constant(compute_fem_mass_matrix1(ux, mesh))
     M2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), mesh)) # a julia kernel needed
     M3 = Laplace
-    Fu = M1 + M2 + M3 
+    Fu = M1 + M2 + M3
 
     Fv = constant(compute_fem_mass_matrix1(uy, mesh))
 
     N1 = constant(compute_fem_mass_matrix1(vy, mesh))
     N2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), mesh))
     N3 = Laplace
-    Gv = N1 + N2 + N3 
+    Gv = N1 + N2 + N3
 
     Gu = constant(compute_fem_mass_matrix1(vx, mesh))
 
@@ -81,8 +85,6 @@ function solve_one_step(S)
     function f(S)
         r, J = compute_residual_and_jacobian(S)
         J, r = impose_Dirichlet_boundary_conditions(J, r, bd, zeros(length(bd)))
-        # J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
-        # residual = scatter_update(residual, bd, zeros(length(bd)))    # residual[bd] .= 0.0 in Tensorflow syntax
         return r, J
     end
 

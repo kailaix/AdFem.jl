@@ -5,6 +5,8 @@ using PyPlot
 matplotlib.use("agg") # or try "macosx"
 using SparseArrays
 
+trialnum = 1
+
 # geometry setup in domain [0,1]^2
 solid_left = 0.45
 solid_right = 0.55
@@ -20,8 +22,13 @@ delta=1e-5
 delta2=1e-5
 
 k_mold = 0.014531
-k_chip = 2.60475
+k_chip_ref = 2.60475
 k_air = 0.64357
+
+function k_exact(x, y)
+    k_mold + 1000 * k_chip_ref * (x-0.49)^2 / (1 + x^2)
+end
+
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
@@ -47,7 +54,7 @@ ndof = mesh.ndof
 nelem = mesh.nelem
 ngauss = get_ngauss(mesh)
 
-NT = 1    # number of iterations for Newton's method, 8 is good for m=400
+NT = 15    # number of iterations for Newton's method, 8 is good for m=400
 
 
 # compute solid indices and chip indices
@@ -128,9 +135,10 @@ for i in 1:nelem
     end
 end
 
+k_chip = eval_f_on_dof_pts(k_exact,mesh)[chip_fem_idx]
 k_fem = k_air * constant(ones(ndof))
 k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
-k_fem = scatter_update(k_fem, chip_fem_idx, k_chip * ones(length(chip_fem_idx)))
+k_fem = scatter_update(k_fem, chip_fem_idx, k_chip)
 kgauss = dof_to_gauss_points(k_fem, mesh)  # try change to include k on edges
 
 heat_source_fem = zeros(ndof)
@@ -257,7 +265,8 @@ function solve_one_step(S)
     residual = compute_residual(S)
     J = compute_jacobian(S)
     
-    J, residual = impose_Dirichlet_boundary_conditions(J, residual, bd, zeros(length(bd)))
+    J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
+    residual = scatter_update(residual, bd, zeros(length(bd)))    # residual[bd] .= 0.0 in Tensorflow syntax
 
     d = J\residual
     residual_norm = norm(residual)
@@ -290,14 +299,12 @@ _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, nelem+3*ndof))
 
 sess = Session(); init(sess)
-output = run_profile(sess, S)
-save_profile("test.json")
-error()
+output = run(sess, S)
 # J = run(sess, J); rank(J)
 # J1 = run(sess, J1); rank(J1)
 # J0 = run(sess, J0); rank(J0)
 
-matwrite("xz_chip_unstructured_data.mat", 
+matwrite("fn$trialnum/xz_chip_unstructured_data.mat", 
     Dict(
         "V"=>output[end, :]
     ))
@@ -321,7 +328,7 @@ subplot(224)
 title("temperature")
 visualize_scalar_on_fem_points(T_out.* T_infty .+ T_infty, mesh);#gca().invert_yaxis()
 tight_layout()
-savefig("forward_solution_unstructured.pdf")
+savefig("fn$trialnum/forward_solution_unstructured.pdf")
 
 print("Solution range:",
     "\n [u velocity] \t min:", minimum(u_out .* u_std), ",\t max:", maximum(u_out .* u_std),

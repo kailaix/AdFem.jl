@@ -19,7 +19,7 @@ k_mold = 0.014531
 k_chip = 2.60475
 k_air = 0.64357
 nu = 0.47893 # equal to 1/Re
-power_source = 0.06189 #82.46295 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
+power_source = 82.46295 #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
 
 u_std = 0.001
@@ -78,7 +78,7 @@ kgauss = fem_to_gauss_points(k_fem, m, n, h)
 
 heat_source_fem = zeros((m+1)*(n+1))
 heat_source_fem[chip_fem_idx] .= power_source #/ h^2
-heat_source_fem[chip_fem_top_idx] .= 82.46295
+# heat_source_fem[chip_fem_top_idx] .= power_source
 
 heat_source_gauss = fem_to_gauss_points(heat_source_fem, m, n, h)
 
