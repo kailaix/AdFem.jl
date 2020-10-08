@@ -19,6 +19,8 @@ compute_fvm_advection_matrix
 compute_fem_laplace_matrix1
 compute_fem_laplace_matrix
 compute_fem_advection_matrix1
+compute_fem_bdm_mass_matrix
+compute_fem_div_bdm_matrix
 ```
 
 ## Vector Assembling Functions

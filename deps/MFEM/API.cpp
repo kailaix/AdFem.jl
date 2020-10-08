@@ -8,6 +8,8 @@ extern "C" {
             for(int i = 0; i< mmesh.nelem; i++) delete mmesh.elements[i];
             mmesh.elements.clear();
         }
+        if (degree==-1)
+            return mmesh.init_BDM1(vertices, num_vertices, element_indices, num_elements, order, nedges);
         return mmesh.init(vertices, num_vertices, element_indices, num_elements, order, degree, nedges);
     }
 

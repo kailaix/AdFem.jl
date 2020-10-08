@@ -13,7 +13,7 @@ pages = Any[
         "SteadyStateNavierStokes.md", "CHTCoupled.md"],
     "Inverse Modeling"=>Any["inverse.md", "inv_viscoelasticity.md", "coupled_viscoelasticity.md",
             "inv_twophaseflow.md", "inv_viscoelasticity_nonparametric.md", "inv_viscoelasticity_earth.md"],
-    "Unstructured Mesh"=>Any["mfem_tutorial.md", "mfem_mesh.md", "dev_unstructured.md"],
+    "Unstructured Mesh"=>Any["mfem_tutorial.md", "mfem_mesh.md", "dev_unstructured.md", "BDMElement.md"],
     "api.md"
 ],
 authors = "Kailai Xu")
