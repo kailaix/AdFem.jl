@@ -1,10 +1,14 @@
-using Revise
-using PyPlot 
-using PoreFlow
+using LinearAlgebra
 using MAT
+using PoreFlow
+using PyPlot; matplotlib.use("agg")
+using SparseArrays
 
-function compute_residual_and_jacobian(S)
-    # read in current step
+ADCME.options.sparse.auto_reorder = false
+
+function compute_residual_and_jacobian(k_chip, S)
+    # compute r and J in Jx=r for Newton's method
+    # read in current step solution
     u, v, p, T = S[1:ndof], 
         S[ndof+1:2*ndof], 
         S[2*ndof+1:2*ndof+nelem],
@@ -21,14 +25,14 @@ function compute_residual_and_jacobian(S)
     M1 = constant(compute_fem_mass_matrix1(ux, mesh))
     M2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), mesh)) # a julia kernel needed
     M3 = Laplace
-    Fu = M1 + M2 + M3 
+    Fu = M1 + M2 + M3
 
     Fv = constant(compute_fem_mass_matrix1(uy, mesh))
 
     N1 = constant(compute_fem_mass_matrix1(vy, mesh))
     N2 = constant(compute_fem_advection_matrix1(constant(ugauss), constant(vgauss), mesh))
     N3 = Laplace
-    Gv = N1 + N2 + N3 
+    Gv = N1 + N2 + N3
 
     Gu = constant(compute_fem_mass_matrix1(vx, mesh))
 
@@ -77,20 +81,18 @@ function compute_residual_and_jacobian(S)
 
 end
 
-function solve_one_step(S)
-    function f(S)
-        r, J = compute_residual_and_jacobian(S)
+function solve_one_step(θ, S)
+    function f(θ, S)
+        r, J = compute_residual_and_jacobian(θ, S)
         J, r = impose_Dirichlet_boundary_conditions(J, r, bd, zeros(length(bd)))
-        # J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
-        # residual = scatter_update(residual, bd, zeros(length(bd)))    # residual[bd] .= 0.0 in Tensorflow syntax
         return r, J
     end
 
-    S_new = newton_raphson_with_grad(f, S)
+    S_new = newton_raphson_with_grad(f, S, θ)
     return S_new
 end
 
-function solve_navier_stokes(S0, NT)
+function solve_navier_stokes(S0, NT, θ)
     function condition(i, S_arr)
         i <= NT
     end
@@ -99,14 +101,14 @@ function solve_navier_stokes(S0, NT)
         S = read(S_arr, i)
         op = tf.print("i=",i)
         i = bind(i, op)
-        S_new = solve_one_step(S)
+        S_new = solve_one_step(θ, S)
         S_arr = write(S_arr, i+1, S_new)
         return i+1, S_arr
     end
 
     i = constant(1, dtype=Int32)
     S_arr = TensorArray(NT+1)
-    S_arr = write(S_arr, 1, zeros(nelem+3*ndof))
+    S_arr = write(S_arr, 1, S0)
     _, S = while_loop(condition, body, [i, S_arr])
-    S = set_shape(stack(S), (NT+1, nelem+3*ndof))
+    S = set_shape(stack(S), NT+1, length(S0))
 end
