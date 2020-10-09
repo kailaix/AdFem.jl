@@ -1,4 +1,4 @@
-export compute_fem_div_bdm_matrix
+export compute_fem_div_bdm_matrix, compute_fem_bdm_mass_matrix
 
 @doc raw"""
     compute_fem_div_bdm_matrix(mmesh::Mesh) 
@@ -40,4 +40,19 @@ function compute_fem_bdm_mass_matrix(alpha::Union{Array{Float64,1}, PyObject},be
     indices, vv = bdm_inner_product_matrix_mfem_(alpha,beta)
     RawSparseTensor(indices, values, mmesh.ndof, mmesh.ndof)
 end
+
+"""
+    compute_fem_bdm_mass_matrix(alpha::Array{Float64,1},beta::Array{Float64,1}, mmesh::Mesh)
+"""
+function compute_fem_bdm_mass_matrix(alpha::Array{Float64,1},beta::Array{Float64,1}, mmesh::Mesh)
+    @assert mmesh.elem_type == BDM1
+    @assert length(alpha)==length(beta)==get_ngauss(mmesh)
+    N = mmesh.elem_ndof * get_ngauss(mmesh) * 6;
+    indices = zeros(Int64, 2N)
+    vv = zeros(Int64, N)
+    @eval ccall((:BDMInnerProductMatrixMfem_forward_Julia, $LIBMFEM), 
+        Cvoid, (Ptr{Clonglong}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $alpha, $beta)
+    sparse(indices[1:2:end].+1, indices[2:2:end].+1, vv, 2mmesh.nedge, 2mmesh.nedge)
+end
+
 
