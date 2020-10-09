@@ -1,10 +1,14 @@
 export Mesh, get_ngauss, get_area
 
-@enum FiniteElementType begin 
-    P1
-    P2 
-    BDM1
+macro exported_enum(name, args...)
+    esc(quote
+        @enum($name, $(args...))
+        export $name
+        $([:(export $arg) for arg in args]...)
+        end)
 end
+
+@exported_enum FiniteElementType P1 P2 BDM1
 
 @doc raw"""
 `Mesh` holds data structures for an unstructured mesh. 
@@ -68,16 +72,8 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
     elseif degree==P2 
         degree = 2
     end
-    if !(degree in [1, 2]) && degree==BDM1
+    if !(degree in [1, 2]) && degree!=BDM1
         error("Only degree = 1 or 2 is supported.")
-    end
-    
-    if degree==1
-        elem_type = P1
-    elseif degree==2
-        elem_type = P2 
-    elseif degree==-1
-        elem_type = BDM1
     end
 
     if order==-1
@@ -116,6 +112,15 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
     ndof = Int64(@eval ccall((:mfem_get_ndof, $LIBMFEM), Cint, ()))
     conn = reshape(conn, elem_dof, size(elems, 1))'|>Array
     elems = conn[:, 1:3]
+
+    elem_type = missing
+    if degree==1
+        elem_type = P1
+    elseif degree==2
+        elem_type = P2 
+    elseif degree==-1
+        elem_type = BDM1
+    end
     Mesh(coords, edges,  elems, nnode, nedges, nelem, ndof, conn, lorder, elem_dof, elem_type)
 end
 
@@ -132,12 +137,13 @@ Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),
                             copy(mesh.elem_type))
 
 @doc raw"""
-    Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Int64 = 1)
+    Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
 
 Constructs a mesh of a rectangular domain. The rectangle is split into $m\times n$ cells, and each cell is further split into two triangles. 
 `order` specifies the quadrature rule order. `degree` determines the degree for finite element basis functions.
 """
-function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
+function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1, 
+            degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
     coords = zeros((m+1)*(n+1), 2)
     elems = zeros(Int64, 2*m*n, 3)
     for i = 1:n 

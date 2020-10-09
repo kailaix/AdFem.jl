@@ -8,9 +8,11 @@ using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using namespace mfem;
 
+enum FiniteElementType {P1, P2, BDM1};
+
 class NNFEM_Element{
 public:
-    NNFEM_Element(int ngauss, int NDOF);
+    NNFEM_Element(int ngauss, int NDOF, FiniteElementType fet);
     // elem_ndof x ngauss matrices
     MatrixXd h; 
     MatrixXd hx;

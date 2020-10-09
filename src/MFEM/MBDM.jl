@@ -31,7 +31,7 @@ Here
 
 $$A\sigma = \alpha \sigma + \beta \text{tr} \sigma I$$
 
-$\sigma$ and $\tau$ are both fourth-order tensors. The output is a  `2mmesh.nedge × 2mmesh.nedge` matrix.
+$\sigma$ and $\tau$ are both fourth-order tensors. The output is a  `4mmesh.nedge × 4mmesh.nedge` matrix.
 """
 function compute_fem_bdm_mass_matrix(alpha::Union{Array{Float64,1}, PyObject},beta::Union{Array{Float64,1}, PyObject}, mmesh::Mesh)
     @assert mmesh.elem_type == BDM1
@@ -47,12 +47,14 @@ end
 function compute_fem_bdm_mass_matrix(alpha::Array{Float64,1},beta::Array{Float64,1}, mmesh::Mesh)
     @assert mmesh.elem_type == BDM1
     @assert length(alpha)==length(beta)==get_ngauss(mmesh)
-    N = mmesh.elem_ndof * get_ngauss(mmesh) * 6;
+    N = mmesh.elem_ndof^2 * get_ngauss(mmesh) * 6;
     indices = zeros(Int64, 2N)
-    vv = zeros(Int64, N)
+    vv = zeros(N)
     @eval ccall((:BDMInnerProductMatrixMfem_forward_Julia, $LIBMFEM), 
         Cvoid, (Ptr{Clonglong}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $alpha, $beta)
-    sparse(indices[1:2:end].+1, indices[2:2:end].+1, vv, 2mmesh.nedge, 2mmesh.nedge)
+    @info minimum(indices[1:2:end].+1), maximum(indices[1:2:end].+1)
+    @info minimum(indices[2:2:end].+1), maximum(indices[2:2:end].+1)
+    sparse(indices[1:2:end].+1, indices[2:2:end].+1, vv, 4mmesh.nedge, 4mmesh.nedge)
 end
 
 

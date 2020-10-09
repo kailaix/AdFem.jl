@@ -49,7 +49,7 @@ long long*  NNFEM_Mesh::init(double *vertices, int num_vertices,
         Array<int> edges_, cor, vtx;
         for (int e = 0; e<mesh.GetNE(); e++){
             // constructing the element
-            auto element = new NNFEM_Element(rule.GetNPoints(), elem_ndof);
+            auto element = new NNFEM_Element(rule.GetNPoints(), elem_ndof, P1);
 
             for(int k = 0; k<3; k++){
                 mesh.GetElementVertices(e, vtx);
@@ -122,6 +122,7 @@ long long*  NNFEM_Mesh::init(double *vertices, int num_vertices,
 long long*  NNFEM_Mesh::init_BDM1(double *vertices, int num_vertices, 
                 int *element_indices, int num_elements, int _order, long long *nedges_ptr)
     {
+        // printf("num_elements = %d, _order = %d, nedges_ptr = %d\n", num_elements, _order, nedges_ptr);
         order = _order;
         nelem = num_elements;
         nnode = num_vertices;
@@ -145,13 +146,15 @@ long long*  NNFEM_Mesh::init_BDM1(double *vertices, int num_vertices,
         int i_gp = 0;
         Array<int> edges_, cor, vtx;
         for (int e = 0; e<mesh.GetNE(); e++){
+            // printf("Processing element %d\n", e);
             // constructing the element
-            auto element = new NNFEM_Element(rule.GetNPoints(), elem_ndof);
+            auto element = new NNFEM_Element(rule.GetNPoints(), elem_ndof, BDM1);
 
             for(int k = 0; k<3; k++){
                 mesh.GetElementVertices(e, vtx);
                 element->node[k] = vtx[k]; // vertex dof 
             } 
+            // printf("Node: %d %d %d\n", element->node[0], element->node[1], element->node[2]);
             
             mesh.GetElementEdges(e, edges_, cor);
             for(int k = 0; k<3; k++){
@@ -165,6 +168,8 @@ long long*  NNFEM_Mesh::init_BDM1(double *vertices, int num_vertices,
                     element->dof[2*k + 1] = edges_[k];
                 }
             }
+            // printf("DOF = %d %d %d %d %d %d\n", element->dof[0], element->dof[1], element->dof[2], 
+            //                                         element->dof[3], element->dof[4], element->dof[5]);
                 
             int *idx = mesh.GetElement(e)->GetVertices();
             double *coord1 = mesh.GetVertex(idx[0]);
@@ -176,6 +181,7 @@ long long*  NNFEM_Mesh::init_BDM1(double *vertices, int num_vertices,
             element->area = heron(element->coord);
 
             for (int i = 0; i < rule.GetNPoints(); i++){
+                // // printf("Processing %d-th gauss quadrature points\n", i);
                 const IntegrationPoint &ip = rule.IntPoint(i);
 
                 // collect Gauss points
@@ -192,14 +198,24 @@ long long*  NNFEM_Mesh::init_BDM1(double *vertices, int num_vertices,
                 // set element weight
                 element->w[i] = ip.weight * element->area/0.5;
 
-                for (int k = 0; k<elem_ndof;k++){
-                    element->BDMx(k, i) = (x2-x3)*ip.x + (x1-x3)*ip.y + x3;
-                    element->BDMy(k, i) = (y2-y3)*ip.x + (y1-y3)*ip.y + y3;
-                    
-                }
                 double J = (x2-x3)*(y1-y3) - (x1-x3)*(y2-y3);
                 double divxi = (y1-y3+x3-x1)/J, diveta = (y3-y2+x2-x3)/J;
                 double g1 = 0.5 - sqrt(3.0)/6, g2 = 0.5 + sqrt(3.0)/6;
+
+                double xi = ip.x, eta = ip.y;
+                element->BDMx(0, i) = sqrt(2.0)/(g2-g1)*g2*xi;
+                element->BDMy(0, i) = sqrt(2.0)/(g2-g1)*(g2-1)*eta;
+                element->BDMx(1, i) = sqrt(2.0)/(g1-g2)*g1*xi;
+                element->BDMy(1, i) = sqrt(2.0)/(g1-g2)*(g1-1)*eta;
+                element->BDMx(2, i) = 1.0/(g2-g1)*(g2*xi+eta-g2);
+                element->BDMy(2, i) = 1.0/(g2-g1)*(g2-1)*eta;
+                element->BDMx(3, i) = 1.0/(g1-g2)*(g1*xi+eta-g1);
+                element->BDMy(3, i) = 1.0/(g1-g2)*(g1-1)*eta;
+                element->BDMx(4, i) = 1.0/(g2-g1)*(g2-1)*xi;
+                element->BDMy(4, i) = 1.0/(g2-g1)*(xi+g2*eta-g2);
+                element->BDMx(5, i) = 1.0/(g1-g2)*(g1-1)*xi;
+                element->BDMy(5, i) = 1.0/(g1-g2)*(xi+g1*eta-g1);
+
                 element->BDMdiv(0, i) = sqrt(2.0)/(g2 - g1) * (g2 * divxi + (g2-1)*diveta);
                 element->BDMdiv(1, i) = sqrt(2.0)/(g1 - g2) * (g1 * divxi + (g1-1)*diveta);
                 element->BDMdiv(2, i) = 1.0/(g2-g1) * (g2 * divxi + (g2-1)*diveta);
@@ -228,10 +244,18 @@ NNFEM_Mesh::~NNFEM_Mesh(){
     }
 }
 
-NNFEM_Element::NNFEM_Element(int ngauss, int ndof): ngauss(ngauss), ndof(ndof), nnode(3){
+NNFEM_Element::NNFEM_Element(int ngauss, int ndof, FiniteElementType fet): ngauss(ngauss), ndof(ndof), nnode(3){
     h.resize(ndof, ngauss);
-    hx.resize(ndof, ngauss);
-    hy.resize(ndof, ngauss);
+    if (fet==BDM1){
+        BDMx.resize(ndof, ngauss);
+        BDMy.resize(ndof, ngauss);
+        BDMdiv.resize(ndof, ngauss);
+    }
+    else{
+        hx.resize(ndof, ngauss);
+        hy.resize(ndof, ngauss);
+    }
+    
     hs.resize(3, ngauss);
     w.resize(ngauss);
     coord.resize(ngauss, 2);

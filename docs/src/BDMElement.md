@@ -9,6 +9,7 @@ BDM elements are approximation to vector spaces (in our case, 2D space). The deg
 $$\begin{aligned}\mathbf{e}_1(s_1, s_2) &= \frac{\sqrt{2}}{s_2-s_1}\begin{bmatrix}s_2\xi\\ (s_2-1)\eta\end{bmatrix}\\\mathbf{e}_2(s_1, s_2) &= \frac{1}{s_2-s_1}\begin{bmatrix}s_2\xi +\eta-s_2\\ (s_2-1)\eta\end{bmatrix}\\\mathbf{e}_3(s_1, s_2) &= \frac{1}{s_2-s_1}\begin{bmatrix}(s_2-1)\xi\\ \xi + s_2\eta - s_2\end{bmatrix}\end{aligned}$$
 
 Let $g_1 = \frac12 - \frac{\sqrt{3}}{6}, g_2 = \frac12 + \frac{\sqrt{3}}{6}$ be the two Gaussian quadrature points on the interval $[0,1]$, the basis functions (defined in a counter clockwise orientation) are 
+
 $$\begin{aligned}\phi_1(\xi, \eta) &= \mathbf{e}_1(g_1, g_2) & \phi_2(\xi, \eta) &= \mathbf{e}_1(g_2, g_1)\\\phi_3(\xi, \eta) &= \mathbf{e}_2(g_1, g_2) & \phi_4(\xi, \eta) &= \mathbf{e}_2(g_2, g_1)\\\phi_5(\xi, \eta) &= \mathbf{e}_3(g_1, g_2) & \phi_6(\xi, \eta) &= \mathbf{e}_3(g_2, g_1)\end{aligned}$$
 
 The six basis functions can be visualized as follows (codes are [here](./snippets/BDM)):
