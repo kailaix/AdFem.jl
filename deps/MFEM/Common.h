@@ -22,8 +22,7 @@ public:
     // BDM basis functions and div functions
     MatrixXd BDMx;
     MatrixXd BDMy;
-    MatrixXd BDMdiv;
-     
+    MatrixXd BDMdiv;     
     VectorXd w;
     double area;
     MatrixXd coord;

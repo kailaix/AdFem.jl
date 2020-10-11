@@ -20,7 +20,7 @@ compute_fem_laplace_matrix1
 compute_fem_laplace_matrix
 compute_fem_advection_matrix1
 compute_fem_bdm_mass_matrix
-compute_fem_div_bdm_matrix
+compute_fem_bdm_div_matrix
 ```
 
 ## Vector Assembling Functions
@@ -93,6 +93,7 @@ antiplane_viscosity
 ## Mesh
 ```@docs
 get_edge_dof
+get_boundary_edge_orientation
 get_area
 get_ngauss
 bcnode
@@ -102,6 +103,7 @@ femidx
 fvmidx
 subdomain
 gauss_nodes
+gauss_weights
 fem_nodes
 fvm_nodes
 ```

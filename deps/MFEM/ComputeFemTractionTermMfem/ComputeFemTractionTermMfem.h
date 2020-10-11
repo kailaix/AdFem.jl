@@ -43,6 +43,21 @@ namespace MFEM{
                 shape(2, r) = (x31 * (y - y1) - y31 * (x-x1))*(x23 * (y - y3) - y23 * (x-x3))/(x31 * y41 - y31 * x41)/(x23 * y43 - y23 * x43);
             }
         }
+        else if (mmesh.degree == -1){
+            double J = (x2*y3 - x3*y2) - (x1*y3-x3*y1) + (x1*y2-x2*y1);
+            double el = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+            for (int r = 0; r < xs.size(); r++){
+                double x = xs[r] * x1 + (1-xs[r]) * x2;
+                double y = xs[r] * y1 + (1-xs[r]) * y2;
+                coords(r, 0) = x; 
+                coords(r, 1) = y;
+                shape(0, r) = (x2*y3-x3*y2 + (y2-y3)*x+(x3-x2)*y)/J/el;
+                shape(1, r) = (x3*y1-x1*y3 + (y3-y1)*x+(x1-x3)*y)/J/el;
+            }
+        }
+        else {
+            printf("ERROR: degree = %d is not supported\n", mmesh.degree);
+        }
     }
 
 
@@ -92,7 +107,21 @@ extern "C" int ComputeFemTractionTermMfem_forward_getGaussPoints(
     IntegrationRule rule = rule_.Get(Element::Type::SEGMENT, order);
     int ngauss = rule.GetNPoints();
 
-    Eigen::MatrixXd shape(mmesh.degree+1, ngauss), coords(ngauss, 2); 
+    int shape_size = -1;
+    switch (mmesh.degree)
+    {
+        case 1:
+            shape_size = 2;
+            break;
+        case 2:
+            shape_size = 3;
+            break;
+        case -1:
+            shape_size = 2;
+        default:
+            break;
+    }
+    Eigen::MatrixXd shape(shape_size, ngauss), coords(ngauss, 2); 
     Eigen::VectorXd w(ngauss), xs(ngauss);
     for (int i = 0; i < ngauss; i++){
         const IntegrationPoint &ip = rule.IntPoint(i);
@@ -113,7 +142,7 @@ extern "C" int ComputeFemTractionTermMfem_forward_getGaussPoints(
     }
 }
 
-extern "C" int ComputeFemTractionTermMfem_forward_Julia(
+extern "C" void ComputeFemTractionTermMfem_forward_Julia(
         double *out, const double *t, 
         const int *dofs,
         const double *bdnode_x,

@@ -1,7 +1,7 @@
-export compute_fem_div_bdm_matrix, compute_fem_bdm_mass_matrix
+export compute_fem_bdm_div_matrix, compute_fem_bdm_mass_matrix
 
 @doc raw"""
-    compute_fem_div_bdm_matrix(mmesh::Mesh) 
+    compute_fem_bdm_div_matrix(mmesh::Mesh) 
 
 Computes the coefficient matrix for 
 
@@ -10,11 +10,11 @@ $$\int_\Omega \text{div} \tau \delta u dx$$
 Here $\tau \in \mathbb{R}^{2\times 2}$ is a fourth-order tensor (not necessarily symmetric). `mmesh` 
 uses the BDM1 finite element. The output is a `mmesh.nelem × 2mmesh.nedge` matrix. 
 """
-function compute_fem_div_bdm_matrix(mmesh::Mesh)
+function compute_fem_bdm_div_matrix(mmesh::Mesh)
     @assert mmesh.elem_type == BDM1
     ii = zeros(Int64, get_ngauss(mmesh) * mmesh.elem_ndof)
     jj = zeros(Int64, get_ngauss(mmesh) * mmesh.elem_ndof)
-    jj = zeros(get_ngauss(mmesh) * mmesh.elem_ndof)
+    vv = zeros(get_ngauss(mmesh) * mmesh.elem_ndof)
     @eval ccall((:BDMDiveMatrixMfem, $LIBMFEM), Cvoid, (Ptr{Clonglong}, Ptr{Clonglong}, Ptr{Cdouble}), 
         $ii, $jj, $vv)
     sparse(ii, jj, vv, mmesh.nelem, 2mmesh.nedge)
@@ -52,9 +52,8 @@ function compute_fem_bdm_mass_matrix(alpha::Array{Float64,1},beta::Array{Float64
     vv = zeros(N)
     @eval ccall((:BDMInnerProductMatrixMfem_forward_Julia, $LIBMFEM), 
         Cvoid, (Ptr{Clonglong}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), $indices, $vv, $alpha, $beta)
-    @info minimum(indices[1:2:end].+1), maximum(indices[1:2:end].+1)
-    @info minimum(indices[2:2:end].+1), maximum(indices[2:2:end].+1)
+    # @info minimum(indices[1:2:end].+1), maximum(indices[1:2:end].+1)
+    # @info minimum(indices[2:2:end].+1), maximum(indices[2:2:end].+1)
     sparse(indices[1:2:end].+1, indices[2:2:end].+1, vv, 4mmesh.nedge, 4mmesh.nedge)
 end
-
 

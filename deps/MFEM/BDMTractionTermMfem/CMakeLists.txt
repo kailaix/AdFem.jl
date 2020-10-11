@@ -64,15 +64,15 @@ if (_nvidia_smi)
   SET(CUDA_PROPAGATE_HOST_FLAGS ON)
   add_definitions(-DGOOGLE_CUDA)
   message("Compiling GPU-compatible custom operator!")
-  cuda_add_library(BDMInnerProductMatrixMfem SHARED BDMInnerProductMatrixMfem.cpp BDMInnerProductMatrixMfem.cu)
+  cuda_add_library(BdmTractionTermMfem SHARED BdmTractionTermMfem.cpp BdmTractionTermMfem.cu)
 else()
-  add_library(BDMInnerProductMatrixMfem SHARED BDMInnerProductMatrixMfem.cpp)
+  add_library(BdmTractionTermMfem SHARED BdmTractionTermMfem.cpp)
 endif()
 
-set_property(TARGET BDMInnerProductMatrixMfem PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(BDMInnerProductMatrixMfem ${TF_LIB_FILE})
+set_property(TARGET BdmTractionTermMfem PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(BdmTractionTermMfem ${TF_LIB_FILE})
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
-set_target_properties(BDMInnerProductMatrixMfem PROPERTIES 
+set_target_properties(BdmTractionTermMfem PROPERTIES 
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build 
                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build
                 ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build)

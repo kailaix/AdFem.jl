@@ -23,9 +23,7 @@ namespace MFEM{
 
                   indices[2*k] = elem->dof[s] + mmesh.ndof;
                   indices[2*k+1] = elem->dof[r] + mmesh.ndof;
-                  vv[k] = alpha[k0] * (elem->BDMx(r, j) * elem->BDMx(s, j) +
-                                      elem->BDMy(r, j) * elem->BDMy(s, j)) * elem->w[j];
-                  // printf("Values: vv[%d] = %f\n", k, vv[k]);
+                  vv[k] = vv[k-1];
                   k++;
 
                   // beta * tr(sigma) * tr(tau)

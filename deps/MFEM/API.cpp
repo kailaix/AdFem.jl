@@ -23,6 +23,16 @@ extern "C" {
         memcpy(y, mmesh.GaussPts.data() + mmesh.ngauss, mmesh.ngauss * sizeof(double));
     }
 
+    void mfem_get_gauss_weights(double *w){
+        int s = 0;
+        for (int i = 0; i < mmesh.nelem; i++){
+            auto elem = mmesh.elements[i];
+            for (int k = 0; k < elem->ngauss; k++){
+                w[s++] = elem->w[k];
+            }
+        }
+    }
+
     void mfem_get_area(double *a){
         for(int i = 0; i<mmesh.nelem; i++)
             a[i] = mmesh.elements[i]->area;
@@ -42,6 +52,15 @@ extern "C" {
             auto elem = mmesh.elements[i];
             for(int k = 0; k < elem->ndof; k++)
                 conn[p++] = mmesh.elements[i]->dof[k] + 1;
+        }
+    }
+
+    void mfem_get_element_to_vertices(long long *elems){
+        for (int i = 0; i < mmesh.nelem; i++){
+            auto elem = mmesh.elements[i];
+            for (int k = 0; k < 3; k++){
+                elems[k * mmesh.nelem + i] = elem->node[k] + 1;
+            }
         }
     }
 }

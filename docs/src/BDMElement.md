@@ -6,7 +6,7 @@ The Brezzi-Douglas-Marini (BDM) finite elements have been used to approximate $H
 
 BDM elements are approximation to vector spaces (in our case, 2D space). The degrees of freedoms of BDM elements are not associated with vertices because they are not nodal basis functions. To describe the basis functions for BDM${}_1$, we consider the following **edge functions**
 
-$$\begin{aligned}\mathbf{e}_1(s_1, s_2) &= \frac{\sqrt{2}}{s_2-s_1}\begin{bmatrix}s_2\xi\\ (s_2-1)\eta\end{bmatrix}\\\mathbf{e}_2(s_1, s_2) &= \frac{1}{s_2-s_1}\begin{bmatrix}s_2\xi +\eta-s_2\\ (s_2-1)\eta\end{bmatrix}\\\mathbf{e}_3(s_1, s_2) &= \frac{1}{s_2-s_1}\begin{bmatrix}(s_2-1)\xi\\ \xi + s_2\eta - s_2\end{bmatrix}\end{aligned}$$
+$$\begin{aligned}\mathbf{e}_1(s_1, s_2) &= \frac{\sqrt{2}}{s_2-s_1}\begin{bmatrix}s_2\xi\\ (s_2-1)\eta\end{bmatrix}\\\mathbf{e}_2(s_1, s_2) &= \frac{1}{s_2-s_1}\begin{bmatrix}s_2\xi +\eta-s_2\\ (s_2-1)\eta\end{bmatrix}\\\mathbf{e}_3(s_1, s_2) &= \frac{1}{s_2-s_1}\begin{bmatrix }(s_2-1)\xi\\ \xi + s_2\eta - s_2\end{bmatrix}\end{aligned}$$
 
 Let $g_1 = \frac12 - \frac{\sqrt{3}}{6}, g_2 = \frac12 + \frac{\sqrt{3}}{6}$ be the two Gaussian quadrature points on the interval $[0,1]$, the basis functions (defined in a counter clockwise orientation) are 
 
