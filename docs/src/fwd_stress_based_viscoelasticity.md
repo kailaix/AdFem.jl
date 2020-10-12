@@ -32,7 +32,13 @@ Let $M$, $V$, and $K$ be the space of matrices, vectors, and skew symmetric matr
 
 Find $(\sigma, v, \rho)\in H(\text{div}, \Omega; M) \times L^2(\Omega; V) \times L^2(\Omega; K)$, such that for all $(\tau, w, \eta)\in H(\text{div}, \Omega; M) \times L^2(\Omega; V) \times L^2(\Omega; K)$
 
-$$\begin{aligned}(A_0\sigma, \tau) + (A_1\dot \sigma, \tau) & + (v, \text{div}\,\tau) &+ (\rho, \tau) &=0 \\ (w, \text{div}\,\sigma) &-(\rho \dot v, w) &&=(-\rho f, w)\\ (\sigma, \eta) & & &=0\end{aligned}$$
+$$\begin{aligned}(A_0\sigma, \tau) + (A_1\dot \sigma, \tau) & + (v, \text{div}\,\tau) &+ (\rho, \tau) &= (\tau \mathbf{n}, v)_{\Gamma_D}\\ (w, \text{div}\,\sigma) &-(\rho \dot v, w) &&=(-\rho f, w)\\ (\sigma, \eta) & & &=0\end{aligned}$$
+
+Here $\Gamma_D$ is the Dirichlet boundary condition for the velocity $v$. Note that if we have traction boundary condition 
+
+$$\sigma \mathbf{n} = g, \quad x\in \Gamma_N\subset \partial\Omega$$
+
+The condition is part of the Dirichlet boundaries for $\sigma$. 
 
 After discretization, this leads to a DAE
 
