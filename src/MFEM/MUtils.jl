@@ -70,6 +70,8 @@ end
 
 Returns the DOFs for `edges`, which is a `K × 2` array containing vertex indices. 
 The DOFs are not offset by `nnode`, i.e., the smallest edge DOF could be 1. 
+
+When the input is a length 2 vector, it returns a single index for the corresponding edge DOF. 
 """
 function get_edge_dof(edges::Array{Int64, 2}, mesh::Mesh)
     d = Dict{Tuple{Int64, Int64}, Int64}()

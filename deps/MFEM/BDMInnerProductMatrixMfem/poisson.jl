@@ -36,17 +36,14 @@ for k = 1:4
     @info "TestCase $k..."
     ufunc, ffunc = testCase[k]
 
-    α = ones(get_ngauss(mmesh))
-    β = zeros(get_ngauss(mmesh))
-
-    A = compute_fem_bdm_mass_matrix(α, β, mmesh)[1:mmesh.ndof, 1:mmesh.ndof]
-    B = compute_fem_bdm_div_matrix(mmesh)
+    A = compute_fem_bdm_mass_matrix1(mmesh)
+    B = compute_fem_bdm_div_matrix1(mmesh)
     C = [A -B'
         -B spzeros(mmesh.nelem, mmesh.nelem)]
 
-    bdedge = bcedge(mmesh)
-    t1 = eval_f_on_boundary_edge(ufunc, bdedge, mmesh)
-    g = compute_fem_traction_term1(t1, bdedge, mmesh) 
+    gD = bcedge(mmesh)
+    t1 = eval_f_on_boundary_edge(ufunc, gD, mmesh)
+    g = compute_fem_traction_term1(t1, gD, mmesh) 
     t2 = eval_f_on_gauss_pts(ffunc, mmesh)
     f = compute_fvm_source_term(t2, mmesh)
     rhs = [-g; f]

@@ -418,11 +418,25 @@ function bcnode(mmesh::Mesh; by_dof::Bool = true)
 end
 
 """
-    bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
+    bcnode(f::Function, mesh::Mesh; by_dof::Bool = true)
 
-Returns the boundary node DOFs that satisfies `f(x,y) = true`
+Returns the boundary node DOFs that satisfies `f(x,y) = true`.
+
+
+!!! note
+
+    For BDM1 element and `by_dof = true`, because the degrees of freedoms are associated with edges, `f` has the signature
+
+    ```julia 
+    f(x1::Float64, y1::Float64, x2::Float64, y2::Float64)::Bool
+    ```
+
+    `bcnode` only returns DOFs on edges such that `f(x1, y1, x2, y2)=true`. 
 """
 function bcnode(f::Function, mesh::Mesh; by_dof::Bool = true)
+    if mesh.elem_type==BDM1
+        return _bcnode_bdm1(f, mesh; by_dof=by_dof)
+    end
     @assert mesh.elem_type in [P1, P2]
     nd = bcnode(mesh, by_dof=by_dof)
     out = Int64[]
@@ -440,6 +454,18 @@ function bcnode(f::Function, mesh::Mesh; by_dof::Bool = true)
         end
     end
     out
+end
+
+function _bcnode_bdm1(f::Function, mmesh::Mesh; by_dof::Bool = true)
+    if !by_dof
+        return bcnode(mmesh, by_dof = false)
+    end 
+    bdedge = bcedge((x1, y1, x2, y2)->f(x1, y1, x2, y2), mmesh)
+    if length(bdedge)==0
+        return Int64[]
+    end
+    e = get_edge_dof(bdedge, mmesh)
+    [e; e.+mmesh.nedge]
 end
 
 @doc raw"""
