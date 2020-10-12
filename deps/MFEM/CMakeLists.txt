@@ -70,6 +70,7 @@ add_library(nnfem_mfem SHARED Common.cpp API.cpp Mechanics.cpp
           ComputeLaplaceTermMfem/ComputeLaplaceTermMfem.cpp
           PlaneStrainAndStress/PlaneStrainAndStress.cpp
           BDM_Utilities/BDMDivMatrixMfem.cpp
+          BDM_Utilities/BDMSkewSymmetricMatrixMfem.cpp
           BDMTractionTermMfem/BdmTractionTermMfem.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp)
           

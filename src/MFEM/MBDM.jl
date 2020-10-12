@@ -1,4 +1,6 @@
-export compute_fem_bdm_div_matrix1, compute_fem_bdm_div_matrix, compute_fem_bdm_mass_matrix, compute_fem_bdm_mass_matrix1
+export compute_fem_bdm_div_matrix1, compute_fem_bdm_div_matrix, 
+        compute_fem_bdm_mass_matrix, compute_fem_bdm_mass_matrix1,
+        compute_fem_bdm_skew_matrix
 
 @doc raw"""
     compute_fem_bdm_div_matrix1(mmesh::Mesh) 
@@ -28,11 +30,12 @@ Computes the coefficient matrix for
 $$\int_\Omega \text{div} \tau \delta u dx$$
 
 Here $\tau \in \mathbb{R}^{2\times 2}$ is a fourth-order tensor (not necessarily symmetric). `mmesh` 
-uses the BDM1 finite element. The output is a `mmesh.nelem × 4mmesh.nedge` matrix. 
+uses the BDM1 finite element. The output is a `2mmesh.nelem × 4mmesh.nedge` matrix. 
 """
 function compute_fem_bdm_div_matrix(mmesh::Mesh)
     C = compute_fem_bdm_div_matrix1(mmesh)
-    [C C]
+    [C spzeros(mmesh.nelem, 2mmesh.nedge)
+    spzeros(mmesh.nelem, 2mmesh.nedge) C]
 end
 
 @doc raw"""
@@ -54,6 +57,19 @@ function compute_fem_bdm_mass_matrix(alpha::Union{Array{Float64,1}, PyObject},be
     alpha,beta = convert_to_tensor(Any[alpha,beta], [Float64,Float64])
     indices, vv = bdm_inner_product_matrix_mfem_(alpha,beta)
     RawSparseTensor(indices, values, mmesh.ndof, mmesh.ndof)
+end
+
+@doc raw"""
+    compute_fem_bdm_mass_matrix(mmesh::Mesh)
+
+Same as [`compute_fem_bdm_mass_matrix`](@ref), except that 
+
+$$$$
+"""
+function compute_fem_bdm_mass_matrix(mmesh::Mesh)
+    C = compute_fem_bdm_mass_matrix1(mmesh)
+    [C spzeros(mmesh.ndof, mmesh.ndof)
+    spzeros(mmesh.ndof, mmesh.ndof) C]
 end
 
 """
@@ -101,4 +117,29 @@ Same as [`compute_fem_bdm_mass_matrix1`](@ref), except that $\alpha\equiv 1$
 """
 function compute_fem_bdm_mass_matrix1(mmesh::Mesh)
     compute_fem_bdm_mass_matrix1(ones(get_ngauss(mmesh)), mmesh)
+end
+
+
+@doc raw"""
+    compute_fem_bdm_skew_matrix(mmesh::Mesh)
+
+Computes 
+$$\int_\Omega \sigma : v dx$$
+where 
+
+$$v = \begin{bmatrix}0 & \rho \\-\rho & 0 \end{bmatrix}$$
+
+Here $\sigma$ is a fourth-order tensor. 
+
+The returned value is a `mmesh.nelem × 4mmesh.nedge` matrix. 
+"""
+function compute_fem_bdm_skew_matrix(mmesh::Mesh)
+    @assert mmesh.elem_type == BDM1
+    N = mmesh.elem_ndof * get_ngauss(mmesh) * 2;
+    ii = zeros(Int64, N)
+    jj = zeros(Int64, N)
+    vv = zeros(N)
+    @eval ccall((:BDMSkewSymmetricMatrixMfem, $LIBMFEM), 
+        Cvoid, (Ptr{Clonglong}, Ptr{Clonglong},  Ptr{Cdouble}), $ii, $jj, $vv)
+    sparse(ii, jj, vv, mmesh.nelem, 4mmesh.nedge)
 end

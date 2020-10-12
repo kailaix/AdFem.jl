@@ -53,13 +53,16 @@ for k = 1:4
     close("all")
     figure(figsize=(15, 5))
     subplot(131)
+    title("Reference")
     xy = fvm_nodes(mmesh)
     x, y = xy[:,1], xy[:,2]
     uf = ufunc.(x, y)
     visualize_scalar_on_fvm_points(uf, mmesh)
     subplot(132)
+    title("Numerical")
     visualize_scalar_on_fvm_points(u, mmesh)
     subplot(133)
+    title("Absolute Error")
     visualize_scalar_on_fvm_points( abs.(u - uf) , mmesh)
     savefig("bdm$k.png")
 end

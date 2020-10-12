@@ -23,6 +23,7 @@ compute_fem_bdm_mass_matrix
 compute_fem_bdm_mass_matrix1
 compute_fem_bdm_div_matrix
 compute_fem_bdm_div_matrix1
+compute_fem_bdm_skew_matrix
 ```
 
 ## Vector Assembling Functions
