@@ -64,6 +64,8 @@ eval_grad_on_gauss_pts
 fem_impose_Dirichlet_boundary_condition
 fem_impose_Dirichlet_boundary_condition1
 impose_Dirichlet_boundary_conditions
+impose_bdm_traction_boundary_condition1
+impose_bdm_traction_boundary_condition
 ```
 
 
