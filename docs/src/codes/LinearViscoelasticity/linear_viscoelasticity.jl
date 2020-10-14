@@ -103,9 +103,7 @@ function body(i, tas...)
   U_new = d
 
   Varepsilon_new = eval_strain_on_gauss_pts(U_new, mmesh)
-
-  res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
-  Sigma_new = res +  res2
+  Sigma_new = update_stress_viscosity(Varepsilon_new, Varepsilon, Sigma, invη, μ*ones(get_ngauss(mmesh)), λ*ones(get_ngauss(mmesh)), Δt)
 
   i+1, write(a_, i+1, a), write(v_, i+1, v), write(d_, i+1, d), write(U_, i+1, U_new),
         write(Sigma_, i+1, Sigma_new), write(Varepsilon_, i+1, Varepsilon_new)
