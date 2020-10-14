@@ -1,7 +1,7 @@
 # AdFem
 
 
-![](./assets/logo.png)
+![](./docs/src/assets/logo.png)
 
 
 
