@@ -1,6 +1,7 @@
 export compute_fem_bdm_div_matrix1, compute_fem_bdm_div_matrix, 
         compute_fem_bdm_mass_matrix, compute_fem_bdm_mass_matrix1,
-        compute_fem_bdm_skew_matrix, impose_bdm_traction_boundary_condition1
+        compute_fem_bdm_skew_matrix, impose_bdm_traction_boundary_condition1,
+        impose_bdm_traction_boundary_condition
 
 @doc raw"""
     compute_fem_bdm_div_matrix1(mmesh::Mesh) 
@@ -208,9 +209,9 @@ See [`impose_bdm_traction_boundary_condition1`](@ref).
 
 Returns a `dof` vector and a `val` vector. 
 """
-function impose_bdm_traction_boundary_condition(g1:Array{Float64, 1}, g2:Array{Float64, 1},
+function impose_bdm_traction_boundary_condition(g1::Array{Float64, 1}, g2::Array{Float64, 1},
                         bdedge::Array{Int64, 2}, mesh::Mesh)
     d1, v1 = impose_bdm_traction_boundary_condition1(g1, bdedge, mesh)
     d2, v2 = impose_bdm_traction_boundary_condition1(g2, bdedge, mesh)
-    [d1;d2], [v1;v2]
+    [d1;d2 .+ mesh.ndof], [v1;v2]
 end

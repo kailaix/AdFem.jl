@@ -168,6 +168,10 @@ function compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh:
     A
 end
 
+function compute_fem_mass_matrix1(mmesh::Mesh)
+    compute_fem_mass_matrix1(ones(get_ngauss(mmesh)), mmesh)
+end
+
 """
     compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
     compute_fem_advection_matrix1(u::Array{Float64,1}, v::Array{Float64,1}, mesh::Mesh)
@@ -676,4 +680,65 @@ function compute_fvm_source_term(f::Array{Float64, 1}, mmesh::Mesh)
         src[i] = sum(f[idx].*w[idx])
     end
     src
+end
+
+
+@doc raw"""
+    compute_strain_energy_term(Sigma::Array{Float64, 2}, mmesh::Mesh)
+
+Computes the strain energy term 
+
+$$\int_A \sigma : \varepsilon (\delta u) dx$$
+
+Here $\sigma$ is a fourth-order tensor. `Sigma` is a `ngauss × 3` matrix, each row represents  $[\sigma_{11}, \sigma_{22}, \sigma_{12}]$ at 
+each Gauss point. 
+
+The output is a length `2mmesh.ndof` vector. 
+"""
+function compute_strain_energy_term(Sigma::Array{Float64, 2}, mmesh::Mesh)
+    @assert size(Sigma,1)==get_ngauss(mmesh)
+    @assert size(Sigma,2)==3
+    out = zeros(2mmesh.ndof)
+    @eval ccall((:ComputeStrainEnergyTermMfem_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $out, $(Array(Sigma')))
+    out
+end
+
+
+"""
+    compute_strain_energy_term(Sigma::PyObject, mmesh::Mesh)
+"""
+function compute_strain_energy_term(Sigma::PyObject, mmesh::Mesh)
+    @assert size(Sigma,1)==get_ngauss(mmesh)
+    @assert size(Sigma,2)==3
+    compute_strain_energy_term_mfem_ =  @eval load_op_and_grad($libmfem,"compute_strain_energy_term_mfem")
+    sigma = convert_to_tensor(Any[Sigma], [Float64]); sigma = sigma[1]
+    se = compute_strain_energy_term_mfem_(sigma)
+    set_shape(se, (2mmesh.ndof,))
+end
+
+
+
+"""
+    eval_strain_on_gauss_pts(u::Array{Float64}, mmesh::Mesh)
+
+Evaluates the strain on Gauss points. `u` is a vector of size `2mmesh.ndof`.
+
+The output is a `ngauss × 3` vector.
+"""
+function eval_strain_on_gauss_pts(u::Array{Float64}, mmesh::Mesh)
+    @assert length(u)==2mmesh.ndof
+    ε = zeros(3get_ngauss(mmesh))
+    @eval ccall((:EvalStrainOnGaussPts_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $ε, $u)
+    Array(reshape(ε, 3, get_ngauss(mmesh))')
+end
+
+"""
+    eval_strain_on_gauss_pts(u::PyObject, mmesh::Mesh)
+"""
+function eval_strain_on_gauss_pts(u::PyObject, mmesh::Mesh)
+    @assert length(u)==2mmesh.ndof
+    eval_strain_on_gauss_pts_ = @eval load_op_and_grad($libmfem,"eval_strain_on_gauss_pts")
+    u = convert_to_tensor(Any[u], [Float64]); u = u[1]
+    ε = eval_strain_on_gauss_pts_(u)
+    set_shape(ε, (get_ngauss(mmesh), 3))
 end
