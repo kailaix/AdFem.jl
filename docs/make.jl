@@ -3,7 +3,7 @@
 
 push!(LOAD_PATH, "../src/")
 using Documenter, PoreFlow
-makedocs(sitename="PoreFlow", modules=[PoreFlow],
+makedocs(sitename="AdFem", modules=[PoreFlow],
     pages = Any[
         "index.md",
         "Tutorial"=>Any["gallery.md"],

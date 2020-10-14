@@ -93,6 +93,7 @@ compute_plane_stress_matrix
 compute_space_varying_tangent_elasticity_matrix
 mantle_viscosity
 antiplane_viscosity
+update_stress_viscosity
 ```
 
 ## Mesh

@@ -312,7 +312,7 @@ and `A` (length=9) is also a vectorized form of $A$
 """
 function cholesky_outproduct(A::Union{Array{<:Real,2}, PyObject})
     @assert size(A,2)==6
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","cholesky_backward_op")
+    op_ = load_op_and_grad(libadfem,"cholesky_backward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end
@@ -324,7 +324,7 @@ Returns the cholesky factor of `A`. See [`cholesky_outproduct`](@ref) for detail
 """
 function cholesky_factorize(A::Union{Array{<:Real,2}, PyObject})
     @assert size(A,2)==9
-    op_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","cholesky_forward_op")
+    op_ = load_op_and_grad(libadfem,"cholesky_forward_op")
     A = convert_to_tensor([A], [Float64]); A = A[1]
     L = op_(A)
 end
@@ -351,7 +351,7 @@ Given a vector of length $(m+1)(n+1)$, `u`, returns the function values at each 
 Returns a vector of length $4mn$.
 """
 function fem_to_gauss_points(u::PyObject, m::Int64, n::Int64, h::Float64)
-    fem_to_gauss_points_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","fem_to_gauss_points")
+    fem_to_gauss_points_ = load_op_and_grad(libadfem,"fem_to_gauss_points")
     u,m_,n_,h = convert_to_tensor(Any[u,m,n,h], [Float64,Int64,Int64,Float64])
     out = fem_to_gauss_points_(u,m_,n_,h)
     out = set_shape(out, (4*m*n,))

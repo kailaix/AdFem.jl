@@ -37,7 +37,7 @@ change_directory(joinpath(@__DIR__, "build"))
 require_file("build.ninja") do 
     ADCME.cmake()
 end
-require_library("poreflow") do 
+require_library("adfem") do 
     ADCME.make()
 end
 

@@ -1,0 +1,9 @@
+ViscoelasticityStressUpdate
+double mu(?)
+double lambda(?)
+double inveta(?)
+double dt()
+double epsilon1(?,3)
+double epsilon2(?,3)
+double sigma1(?,3)
+double sigma2(?,3) -> output

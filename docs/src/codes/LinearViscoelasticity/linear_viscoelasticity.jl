@@ -24,28 +24,13 @@ NT = 500
 ηmax = 1
 ηmin = 0.5
 
-obs_idx = collect(1:stepsize:m+1)
 
 bdedge = bcedge((x1, y1, x2, y2)->(x1>1-1e-5 && x2>1-1e-5), mmesh)
 bdnode = bcnode((x1, y1)->(y1<1e-5), mmesh)
 
-
-function eta_model(idx)
-  if idx == 1
-    out = ηmin * ones(n)
-    out[1:div(n,3)] .= ηmax
-    out
-  elseif idx==2
-    out = ηmin * ones(n)
-    out[1:div(n,3)] .= ηmax
-    out[2div(n,3):end] .= ηmax
-    out
-  end
-
-end 
-
-
 invη = 50 * constant(ones(get_ngauss(mmesh)))
+μ = 1.0
+λ = 1.0
 
 fn_G = invη->begin 
   G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
@@ -75,8 +60,8 @@ a = TensorArray(NT+1); a = write(a, 1, zeros(2mmesh.ndof))
 v = TensorArray(NT+1); v = write(v, 1, zeros(2mmesh.ndof))
 d = TensorArray(NT+1); d = write(d, 1, zeros(2mmesh.ndof))
 U = TensorArray(NT+1); U = write(U, 1, zeros(2mmesh.ndof))
-Sigma = TensorArray(NT+1); Sigma = write(Sigma, 1, zeros(4get_ngauss(mmesh), 3))
-Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1, zeros(4get_ngauss(mmesh), 3))
+Sigma = TensorArray(NT+1); Sigma = write(Sigma, 1, zeros(get_ngauss(mmesh), 3))
+Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1, zeros(get_ngauss(mmesh), 3))
 
 
 Forces = zeros(NT, 2mmesh.ndof)
@@ -102,7 +87,7 @@ function body(i, tas...)
   Varepsilon = read(Varepsilon_, i)
 
   res = batch_matmul(invG/Δt, Sigma)
-  F = compute_strain_energy_term(res, m, n, h) - K * U
+  F = compute_strain_energy_term(res, mmesh) - K * U
   rhs = Forces[i] - F
 
   td = d + Δt*v + Δt^2/2*(1-2β)*a 
@@ -117,7 +102,7 @@ function body(i, tas...)
   v = tv + γ*Δt*a 
   U_new = d
 
-  Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
+  Varepsilon_new = eval_strain_on_gauss_pts(U_new, mmesh)
 
   res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
   Sigma_new = res +  res2
