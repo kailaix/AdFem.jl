@@ -60,8 +60,8 @@ $$\begin{bmatrix}
 \dot\sigma_{yy}\\ 
 \dot\sigma_{xy}
 \end{bmatrix} + \frac{\mu}{\eta}\begin{bmatrix}
-2/3 & 1/3 & 0 \\ 
-1/3 & 2/3 & 0 \\ 
+2/3 & -1/3 & 0 \\ 
+-1/3 & 2/3 & 0 \\ 
 0 & 0 & 1 
 \end{bmatrix}\begin{bmatrix}
 \sigma_{xx}\\ 

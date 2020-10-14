@@ -50,7 +50,7 @@ Here
 
 $$A\sigma = \alpha \sigma + \beta \text{tr} \sigma I$$
 
-$\sigma$ and $\tau$ are both fourth-order tensors. The output is a  `4mmesh.nedge × 4mmesh.nedge` matrix.
+Here $\sigma$ and $\tau$ are both fourth-order tensors. The output is a  `4mmesh.nedge × 4mmesh.nedge` matrix.
 """
 function compute_fem_bdm_mass_matrix(alpha::Union{Array{Float64,1}, PyObject},beta::Union{Array{Float64,1}, PyObject}, mmesh::Mesh)
     @assert mmesh.elem_type == BDM1
@@ -63,9 +63,7 @@ end
 @doc raw"""
     compute_fem_bdm_mass_matrix(mmesh::Mesh)
 
-Same as [`compute_fem_bdm_mass_matrix`](@ref), except that 
-
-$$$$
+Same as [`compute_fem_bdm_mass_matrix`](@ref)
 """
 function compute_fem_bdm_mass_matrix(mmesh::Mesh)
     C = compute_fem_bdm_mass_matrix1(mmesh)
