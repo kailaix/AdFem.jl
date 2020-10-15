@@ -15,11 +15,14 @@ module PoreFlow
     interpolate = PyNULL()
     LIBMFEM = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("nnfem_mfem")))
     libmfem = missing 
+    LIBADFEM = abspath(joinpath(@__DIR__, "..",  "deps", "build", get_library_name("adfem")))
+    libadfem = missing
 
     function __init__()
         copy!(np, pyimport("numpy"))
         copy!(interpolate,pyimport("scipy.interpolate"))
         global libmfem = tf.load_op_library(LIBMFEM) # load for tensorflow first
+        global libadfem = load_library(LIBADFEM)
     end
 
     include("Struct.jl")

@@ -34,7 +34,8 @@ compute_fem_laplace_matrix1,
 compute_fem_laplace_matrix,
 eval_grad_on_gauss_pts1,
 eval_grad_on_gauss_pts,
-compute_plane_stress_matrix
+compute_plane_stress_matrix,
+eval_f_on_boundary_gauss_pts
 
 ####################### Mechanics #######################
 @doc raw"""
@@ -404,7 +405,7 @@ end
     compute_fvm_mechanics_term(u::PyObject, m::Int64, n::Int64, h::Float64)
 """
 function compute_fvm_mechanics_term(u::PyObject, m::Int64, n::Int64, h::Float64)
-    volumetric_strain_ = load_op_and_grad("$(@__DIR__)/../deps/build/libporeflow","volumetric_strain")
+    volumetric_strain_ = load_op_and_grad(libadfem,"volumetric_strain")
     u,m_,n_,h = convert_to_tensor([u,m,n,h], [Float64,Int32,Int32,Float64])
     strain = volumetric_strain_(u,m_,n_,h)
     set_shape(strain, (m*n,))
@@ -931,51 +932,52 @@ end
     
     
 @doc raw"""
-    eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
+    eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
 
 Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 Gauss points per element)
 
+If `tensor_input = true`, the function `f` is assumed to map a tensor to a tensor output.
+
 ![](./assets/gauss.png)
 """
-function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64)
-    out = zeros(4*m*n)
-    for i = 1:m 
-        for j = 1:n 
-            idx = (j-1)*m + i 
-            x1 = (i-1)*h 
-            y1 = (j-1)*h
-            for p = 1:2
-                for q = 1:2
-                    k = (idx-1)*4 + 2*(q-1) + p
-                    ξ = pts[p]; η = pts[q]
-                    x = x1 + ξ*h; y = y1 + η*h
-                    out[k] = f(x, y)
-                end
-            end
-        end
-    end
-    out
-end
-
-@doc raw"""
-    eval_f_on_fem_pts(f::Function, m::Int64, n::Int64, h::Float64)
-
-Returns $f(x_i, y_i)$ where $(x_i,y_i)$ are FEM nodes. 
-"""
-function eval_f_on_fem_pts(f::Function, m::Int64, n::Int64, h::Float64)
-    xy = fem_nodes(m, n, h)
+function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
+    xy = gauss_nodes(m, n, h)
     x, y = xy[:,1], xy[:,2]
+    if tensor_input
+        return f(constant(x), constant(y))
+    end
     return f.(x, y)
 end
 
 @doc raw"""
-    eval_f_on_fvm_pts(f::Function, m::Int64, n::Int64, h::Float64)
+    eval_f_on_fem_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
+
+Returns $f(x_i, y_i)$ where $(x_i,y_i)$ are FEM nodes. 
+
+If `tensor_input = true`, the function `f` is assumed to map a tensor to a tensor output.
+"""
+function eval_f_on_fem_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
+    xy = fem_nodes(m, n, h)
+    x, y = xy[:,1], xy[:,2]
+    if tensor_input
+        return f(constant(x), constant(y))
+    end
+    return f.(x, y)
+end
+
+@doc raw"""
+    eval_f_on_fvm_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
 
 Returns $f(x_i, y_i)$ where $(x_i,y_i)$ are FVM nodes. 
+
+If `tensor_input = true`, the function `f` is assumed to map a tensor to a tensor output.
 """
-function eval_f_on_fvm_pts(f::Function, m::Int64, n::Int64, h::Float64)
+function eval_f_on_fvm_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
     xy = fvm_nodes(m, n, h)
     x, y = xy[:,1], xy[:,2]
+    if tensor_input
+        return f(constant(x), constant(y))
+    end
     return f.(x, y)
 end
 

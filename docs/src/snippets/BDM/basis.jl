@@ -1,29 +1,52 @@
 using PyPlot 
-
+using LinearAlgebra
 g1 = 1/2-√3/6
 g2 = 1/2+√3/6
+
+function calc_basis(ξ, η, x1=1.0, y1=0.0, x2=0.0, y2=1.0, x3=0.0, y3=0.0)
+    λ = [ξ;η;1-ξ-η]
+    K = 0.5 * abs(det([
+        x2-x1 x3-x1 
+        y2-y1 y3-y1
+    ]))
+    ∇λ = [
+        y2-y3 x3-x2 
+        y3-y1 x1-x3 
+        y1-y2 x2-x1 
+    ]/2K 
+    ∇λ = [∇λ[:,2] -∇λ[:,1]]
+    return λ, ∇λ
+end
+
+
 function φ1(ξ, η)
-    return √2/(g2-g1) * [g2*ξ; (g2-1)*η]
+    λ, ∇λ = calc_basis(ξ, η)
+    return λ[1]*∇λ[2,:]
 end
 
 function φ2(ξ, η)
-    return √2/(g1-g2) * [g1*ξ; (g1-1)*η]
+    λ, ∇λ = calc_basis(ξ, η)
+    return λ[2]*∇λ[1,:]
 end
 
 function φ3(ξ, η)
-    return 1/(g2-g1)*[g2*ξ+η-g2; (g2-1)*η]
+    λ, ∇λ = calc_basis(ξ, η)
+    return λ[2]*∇λ[3,:]
 end
 
 function φ4(ξ, η)
-    return 1/(g1-g2)*[g1*ξ+η-g1; (g1-1)*η]
+    λ, ∇λ = calc_basis(ξ, η)
+    return λ[3]*∇λ[2,:]
 end
 
 function φ5(ξ, η)
-    return 1/(g2-g1)*[(g2-1)*ξ; ξ+g2*η-g2]
+    λ, ∇λ = calc_basis(ξ, η)
+    return λ[3]*∇λ[1,:]
 end
 
 function φ6(ξ, η)
-    return 1/(g1-g2)*[(g1-1)*ξ; ξ+g1*η-g1]
+    λ, ∇λ = calc_basis(ξ, η)
+    return λ[1]*∇λ[3,:]
 end
 
 Basis = [φ1, φ2, φ3, φ4, φ5, φ6]

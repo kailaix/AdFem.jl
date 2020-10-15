@@ -69,7 +69,11 @@ add_library(nnfem_mfem SHARED Common.cpp API.cpp Mechanics.cpp
           DofToGaussPoints/DofToGaussPointsMfem.cpp
           ComputeLaplaceTermMfem/ComputeLaplaceTermMfem.cpp
           PlaneStrainAndStress/PlaneStrainAndStress.cpp
-          BDMDivMatrixMfem/BDMDivMatrixMfem.cpp
+          BDM_Utilities/BDMDivMatrixMfem.cpp
+          BDM_Utilities/BDMSkewSymmetricMatrixMfem.cpp
+          BDMTractionTermMfem/BdmTractionTermMfem.cpp
+          ComputeStrainEnergyTermMfem/ComputeStrainEnergyTermMfem.cpp
+          EvalStrainOnGaussPtsMfem/EvalStrainOnGaussPts.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp)
           
 message("MFEM = ${mfem}")

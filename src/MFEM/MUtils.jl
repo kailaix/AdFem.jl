@@ -1,4 +1,4 @@
-export PDATA, get_edge_dof, impose_Dirichlet_boundary_conditions, dof_to_gauss_points
+export PDATA, get_edge_dof, impose_Dirichlet_boundary_conditions, dof_to_gauss_points, get_boundary_edge_orientation
 
 """
     PDATA
@@ -70,6 +70,8 @@ end
 
 Returns the DOFs for `edges`, which is a `K × 2` array containing vertex indices. 
 The DOFs are not offset by `nnode`, i.e., the smallest edge DOF could be 1. 
+
+When the input is a length 2 vector, it returns a single index for the corresponding edge DOF. 
 """
 function get_edge_dof(edges::Array{Int64, 2}, mesh::Mesh)
     d = Dict{Tuple{Int64, Int64}, Int64}()
@@ -178,4 +180,43 @@ function dof_to_gauss_points(u::Array{Float64,1}, mesh::Mesh)
     @eval ccall((:DofToGaussPointsMfem_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), 
                 $out, $u)
     return out
+end
+
+
+"""
+    get_boundary_edge_orientation(bdedge::Array{Int64, 2}, mmesh::Mesh)
+
+Returns the orientation of the edges in `bdedge`. For example, if for a boundary element `[1,2,3]`, assume `[1,2]` is the boundary edge, 
+then 
+
+```
+get_boundary_edge_orientation([1 2;2 1], mmesh) = [1.0;-1.0]
+```
+
+The return values for non-boundary edges in `bdedge` is undefined. 
+"""
+function get_boundary_edge_orientation(bdedge::Array{Int64, 2}, mmesh::Mesh)
+    edge_orientation = Dict{Tuple{Int64, Int64}, Float64}()
+    elems = mmesh.elems
+    bd = bcedge(mmesh)
+    bd = Set([(bd[i,1], bd[i,2]) for i = 1:size(bd, 1)])
+    add_to_dict = (k, i, j)->begin 
+        if (elems[k, i], elems[k, j]) in bd || (elems[k, j], elems[k, i]) in bd
+            edge_orientation[(elems[k, i], elems[k, j])] = 1.0
+            edge_orientation[(elems[k, j], elems[k, i])] = -1.0
+        end
+    end
+    for i = 1:mmesh.nelem
+        add_to_dict(i, 1, 2)
+        add_to_dict(i, 2, 3)
+        add_to_dict(i, 3, 1)
+    end
+    sng = zeros(size(bdedge, 1))
+    for i = 1:size(bdedge, 1)
+        if !haskey(edge_orientation, (bdedge[i,1], bdedge[i,2]))
+            error("($(bdedge[i,1]), $(bdedge[i,2])) is not a boundary edge")
+        end
+        sng[i] = edge_orientation[(bdedge[i,1], bdedge[i,2])]
+    end
+    sng 
 end

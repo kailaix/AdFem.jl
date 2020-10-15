@@ -134,3 +134,45 @@ function visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,
     ylabel("y")
     axis("scaled")
 end
+
+
+@doc raw"""
+    visualize_displacement(u::Array{Float64, 2}, mmesh::Mesh)
+
+Generates scattered plot animation for displacement $u\in \mathbb{R}^{(NT+1)\times 2N_{\text{dof}}}$.
+"""
+function visualize_displacement(u::Array{Float64, 2}, mmesh::Mesh)
+    X = mmesh.nodes[:,1]
+    Y = mmesh.nodes[:,2]
+    function disp(u)
+        U1 = u[1:mmesh.ndof]
+        U2 = u[mmesh.ndof+1:2mmesh.ndof]
+        U1 = X + U1 
+        U2 = Y + U2
+        U1, U2 
+    end
+    close("all")
+    U1, U2 = disp(u[1,:])
+    s = scatter(U1, U2, s=5)
+    xmin = minimum(u[:,1:mmesh.ndof] .+ X')
+    xmax = maximum(u[:,1:mmesh.ndof] .+ X')
+    ymin = minimum(u[:,mmesh.ndof+1:2mmesh.ndof] .+ Y')
+    ymax = maximum(u[:,mmesh.ndof+1:2mmesh.ndof] .+ Y')
+    t = title("snapshot = 000")
+    xlabel("x")
+    ylabel("y")
+    axis("equal")
+    xlim(xmin, xmax)
+    ylim(ymin, ymax)
+    function update(i)
+        U1, U2 = disp(u[i,:])
+        s.set_offsets([U1 U2])
+
+        k = string(i-1)
+        k = repeat("0", 3-length(k))*k 
+        t.set_text("snapshot = $k")
+        xlim(xmin, xmax)
+        ylim(ymin, ymax)
+    end
+    animate(update, 1:size(u,1))
+end

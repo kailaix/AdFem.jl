@@ -74,3 +74,4 @@ docs/src/codes/ChipUnstructured/mesh
 
 *fenics*
 !docs/src/assets/*.png
+deps/MFEM/BDMInnerProductMatrixMfem/bdm_mfem/*

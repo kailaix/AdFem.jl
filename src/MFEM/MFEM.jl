@@ -108,10 +108,12 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
     edges = reshape(edges, nedges, 2)
     elem_dof = Int64(@eval ccall((:mfem_get_elem_ndof, $LIBMFEM), Cint, ()))
     conn = zeros(Int64, elem_dof * size(elems, 1))
-    @eval ccall((:mfem_get_connectivity, $LIBMFEM), Cvoid, (Ptr{Cint}, ), $conn)
+    @eval ccall((:mfem_get_connectivity, $LIBMFEM), Cvoid, (Ptr{Clonglong}, ), $conn)
     ndof = Int64(@eval ccall((:mfem_get_ndof, $LIBMFEM), Cint, ()))
     conn = reshape(conn, elem_dof, size(elems, 1))'|>Array
-    elems = conn[:, 1:3]
+    @eval ccall((:mfem_get_element_to_vertices, $LIBMFEM), Cvoid, (Ptr{Clonglong}, ), $elems)
+
+    
 
     elem_type = missing
     if degree==1
@@ -162,6 +164,29 @@ function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1,
             k += 1
         end
     end
+    Mesh(coords, elems, order, degree, lorder)
+end
+
+
+"""
+    Mesh(; order::Int64 = -1, 
+    degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
+
+Creates a mesh with a reference triangle. 
+
+![](./assets/mapping.png)
+
+"""
+function Mesh(; order::Int64 = -1, 
+    degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
+    coords = [
+        1.0 0.0
+        0.0 1.0
+        0.0 0.0
+    ]
+    elems = [
+        1 2 3
+    ]
     Mesh(coords, elems, order, degree, lorder)
 end
 

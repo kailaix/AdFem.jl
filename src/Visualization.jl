@@ -379,6 +379,8 @@ function visualize_displacement(u::Array{Float64, 2}, m::Int64, n::Int64, h::Flo
     animate(update, 1:size(u,1))
 end
 
+
+
 function visualize_displacement(u::Array{Float64, 1}, m::Int64, n::Int64, h::Float64)
     X = zeros(m+1, n+1)
     Y = zeros(m+1, n+1)

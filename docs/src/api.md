@@ -20,7 +20,10 @@ compute_fem_laplace_matrix1
 compute_fem_laplace_matrix
 compute_fem_advection_matrix1
 compute_fem_bdm_mass_matrix
-compute_fem_div_bdm_matrix
+compute_fem_bdm_mass_matrix1
+compute_fem_bdm_div_matrix
+compute_fem_bdm_div_matrix1
+compute_fem_bdm_skew_matrix
 ```
 
 ## Vector Assembling Functions
@@ -61,6 +64,8 @@ eval_grad_on_gauss_pts
 fem_impose_Dirichlet_boundary_condition
 fem_impose_Dirichlet_boundary_condition1
 impose_Dirichlet_boundary_conditions
+impose_bdm_traction_boundary_condition1
+impose_bdm_traction_boundary_condition
 ```
 
 
@@ -88,11 +93,13 @@ compute_plane_stress_matrix
 compute_space_varying_tangent_elasticity_matrix
 mantle_viscosity
 antiplane_viscosity
+update_stress_viscosity
 ```
 
 ## Mesh
 ```@docs
 get_edge_dof
+get_boundary_edge_orientation
 get_area
 get_ngauss
 bcnode
@@ -102,6 +109,7 @@ femidx
 fvmidx
 subdomain
 gauss_nodes
+gauss_weights
 fem_nodes
 fvm_nodes
 ```

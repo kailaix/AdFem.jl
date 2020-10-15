@@ -1,17 +1,36 @@
-export eval_f_on_dof_pts, get_bdedge_integration_pts
+export eval_f_on_dof_pts, get_bdedge_integration_pts, gauss_weights
 
-function eval_f_on_gauss_pts(f::Function, mesh::Mesh)
+"""
+    eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
+"""
+function eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
     xy = gauss_nodes(mesh)
+    if tensor_input 
+        return f(constant(xy[:,1]), constant(xy[:,2]))
+    end
     f.(xy[:,1], xy[:,2])
 end
 
-function eval_f_on_fem_pts(f::Function, mesh::Mesh)
+
+"""
+    eval_f_on_fem_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
+"""
+function eval_f_on_fem_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
     xy = mesh.nodes
+    if tensor_input 
+        return f(constant(xy[:,1]), constant(xy[:,2]))
+    end
     f.(xy[:,1], xy[:,2])
 end
 
-function eval_f_on_fvm_pts(f::Function, mesh::Mesh)
+"""
+    eval_f_on_fvm_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
+"""
+function eval_f_on_fvm_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
     xy = fvm_nodes(mesh)
+    if tensor_input 
+        return f(constant(xy[:,1]), constant(xy[:,2]))
+    end
     f.(xy[:,1], xy[:,2])
 end
 
@@ -149,6 +168,10 @@ function compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh:
     A
 end
 
+function compute_fem_mass_matrix1(mmesh::Mesh)
+    compute_fem_mass_matrix1(ones(get_ngauss(mmesh)), mmesh)
+end
+
 """
     compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
     compute_fem_advection_matrix1(u::Array{Float64,1}, v::Array{Float64,1}, mesh::Mesh)
@@ -272,9 +295,9 @@ end
 
 Returns Gauss quadrature points on the boundary edge as a $n\times 2$ matrix. Here $n$ is the number of rows for `bdedge`.
 """
-function get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mesh::Mesh)
-    order = mesh.lorder
-    bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mesh)
+function get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mmesh::Mesh)
+    order = mmesh.lorder
+    bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mmesh)
     bdnode_x = bdnode_x'[:]
     bdnode_y = bdnode_y'[:]
     bdN = size(bdedge, 1)
@@ -376,27 +399,50 @@ end
 
 
 @doc raw"""
-    bcnode(mesh::Mesh; with_edge::Bool = true)
+    bcnode(mesh::Mesh; by_dof::Bool = true)
 
-Returns all boundary node indices. If `with_edge = true` **and** the `mesh` uses P2 element, the edge DOFs are also returned
+Returns all boundary node indices. 
+
+If `by_dof = true`, `bcnode` returns the global indices for boundary DOFs. 
+
+- For `P2` elements, the returned values are boundary node DOFs + boundary edge DOFs (offseted by `mesh.nnode`)
+- For `BDM1` elements, the returned values are boundary edge DOFs + boundary edge DOFs offseted by `mesh.nedge`
 """
-function bcnode(mmesh::Mesh; with_edge::Bool = true)
+function bcnode(mmesh::Mesh; by_dof::Bool = true)
     bdedge = bcedge(mmesh)
-    if with_edge && size(mmesh.conn,2)==6 
+    if by_dof && mmesh.elem_type == P2
         edgedof = get_edge_dof(bdedge, mmesh) .+ mmesh.nnode
         [collect(Set(bdedge[:])); edgedof]
+    elseif by_dof && mmesh.elem_type == BDM1
+        bd = get_edge_dof(bdedge, mmesh) 
+        [bd; bd .+ mmesh.nedge]
     else
         collect(Set(bdedge[:]))
     end
 end
 
 """
-    bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
+    bcnode(f::Function, mesh::Mesh; by_dof::Bool = true)
 
-Returns the boundary node DOFs that satisfies `f(x,y) = true`
+Returns the boundary node DOFs that satisfies `f(x,y) = true`.
+
+
+!!! note
+
+    For BDM1 element and `by_dof = true`, because the degrees of freedoms are associated with edges, `f` has the signature
+
+    ```julia 
+    f(x1::Float64, y1::Float64, x2::Float64, y2::Float64)::Bool
+    ```
+
+    `bcnode` only returns DOFs on edges such that `f(x1, y1, x2, y2)=true`. 
 """
-function bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
-    nd = bcnode(mesh, with_edge=with_edge)
+function bcnode(f::Function, mesh::Mesh; by_dof::Bool = true)
+    if mesh.elem_type==BDM1
+        return _bcnode_bdm1(f, mesh; by_dof=by_dof)
+    end
+    @assert mesh.elem_type in [P1, P2]
+    nd = bcnode(mesh, by_dof=by_dof)
     out = Int64[]
     for i = 1:length(nd)
         if nd[i]<=mesh.nnode
@@ -414,6 +460,18 @@ function bcnode(f::Function, mesh::Mesh; with_edge::Bool = true)
     out
 end
 
+function _bcnode_bdm1(f::Function, mmesh::Mesh; by_dof::Bool = true)
+    if !by_dof
+        return bcnode(mmesh, by_dof = false)
+    end 
+    bdedge = bcedge((x1, y1, x2, y2)->f(x1, y1, x2, y2), mmesh)
+    if length(bdedge)==0
+        return Int64[]
+    end
+    e = get_edge_dof(bdedge, mmesh)
+    [e; e.+mmesh.nedge]
+end
+
 @doc raw"""
     compute_fem_traction_term1(t::Array{Float64, 1},
     bdedge::Array{Int64,2}, mesh::Mesh)
@@ -426,6 +484,12 @@ Returns a vector of size `dof`.
 """
 function compute_fem_traction_term1(t::Array{Float64, 1},
             bdedge::Array{Int64,2}, mesh::Mesh)
+    # sort bdedge so that bdedge[i,1] < bdedge[i,2]
+    for i = 1:size(bdedge, 1)
+        if bdedge[i,1]>bdedge[i,2]
+            bdedge[i,:] = [bdedge[i,2]; bdedge[i,1]]
+        end
+    end
     order = mesh.lorder
     D = _edge_dict(mesh)
     node_x = zeros(size(bdedge, 1))
@@ -434,27 +498,41 @@ function compute_fem_traction_term1(t::Array{Float64, 1},
             (Cint,), Int32($order)))
     bdN = size(bdedge, 1)
     @assert length(t) == ngauss * bdN
-    if size(mesh.conn, 2)==3
+    if mesh.elem_type==P1
         dofs = zeros(Int64, 2bdN)
         for i = 1:bdN 
             dofs[2*i-1] = bdedge[i,1] - 1
             dofs[2*i] = bdedge[i,2] - 1
         end
-    else
+    elseif mesh.elem_type==P2
         dofs = zeros(Int64, 3bdN)
         for i = 1:bdN 
             dofs[3*i-2] = bdedge[i,1] - 1
             dofs[3*i-1] = bdedge[i,2] - 1
             dofs[3*i] = D[(bdedge[i,1], bdedge[i,2])] + mesh.nnode - 1
         end
+    elseif mesh.elem_type==BDM1
+        dofs = zeros(Int64, 2bdN)
+        for i = 1:bdN 
+            e = D[(bdedge[i,1], bdedge[i,2])]
+            dofs[2*i-1] = e - 1
+            dofs[2*i] = e - 1 + mesh.nedge
+        end
     end
     out = zeros(mesh.ndof)
     bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mesh)
     bdnode_x = bdnode_x'[:]
     bdnode_y = bdnode_y'[:]
-    @eval ccall((:ComputeFemTractionTermMfem_forward_Julia, $LIBMFEM), Cvoid, 
-        (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint), 
-            $out, $t, Int32.($dofs), $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
+    if mesh.elem_type in [P1, P2]
+        @eval ccall((:ComputeFemTractionTermMfem_forward_Julia, $LIBMFEM), Cvoid, 
+            (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint), 
+                $out, $t, Int32.($dofs), $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
+    elseif mesh.elem_type == BDM1
+        sn = get_boundary_edge_orientation(bdedge, mesh)
+        @eval ccall((:ComputeBDMTractionTermMfem_forward_Julia, $LIBMFEM), Cvoid, 
+            (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint),
+            $out, $sn, $t, Int32.($dofs), $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
+    end
     return out 
 end
 
@@ -481,13 +559,24 @@ end
 
 
 """
-    eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh)
+    eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh; tensor_input::Bool = false)
 
-Evaluates `f` on the boundary **Gauss points**. 
+Evaluates `f` on the boundary **Gauss points**. Here `f` has the signature
+
+```f(Float64, Float64)::Float64```
+
+or 
+
+```f(PyObject, PyObject)::PyObject```
 """
-function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, mesh::Mesh)
+function eval_f_on_boundary_edge(f::Function, bdedge::Array{Int64, 2}, 
+        mesh::Mesh; tensor_input::Bool = false)
     pts = get_bdedge_integration_pts(bdedge, mesh)
-    f.(pts[:,1], pts[:,2])
+    if tensor_input
+        f(constant(pts[:,1]), constant(pts[:,2]))
+    else
+        f.(pts[:,1], pts[:,2])
+    end
 end
 
 
@@ -565,4 +654,91 @@ function compute_fem_laplace_term1(u::Union{PyObject, Array{Float64, 1}},
     u,nu = convert_to_tensor(Any[u,nu], [Float64,Float64])
     out = compute_laplace_term_mfem_(u,nu)
     set_shape(out, (mesh.ndof,))
+end
+
+"""
+    gauss_weights(mmesh::Mesh)
+
+Returns the weights for each Gauss points.
+"""
+function gauss_weights(mmesh::Mesh)
+    w = zeros(get_ngauss(mmesh))
+    @eval ccall((:mfem_get_gauss_weights, $LIBMFEM), Cvoid, (Ptr{Cdouble},), $w)
+    w
+end
+
+
+"""
+    compute_fvm_source_term(f::Array{Float64, 1}, mmesh::Mesh)
+"""
+function compute_fvm_source_term(f::Array{Float64, 1}, mmesh::Mesh)
+    w = gauss_weights(mmesh)
+    src = zeros(mmesh.nelem)
+    ngauss_per_elem = get_ngauss(mmesh)÷mmesh.nelem
+    for i = 1:mmesh.nelem
+        idx = (i-1)*ngauss_per_elem+1:i*ngauss_per_elem
+        src[i] = sum(f[idx].*w[idx])
+    end
+    src
+end
+
+
+@doc raw"""
+    compute_strain_energy_term(Sigma::Array{Float64, 2}, mmesh::Mesh)
+
+Computes the strain energy term 
+
+$$\int_A \sigma : \varepsilon (\delta u) dx$$
+
+Here $\sigma$ is a fourth-order tensor. `Sigma` is a `ngauss × 3` matrix, each row represents  $[\sigma_{11}, \sigma_{22}, \sigma_{12}]$ at 
+each Gauss point. 
+
+The output is a length `2mmesh.ndof` vector. 
+"""
+function compute_strain_energy_term(Sigma::Array{Float64, 2}, mmesh::Mesh)
+    @assert size(Sigma,1)==get_ngauss(mmesh)
+    @assert size(Sigma,2)==3
+    out = zeros(2mmesh.ndof)
+    @eval ccall((:ComputeStrainEnergyTermMfem_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $out, $(Array(Sigma')))
+    out
+end
+
+
+"""
+    compute_strain_energy_term(Sigma::PyObject, mmesh::Mesh)
+"""
+function compute_strain_energy_term(Sigma::PyObject, mmesh::Mesh)
+    @assert size(Sigma,1)==get_ngauss(mmesh)
+    @assert size(Sigma,2)==3
+    compute_strain_energy_term_mfem_ =  @eval load_op_and_grad($libmfem,"compute_strain_energy_term_mfem")
+    sigma = convert_to_tensor(Any[Sigma], [Float64]); sigma = sigma[1]
+    se = compute_strain_energy_term_mfem_(sigma)
+    set_shape(se, (2mmesh.ndof,))
+end
+
+
+
+"""
+    eval_strain_on_gauss_pts(u::Array{Float64}, mmesh::Mesh)
+
+Evaluates the strain on Gauss points. `u` is a vector of size `2mmesh.ndof`.
+
+The output is a `ngauss × 3` vector.
+"""
+function eval_strain_on_gauss_pts(u::Array{Float64}, mmesh::Mesh)
+    @assert length(u)==2mmesh.ndof
+    ε = zeros(3get_ngauss(mmesh))
+    @eval ccall((:EvalStrainOnGaussPts_forward_Julia, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $ε, $u)
+    Array(reshape(ε, 3, get_ngauss(mmesh))')
+end
+
+"""
+    eval_strain_on_gauss_pts(u::PyObject, mmesh::Mesh)
+"""
+function eval_strain_on_gauss_pts(u::PyObject, mmesh::Mesh)
+    @assert length(u)==2mmesh.ndof
+    eval_strain_on_gauss_pts_ = @eval load_op_and_grad($libmfem,"eval_strain_on_gauss_pts")
+    u = convert_to_tensor(Any[u], [Float64]); u = u[1]
+    ε = eval_strain_on_gauss_pts_(u)
+    set_shape(ε, (get_ngauss(mmesh), 3))
 end

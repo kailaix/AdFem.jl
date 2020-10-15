@@ -197,5 +197,5 @@ for i = 1:NT+1
 end
 # visualize_von_mises_stress_on_scoped_body(d_, domain, scale_factor=10.0)
 p = visualize_total_deformation_on_scoped_body(U, domain, scale_factor=10.0)
-saveanim(p, "poreflow.gif")
+saveanim(p, "adfem.gif")
 close("all")
