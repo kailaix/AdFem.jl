@@ -10,8 +10,11 @@ include("chip_unstructured_solver.jl")
 
 # physical constants
 k_mold = 0.014531
-k_chip = 2.60475
+k_chip_ref = 2.60475
 k_air = 0.64357
+
+k_chip = k_chip_ref * ones(length(chip_fem_idx))
+
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp; 0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
@@ -46,7 +49,7 @@ bd = [bd; bd .+ ndof;
 bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 
 S0 = zeros(nelem+3*ndof)
-S = solve_navier_stokes(S0, NT, constant(k_chip))
+S = solve_navier_stokes(S0, NT, k_chip)
 
 sess = Session(); init(sess)
 output = run(sess, S)
