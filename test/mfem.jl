@@ -42,7 +42,7 @@ end
             end
         end
         bdedge = vcat(bdedge...)
-        t = eval_f_on_boundary_edge((x, y)-> y^2 + x^2 + 1.0, bdedge, mesh; order=6)
+        t = eval_f_on_boundary_edge((x, y)-> y^2 + x^2 + 1.0, bdedge, mesh)
         rhs = compute_fem_traction_term1(t, bdedge, mesh; order=6)
         @test abs(sum(rhs)-7/3)<1e-5
 
