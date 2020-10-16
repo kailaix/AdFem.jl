@@ -34,7 +34,7 @@ using AdFem
 using PyPlot 
 
 # forward computation
-mmesh = Meh(joinpath(PDATA, "twoholes_large.stl"))
+mmesh = Mesh(joinpath(PDATA, "twoholes_large.stl"))
 xy = gauss_nodes(mmesh)
 κ = @. sin(xy[:,1]) * (1+xy[:,2]^2) + 1.0
 f = 1e5 * @. xy[:,1] + xy[:,2]
