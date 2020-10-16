@@ -4,7 +4,7 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
-using PoreFlow
+using AdFem
 Random.seed!(233)
 
 function strain_energy_univariate(sigma,m,n,h)

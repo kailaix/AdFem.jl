@@ -1,5 +1,5 @@
 using Revise
-using PoreFlow
+using AdFem
 using LinearAlgebra
 using PyPlot
 
@@ -32,7 +32,7 @@ bdedge = vcat(bdedge...)
 # scatter(nodes[:,1], nodes[:,2], s = 2)
 # savefig("test_quadrature.png")
 
-# nx, ny = PoreFlow._traction_get_nodes(bdedge, mesh)
+# nx, ny = AdFem._traction_get_nodes(bdedge, mesh)
 # close("all")
 # visualize_mesh(mesh)
 # scatter(nx[:,1], ny[:,1])

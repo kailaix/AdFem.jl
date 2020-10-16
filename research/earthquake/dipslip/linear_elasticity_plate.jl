@@ -94,4 +94,4 @@ saveanim(p, "linear.gif")
 close("all")
 
 #----------------------------------------------------------------------------
-# step 4: verification with PoreFlow   
+# step 4: verification with AdFem   

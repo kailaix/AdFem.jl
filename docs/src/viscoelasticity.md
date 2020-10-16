@@ -154,7 +154,7 @@ The parameters used in the simulation are
 
 ```julia
 using Revise
-using PoreFlow
+using AdFem
 using PyCall
 using LinearAlgebra
 using PyPlot
@@ -257,7 +257,7 @@ savefig("linear.png")
 
 ```julia
 using Revise
-using PoreFlow
+using AdFem
 using PyCall
 using LinearAlgebra
 using PyPlot

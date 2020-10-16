@@ -324,7 +324,7 @@ uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
 version = "1.2.11+17"
 
 [[Zstd_jll]]
-deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "4de91f4313d9e88162d461e282fe3066ab3a3c09"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "6f1abcb0c44f184690912aa4b0ba861dd64f11b9"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
-version = "1.4.5+1"
+version = "1.4.5+2"

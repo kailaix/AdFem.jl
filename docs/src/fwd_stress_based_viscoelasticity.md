@@ -81,6 +81,6 @@ Here
 
 $$a = \frac{1}{2\mu} + \frac{1}{2\eta}, \quad b = \beta \left(\frac{1}{2\mu} + \frac{1}{2\eta}\right) - \frac{1}{6\eta} - \frac{\beta}{3\eta}, \quad \beta = -\frac{\lambda}{2(\lambda + \mu)}$$
 
-In PoreFlow, $(a\sigma + b T\sigma, \tau)$ can be calculated using [`compute_fem_bdm_mass_matrix`](@ref). 
+In AdFem, $(a\sigma + b T\sigma, \tau)$ can be calculated using [`compute_fem_bdm_mass_matrix`](@ref). 
 
 ## Example 

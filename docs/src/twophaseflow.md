@@ -70,7 +70,7 @@ Here, the strain is the Cauchy strain
 
 $$\varepsilon = \frac{1}{2}(\nabla \mathbf{u} + (\nabla \mathbf{u})^T)$$
 
-Instead of assuming a linear elasticity model for the geomechanics, we can also model the subsurface solid material by a viscoelasticity model (see [here](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/) for details). For example, the constitutive relation for the two dimensiona Maxwell material is as follows:
+Instead of assuming a linear elasticity model for the geomechanics, we can also model the subsurface solid material by a viscoelasticity model (see [here](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity/) for details). For example, the constitutive relation for the two dimensiona Maxwell material is as follows:
 
 $$\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}$$
 

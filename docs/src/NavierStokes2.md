@@ -101,7 +101,7 @@ $$p(x,y,t)=-\frac{\rho}{4}\left( \cos(4\pi x) + \cos(4\pi y) \right)\exp(-16\pi^
 
 ```julia
 using ADCME
-using PoreFlow
+using AdFem
 using PyPlot
 using SparseArrays
 

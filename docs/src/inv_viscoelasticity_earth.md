@@ -1,6 +1,6 @@
 # Viscoelasticity Model for the Earth 
 
-In [previous section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity_earth/), we show how to conduct forward computation of viscoelasticity models for the earth. In this section, we use a gradient-based optimization (L-BFGS-S) approach for calibrating the spatial-varying viscoelasticity parameters for the viscoelasticity model. The major function we use is [`ViscoelasticitySolver`](@ref) in [NNFEM](https://github.com/kailaix/NNFEM.jl/) in the NNFEM package.  
+In [previous section](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity_earth/), we show how to conduct forward computation of viscoelasticity models for the earth. In this section, we use a gradient-based optimization (L-BFGS-S) approach for calibrating the spatial-varying viscoelasticity parameters for the viscoelasticity model. The major function we use is [`ViscoelasticitySolver`](@ref) in [NNFEM](https://github.com/kailaix/NNFEM.jl/) in the NNFEM package.  
 
 
 
@@ -24,7 +24,7 @@ We show the inversion results in each iteration:
 ```
 
 
-Code:  [antiplane_viscosity_inverse.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/research/earthquake/strikeslip/antiplane_viscosity_inverse.jl)
+Code:  [antiplane_viscosity_inverse.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/strikeslip/antiplane_viscosity_inverse.jl)
 
 ## Dip-slip Fault 
 
@@ -53,4 +53,4 @@ We also show the inversion results in each iteration:
 </center>
 ```
 
-Code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_inversion.jl), [load_domain_function.jl](https://github.com/kailaix/PoreFlow.jl/blob/master/research/earthquake/dipslip/load_domain_function.jl).
+Code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_inversion.jl), [load_domain_function.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/load_domain_function.jl).

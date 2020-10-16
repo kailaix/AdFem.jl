@@ -131,7 +131,7 @@ function impose_Dirichlet_boundary_conditions(A::SparseTensor, rhs::Union{Array{
     @assert size(A, 1) == size(A, 2) == length(rhs)
     @assert length(bdnode)==length(bdval)
     @assert length(bdnode)<=length(rhs)
-    impose_dirichlet_ = load_op_and_grad(PoreFlow.libmfem,"impose_dirichlet", multiple=true)
+    impose_dirichlet_ = load_op_and_grad(AdFem.libmfem,"impose_dirichlet", multiple=true)
     indices,vv,bd,rhs,bdval = convert_to_tensor(Any[indices,vv,bdnode,rhs,bdval], [Int64,Float64,Int64,Float64,Float64])
     indices, vv, rhs = impose_dirichlet_(indices,vv,bd,rhs,bdval)
     RawSparseTensor(indices, vv, size(A)...), set_shape(rhs, (size(A,2),))
@@ -142,7 +142,7 @@ end
     fem_to_gauss_points(u::PyObject, mesh::Mesh)
 """
 function fem_to_gauss_points(u::PyObject, mesh::Mesh)
-    fem_to_gauss_points_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_to_gauss_points_mfem")
+    fem_to_gauss_points_mfem_ = load_op_and_grad(AdFem.libmfem,"fem_to_gauss_points_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     out = fem_to_gauss_points_mfem_(u)
     set_shape(out, (get_ngauss(mesh),))
@@ -168,7 +168,7 @@ for quadratic elements, the nodal values on the edges are also used.
 """
 function dof_to_gauss_points(u::PyObject, mesh::Mesh)
     @assert length(u)==mesh.ndof
-    dof_to_gauss_points_mfem_ = load_op_and_grad(PoreFlow.libmfem,"dof_to_gauss_points_mfem")
+    dof_to_gauss_points_mfem_ = load_op_and_grad(AdFem.libmfem,"dof_to_gauss_points_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     out = dof_to_gauss_points_mfem_(u)
     set_shape(out, (get_ngauss(mesh),))

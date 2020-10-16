@@ -1,6 +1,6 @@
 using LinearAlgebra
 using MAT
-using PoreFlow
+using AdFem
 using PyPlot; matplotlib.use("agg")
 using SparseArrays
 

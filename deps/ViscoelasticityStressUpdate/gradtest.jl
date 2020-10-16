@@ -2,7 +2,7 @@ using Revise
 using ADCME
 using PyCall
 using LinearAlgebra
-using PoreFlow
+using AdFem
 using PyPlot
 using Random
 Random.seed!(233)

@@ -1,6 +1,6 @@
 # Coupled Viscoelasticity and Single Phase Flow 
 
-We have considered [inverse modeling for viscoelasticity](https://kailaix.github.io/PoreFlow.jl/dev/inv_viscoelasticity/) and [coupled elasticity and single phase flow inversion](https://kailaix.github.io/PoreFlow.jl/dev/inverse/). A more complex case is when the constitutive relation is given by the [viscoelasticity](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/) and the dynamics is governed by the coupled viscoelasticity and single phase flow equation. We consider the same governing equation as the [poreelasticity](https://kailaix.github.io/PoreFlow.jl/dev/coupled/)
+We have considered [inverse modeling for viscoelasticity](https://kailaix.github.io/AdFem.jl/dev/inv_viscoelasticity/) and [coupled elasticity and single phase flow inversion](https://kailaix.github.io/AdFem.jl/dev/inverse/). A more complex case is when the constitutive relation is given by the [viscoelasticity](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity/) and the dynamics is governed by the coupled viscoelasticity and single phase flow equation. We consider the same governing equation as the [poreelasticity](https://kailaix.github.io/AdFem.jl/dev/coupled/)
 
 
 
@@ -22,7 +22,7 @@ and the initial condition
 
 $$p(x,0) = 0,\ u(x,0) =0,\ x\in \Omega$$
 
-The only difference is that the consitutive relation is given by the [Maxwell material equation](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example-1), which has the following form in the discretization (for the definition of $H$ and $S$, see [here](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example-1))
+The only difference is that the consitutive relation is given by the [Maxwell material equation](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity/#Numerical-Example-1), which has the following form in the discretization (for the definition of $H$ and $S$, see [here](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity/#Numerical-Example-1))
 
 $$\sigma^{n+1} = H \varepsilon^{n+1} + S \sigma^n  - H\varepsilon^n$$
 
@@ -30,7 +30,7 @@ Then the discretization for the mechanics is
 
 $$\int_\Omega H \varepsilon^{n+1} : \delta \varepsilon \;\mathrm{d}x- \int_\Omega b p \delta u \;\mathrm{d}x = \int_{\partial \Omega} \mathbf{t}\delta u \;\mathrm{d}s + \int_{\Omega} H\varepsilon^n : \delta\varepsilon \;\mathrm{d} x - \int_\Omega S\sigma^n : \delta \varepsilon \;\mathrm{d} x$$
 
-For the discretization of the fluid equation, see [here](https://kailaix.github.io/PoreFlow.jl/dev/coupled/).
+For the discretization of the fluid equation, see [here](https://kailaix.github.io/AdFem.jl/dev/coupled/).
 
 ## Forward Simulation
 
@@ -74,9 +74,9 @@ We have 5 sets of training data, each corresponds to a Delta production (injecti
 
 The observation data is the $x$-direction displacement at all time steps on the surface. We will consider several kinds of inversion. 
 
-* **Parametric inversion**. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_param.jl)
+* **Parametric inversion**. In this case, we assume we already know the form of the consitutitve relation and we only need to estimate $\mu$, $\lambda$ and $\eta$. [code](https://github.com/kailaix/AdFem.jl/blob/master/research/visco_inverse/coupled_visco_param.jl)
 
-* **Linear elasticity approximation**. In this case, the constitutive relation is assumed to have the linear elasticity form [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_simple.jl)
+* **Linear elasticity approximation**. In this case, the constitutive relation is assumed to have the linear elasticity form [code](https://github.com/kailaix/AdFem.jl/blob/master/research/visco_inverse/coupled_visco_simple.jl)
 
   $$\sigma = H\varepsilon$$
 
@@ -86,13 +86,13 @@ The observation data is the $x$-direction displacement at all time steps on the 
 
     $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n)$$
 
-    where $\mathcal{NN}$ is a neural network. [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn_direct.jl)
+    where $\mathcal{NN}$ is a neural network. [code](https://github.com/kailaix/AdFem.jl/blob/master/research/visco_inverse/coupled_visco_nn_direct.jl)
 
 * **Implicit inversion**. The constitutive relation is subsituted by 
 
     $$\sigma^{n+1} = \mathcal{NN}(\sigma^n, \varepsilon^n) + H\varepsilon^{n+1}$$
 
-    where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The motivation of this form is to improve the conditioning of the implicit numerical scheme.  [code](https://github.com/kailaix/PoreFlow.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
+    where $\mathcal{NN}$ is a neural network and $H$ is an unknown SPD matrix. The motivation of this form is to improve the conditioning of the implicit numerical scheme.  [code](https://github.com/kailaix/AdFem.jl/blob/master/research/visco_inverse/coupled_visco_nn.jl)
 
 
 
@@ -134,7 +134,7 @@ The results are reported at 2000-th iteration. In terms of the Von Mises stress,
 
 ```julia
 using Revise
-using PoreFlow
+using AdFem
 using PyCall
 using LinearAlgebra
 using ADCME

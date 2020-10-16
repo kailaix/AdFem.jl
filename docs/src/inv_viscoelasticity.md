@@ -95,7 +95,7 @@ The highlights of the implementation are
 
 ```julia
 using Revise
-using PoreFlow
+using AdFem
 using PyCall
 using LinearAlgebra
 using PyPlot

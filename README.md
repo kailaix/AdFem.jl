@@ -6,7 +6,7 @@
 
 | Documentation                                                |
 | ------------------------------------------------------------ |
-| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://kailaix.github.io/PoreFlow.jl/dev/) |
+| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://kailaix.github.io/AdFem.jl/dev/) |
 
 AdFem is a finite element method open source library for inverse modeling in computational and mathematical engineering. It provides a set of reusable, flexible, and differentiable operators for building scalable and efficient simulators for partial differential equations. 
 
@@ -31,7 +31,7 @@ The weak form for the Poisson's equation is to solve a variational equation
 The problem is easily translated in AdFem:
 
 ```julia
-using PoreFlow
+using AdFem
 using PyPlot 
 
 # forward computation
@@ -72,18 +72,18 @@ BFGS!(sess, loss)
 
 ## Installation 
 
-PoreFlow is tested on Unix platform (Linux and Mac). To install the stable release:
+AdFem is tested on Unix platform (Linux and Mac). To install the stable release:
 
 ```julia
 using Pkg
-Pkg.add("PoreFlow")
+Pkg.add("AdFem")
 ```
 
 To install the latest version:
 
 ```julia
 using Pkg 
-Pkg.add(PackageSpec(url="https://github.com/kailaix/PoreFlow.jl", rev="master")) 
+Pkg.add(PackageSpec(url="https://github.com/kailaix/AdFem.jl", rev="master")) 
 ```
 
 
@@ -92,7 +92,7 @@ Pkg.add(PackageSpec(url="https://github.com/kailaix/PoreFlow.jl", rev="master"))
 
 ## Research
 
-PoreFlow is an open-source package that accompanies ADCME.jl for solving inverse problems involving partial differential equations (PDEs). PoreFlow provides users a rich collection of operators, which users can use to quickly build finite element/volumn codes for forward computation. More importantly, these operators can back-propagate gradients, and therefore users can calculate the gradients using the ideas of adjoint methods and reverse-mode automatic differention (these two concepts overlap). The advanced physics constrained learning (PCL) approach enables users to back-propagate gradients through iterative and nonlinear solvers efficiently. PoreFlow offers a flexible interface for experienced researchers to develop their own operators.
+AdFem is an open-source package that accompanies ADCME.jl for solving inverse problems involving partial differential equations (PDEs). AdFem provides users a rich collection of operators, which users can use to quickly build finite element/volumn codes for forward computation. More importantly, these operators can back-propagate gradients, and therefore users can calculate the gradients using the ideas of adjoint methods and reverse-mode automatic differention (these two concepts overlap). The advanced physics constrained learning (PCL) approach enables users to back-propagate gradients through iterative and nonlinear solvers efficiently. AdFem offers a flexible interface for experienced researchers to develop their own operators.
 
 Some related research works can be found here:
 
@@ -103,4 +103,4 @@ Some related research works can be found here:
 
 ## License
 
-AdFem is licensed under MIT License. See [LICENSE](https://github.com/kailaix/PoreFlow.jl/blob/master/LICENSE) for details.
+AdFem is licensed under MIT License. See [LICENSE](https://github.com/kailaix/AdFem.jl/blob/master/LICENSE) for details.

@@ -1,6 +1,6 @@
 # Inverse Modeling for Poroelasticity Models
 
-We have coupled geomechanics and single phase flow in [`Coupled Geomechanics and Single Phase Flow`](https://kailaix.github.io/PoreFlow.jl/dev/coupled/) (poroelasticity). The governing equation for poroelasticity model is 
+We have coupled geomechanics and single phase flow in [`Coupled Geomechanics and Single Phase Flow`](https://kailaix.github.io/AdFem.jl/dev/coupled/) (poroelasticity). The governing equation for poroelasticity model is 
 
 $$\begin{aligned}
 \mathrm{div}\sigma(u) - b \nabla p &= 0\\
@@ -34,7 +34,7 @@ where $\varepsilon_i$ are i.i.d. Gaussian noise with unit standard deviations an
 
 ```julia
 using Revise
-using PoreFlow
+using AdFem
 using PyCall
 using LinearAlgebra
 using ADCME

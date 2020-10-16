@@ -94,4 +94,4 @@ saveanim(p, "julia.gif")
 close("all")
 
 #----------------------------------------------------------------------------
-# step 4: verification with PoreFlow   
+# step 4: verification with AdFem   

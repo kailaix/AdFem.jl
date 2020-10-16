@@ -1,8 +1,8 @@
-# Unstructured Meshes in PoreFlow
+# Unstructured Meshes in AdFem
 
-PoreFlow.jl also provides unstructured mesh support by leveraging [MFEM](https://mfem.org/) as the finite element backend. 
+AdFem.jl also provides unstructured mesh support by leveraging [MFEM](https://mfem.org/) as the finite element backend. 
 
-The APIs are designed such that they are consistent with structured meshes. For most of the functions, we only need to replace geometry parameters `m, n, h` with `mesh`, which is a [`Mesh`](@ref) instance. The triangular elements are the default in the PoreFlow unstructured mesh module.  `Mesh` can be constructed using a $N\times 2$ node vector and a $E\times 3$ element vector (**1-based**); for example:
+The APIs are designed such that they are consistent with structured meshes. For most of the functions, we only need to replace geometry parameters `m, n, h` with `mesh`, which is a [`Mesh`](@ref) instance. The triangular elements are the default in the AdFem unstructured mesh module.  `Mesh` can be constructed using a $N\times 2$ node vector and a $E\times 3$ element vector (**1-based**); for example:
 
 ```julia
 nodes = [0.0 0.0;1.0 0.0;0.0 1.0;1.0 1.0]
@@ -20,11 +20,11 @@ visualize_mesh(mesh)
 ![](./assets/mfem/mfem_mesh.png)
 Because we do not use the static condensation technique for tackling boundary conditions, there is no need to specify boundary conditions at this point. Plus, the lack of boundary conditions make it easier to develope re-usable custom operators for the finite element method. 
 
-The following script shows how to use an unstructured mesh to solve the Poisson equation [here](https://kailaix.github.io/PoreFlow.jl/dev/gallery/#Poisson's-Equation)
+The following script shows how to use an unstructured mesh to solve the Poisson equation [here](https://kailaix.github.io/AdFem.jl/dev/gallery/#Poisson's-Equation)
 
 ```julia
 using PyPlot 
-using PoreFlow
+using AdFem
 
 m = 50; n = 50; h = 1/n 
 mesh = Mesh(m, n, h)
@@ -66,7 +66,7 @@ As a more interesting example, we consider the domain with two holes. Here we le
 
 ```julia
 using PyPlot 
-using PoreFlow
+using AdFem
 
 mesh = Mesh("twoholes.msh")
 

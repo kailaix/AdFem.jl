@@ -4,7 +4,7 @@ We consider the nonlinear elasticity. In this case, the viscosity depends on the
 
 [^nonlinear viscosity]: http://www.mate.tue.nl/~piet/inf/trc/pdf/infmamo1d.pdf
 
-![image-20200227153439348](/Users/kailaix/Desktop/PoreFlow.jl/docs/src/assets/nonlinear.png)
+![image-20200227153439348](/Users/kailaix/Desktop/AdFem.jl/docs/src/assets/nonlinear.png)
 
 The constitutive equations are 
 $$
