@@ -11,9 +11,11 @@ k_mold = 0.014531
 k_chip_ref = 2.60475
 k_air = 0.64357
 
-paramA = Variable(2.0)
-paramB = Variable(0.5)
-paramC = Variable(2.0)
+θ0 = [2.60475; 0.49; 1.0]
+θ = Variable([2.60475; 0.49; 1.0])
+paramA = θ[1]
+paramB = θ[2]
+paramC = θ[3]
 
 function k_exact(x, y)
     k_mold + 1000 * k_chip_ref * (x-0.49)^2 / (1 + x^2)
@@ -44,6 +46,7 @@ xy = [xy;xy2]
 
 x, y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip = k_nn(x, y)
+k_chip_exact = @. k_exact(x, y)
 # k_chip = eval_f_on_dof_pts(k_nn, mesh)[chip_fem_idx]
 # k_chip=stack(k_chip)
 
@@ -59,7 +62,7 @@ heat_source_fem[chip_fem_top_idx] .= power_source
 heat_source_gauss = dof_to_gauss_points(heat_source_fem, mesh)
 heat_source = compute_fem_source_term1(constant(heat_source_gauss), mesh)
 
-B = constant(compute_interaction_matrix(mesh)) # function not exist
+B = constant(compute_interaction_matrix(mesh))
 Laplace = constant(compute_fem_laplace_matrix1(nu * constant(ones(ngauss)), mesh))
 
 # apply Dirichlet to velocity and temperature; set left bottom two points to zero to fix rank deficient problem for pressure
@@ -77,19 +80,11 @@ S_data = matread("fn$trialnum/xz_chip_unstructured_data.mat")["V"]
 
 loss =  mean((S_computed .- S_data)^2)
 loss = loss * 1e10
+sess = Session(); init(sess)
 
 # ---------------------------------------------------
-_loss = Float64[]
-cb = (vs, iter, loss)->begin 
-    global _loss
-    push!(_loss, loss)
-    printstyled("[#iter $iter] loss=$loss\n", color=:green)
-    if mod(iter, 10)==1
-        close("all")
-        plot_velo_pres_temp_cond(iter)
-        matwrite("fn$trialnum/nn_loss$iter.mat", Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1]))
-    end
-end
-
-sess = Session(); init(sess)
-BFGS!(sess, loss, vars = [k_chip], callback = cb)
+@info run(sess, loss, θ=>θ0)
+lineview(sess, θ, loss, θ0, ones(3))
+savefig("fn$trialnum/lineview1.png")
+gradview(sess, θ, loss, zeros(3))
+savefig("fn$trialnum/gradview1.png")

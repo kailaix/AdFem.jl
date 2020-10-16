@@ -21,7 +21,8 @@ delta2=1e-5
 
 k_mold = 0.014531
 # k_chip = 2.60475
-k_chip = Variable(1.0)
+θ = Variable([1.0])
+k_chip = θ[1]
 k_air = 0.64357
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
@@ -310,7 +311,14 @@ loss = mean((S_computed[idx] .- observed_data)^2)
 loss = loss * 1e10
 # ---------------------------------------------------
 # create a session and run 
-max_iter = 20
+# max_iter = 20
+# sess = Session(); init(sess)
+# loss_ = BFGS!(sess, loss, max_iter)
+# figure(); semilogy(loss_); savefig("chip_unstructured_scalar_loss.png")
+
 sess = Session(); init(sess)
-loss_ = BFGS!(sess, loss, max_iter)
-figure(); semilogy(loss_); savefig("chip_unstructured_scalar_loss.png")
+@info run(sess, loss, k_chip=>2.60475)
+lineview(sess, θ, loss, [2.60475], ones(1))
+savefig("lineview.png")
+gradview(sess, θ, loss, ones(1))
+savefig("gradview.png")

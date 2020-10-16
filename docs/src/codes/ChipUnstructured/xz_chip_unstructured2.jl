@@ -23,11 +23,11 @@ T_infty = 300
 
 NT = 14    # number of iterations for Newton's method
 
-k_fem = k_air * constant(ones(ndof))
-k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
-k_fem = scatter_update(k_fem, chip_fem_idx, k_chip * ones(length(chip_fem_idx)))
-kgauss = dof_to_gauss_points(k_fem, mesh)
-LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, mesh))
+# k_fem = k_air * constant(ones(ndof))
+# k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
+# k_fem = scatter_update(k_fem, chip_fem_idx, k_chip * ones(length(chip_fem_idx)))
+# kgauss = dof_to_gauss_points(k_fem, mesh)
+# LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, mesh))
 
 heat_source_fem = zeros(ndof)
 heat_source_fem[chip_fem_top_idx] .= power_source
@@ -44,6 +44,9 @@ bd = [bd; bd .+ ndof;
 
 # add solid region into boundary condition for u, v, p, i.e. exclude solid when solving Navier Stokes
 bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
+
+S0 = zeros(nelem+3*ndof)
+S = solve_navier_stokes(S0, NT, constant(k_chip))
 
 sess = Session(); init(sess)
 output = run(sess, S)

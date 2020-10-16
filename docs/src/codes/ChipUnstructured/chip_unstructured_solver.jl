@@ -8,7 +8,14 @@ ADCME.options.sparse.auto_reorder = false
 
 function compute_residual_and_jacobian(k_chip, S)
     # compute r and J in Jx=r for Newton's method
-    # read in current step solution
+    # read in current step 
+    k_fem = k_air * constant(ones(ndof))
+    k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
+    # k_fem = scatter_update(k_fem, chip_fem_idx, k_chip * ones(length(chip_fem_idx))) # if k_chip is a constant
+    k_fem = scatter_update(k_fem, chip_fem_idx, k_chip)
+    kgauss = dof_to_gauss_points(k_fem, mesh)
+    LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, mesh))
+
     u, v, p, T = S[1:ndof], 
         S[ndof+1:2*ndof], 
         S[2*ndof+1:2*ndof+nelem],
@@ -85,6 +92,9 @@ function solve_one_step(θ, S)
     function f(θ, S)
         r, J = compute_residual_and_jacobian(θ, S)
         J, r = impose_Dirichlet_boundary_conditions(J, r, bd, zeros(length(bd)))
+        # residual_norm = norm(r)
+        # op = tf.print("residual norm", residual_norm)
+        # r = bind(r, op)
         return r, J
     end
 
