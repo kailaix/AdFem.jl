@@ -99,3 +99,8 @@ Some related research works can be found here:
 1. [Physics constrained learning for data-driven inverse modeling from sparse observations](https://arxiv.org/abs/2002.10521)
 2. [Solving Inverse Problems in Steady State Navier-Stokes Equations using Deep Neural Networks](https://arxiv.org/abs/2008.13074)
 3. [Inverse Modeling of Viscoelasticity Materials using Physics Constrained Learning](https://arxiv.org/abs/2005.04384)
+
+
+## License
+
+AdFem is licensed under MIT License. See [LICENSE](https://github.com/kailaix/PoreFlow.jl/blob/master/LICENSE) for details.
