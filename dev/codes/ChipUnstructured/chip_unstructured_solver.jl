@@ -13,6 +13,7 @@ function compute_residual_and_jacobian(k_chip, S)
     k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
     # k_fem = scatter_update(k_fem, chip_fem_idx, k_chip * ones(length(chip_fem_idx))) # if k_chip is a constant
     k_fem = scatter_update(k_fem, chip_fem_idx, k_chip)
+
     kgauss = dof_to_gauss_points(k_fem, mesh)
     LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, mesh))
 
