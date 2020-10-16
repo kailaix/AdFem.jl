@@ -2,9 +2,9 @@
 
 [[ADCME]]
 deps = ["CMake", "FFTW", "LibGit2", "Libdl", "LinearAlgebra", "MAT", "Pkg", "PyCall", "Random", "SparseArrays", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "568f87691a9563fdebe907d3b1c6fe13730bfc3c"
+git-tree-sha1 = "a1df9cdc45f6f3d44b756d4e66cffec6d481cc3d"
 uuid = "07b341a0-ce75-57c6-b2de-414ffdc00be5"
-version = "0.6.0"
+version = "0.6.1"
 
 [[AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -319,9 +319,9 @@ version = "1.2.0"
 
 [[Zlib_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "ded43825988ace7a311ee7e1d0f09571822509c4"
+git-tree-sha1 = "320228915c8debb12cb434c59057290f0834dbf6"
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
-version = "1.2.11+17"
+version = "1.2.11+18"
 
 [[Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
