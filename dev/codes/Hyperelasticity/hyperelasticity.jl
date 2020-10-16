@@ -1,5 +1,5 @@
 using Revise
-using PoreFlow
+using AdFem
 using LinearAlgebra
 using PyPlot
 using DelimitedFiles
@@ -31,4 +31,4 @@ close("all")
 u = nr.x[1:mmesh.nnode]
 v = nr.x[mmesh.ndof+1:mmesh.ndof + mmesh.nnode]
 visualize_scalar_on_fem_points(sqrt.(u.^2+v.^2), mmesh)
-savefig("test_poreflow.png")
+savefig("test_AdFem.png")
