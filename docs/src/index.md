@@ -5,9 +5,13 @@ PoreFlow is an open-source package that accompanies [ADCME.jl](https://github.co
 ## Expressing Numerical Simulation as a Computational Graph
 
 As an example, we consider solving the Poisson's equation 
+
 $$\nabla \cdot (\kappa\nabla u) = f, \mathbf{x}\in \partial \Omega; \qquad u(\mathbf{x}) = 0, \mathbf{x}\in \partial \Omega$$
+
 Here $\kappa$ is an unknown parameter, which we want to estimate. The corresponding variational form is 
+
 $$\int_\Omega\kappa \nabla u\cdot \nabla vdx = - \int_\Omega fv dx$$
+
 In PoreFlow, consider a $(m+1)\times (n+1)$ uniform grid with step size $h$, the finite element solution can be expressed as 
 ```julia
 κ = Variable(1.0)
@@ -47,12 +51,4 @@ Because of the novel idea of expressing numerical simulators as computational gr
 x = gauss_nodes(m, n, h)
 κ = fc(x, [20,20,20,1])
 A = compute_fem_laplace_matrix1(κ, m, n, h)
-```
-
-## Installation
-To install the latest version of PoreFlow, try
-```julia-repl
-julia> ]
-pkg> add https://github.com/kailaix/PoreFlow.jl#master 
-pkg> build PoreFlow
 ```
