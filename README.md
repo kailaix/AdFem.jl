@@ -1,3 +1,5 @@
+![](https://travis-ci.com/kailaix/AdFem.jl.svg?token=tCRK4npbxWQNS6KVeBvs&branch=master)![Documentation](https://github.com/kailaix/AdFem.jl/workflows/Documentation/badge.svg)
+
 <p align="center">
 <img src="./docs/src/assets/logo.png" width="500"/>
 </p>
