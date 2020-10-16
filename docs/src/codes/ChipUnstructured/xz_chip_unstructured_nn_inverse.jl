@@ -11,18 +11,18 @@ k_mold = 0.014531
 k_chip_ref = 2.60475
 k_air = 0.64357
 
-paramA = Variable(2.0)
-paramB = Variable(0.5)
-paramC = Variable(2.0)
+# paramA = Variable(2.0)
+# paramB = Variable(0.5)
+# paramC = Variable(2.0)
 
 function k_exact(x, y)
     k_mold + 1000 * k_chip_ref * (x-0.49)^2 / (1 + x^2)
 end
 
 function k_nn(x, y)
-    # out = abs(fc(x, [20,20,20,1])) .+ k_mold
-    # squeeze(out)
-    k_mold + 1000 * paramA * (x-paramB)^2 ./ (1 + paramC * x.^2)
+    out = abs(fc(x, [20,20,20,1])) .+ k_mold
+    squeeze(out)
+    # k_mold + 1000 * paramA * (x-paramB)^2 ./ (1 + paramC * x.^2)
 end
 
 nu = 0.47893  # equal to 1/Re
@@ -44,15 +44,6 @@ xy = [xy;xy2]
 
 x, y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip = k_nn(x, y)
-# k_chip = eval_f_on_dof_pts(k_nn, mesh)[chip_fem_idx]
-# k_chip=stack(k_chip)
-
-# k_fem = k_air * constant(ones(ndof))
-# k_fem = scatter_update(k_fem, solid_fem_idx, k_mold * ones(length(solid_fem_idx)))
-# k_fem = scatter_update(k_fem, chip_fem_idx, k_chip)
-# kgauss = dof_to_gauss_points(k_fem, mesh)
-# LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, mesh))
-
 
 heat_source_fem = zeros(ndof)
 heat_source_fem[chip_fem_top_idx] .= power_source
