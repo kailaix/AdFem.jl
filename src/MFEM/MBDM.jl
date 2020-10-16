@@ -57,7 +57,7 @@ function compute_fem_bdm_mass_matrix(alpha::Union{Array{Float64,1}, PyObject},be
     bdm_inner_product_matrix_mfem_ = load_op_and_grad(libmfem,"bdm_inner_product_matrix_mfem", multiple=true)
     alpha,beta = convert_to_tensor(Any[alpha,beta], [Float64,Float64])
     indices, vv = bdm_inner_product_matrix_mfem_(alpha,beta)
-    RawSparseTensor(indices, values, mmesh.ndof, mmesh.ndof)
+    RawSparseTensor(indices, vv, 2mmesh.ndof, 2mmesh.ndof)
 end
 
 @doc raw"""

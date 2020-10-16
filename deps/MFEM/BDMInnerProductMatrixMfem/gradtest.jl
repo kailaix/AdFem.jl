@@ -3,33 +3,35 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using PoreFlow
 Random.seed!(233)
 
-function bdm_inner_product_matrix_mfem(alpha,beta)
-    bdm_inner_product_matrix_mfem_ = load_op_and_grad("./build/libBDMInnerProductMatrixMfem","bdm_inner_product_matrix_mfem", multiple=true)
-    alpha,beta = convert_to_tensor(Any[alpha,beta], [Float64,Float64])
-    bdm_inner_product_matrix_mfem_(alpha,beta)
-end
 
+mmesh = Mesh(10, 10, 0.1, degree=BDM1)
 # TODO: specify your input parameters
-u = bdm_inner_product_matrix_mfem(alpha,beta)
+alpha = constant(rand(get_ngauss(mmesh)))
+β = constant(rand(get_ngauss(mmesh)))
+u = compute_fem_bdm_mass_matrix(alpha,β, mmesh)
 sess = Session(); init(sess)
-@show run(sess, u)
 
+uref = compute_fem_bdm_mass_matrix(run(sess, alpha),run(sess,β), mmesh)
+
+run(sess, u)
+@show sum(abs.(run(sess,u) - uref))
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
-function scalar_function(m)
-    return sum(bdm_inner_product_matrix_mfem(alpha,beta)^2)
+function scalar_function(x)
+    return sum(values(compute_fem_bdm_mass_matrix(alpha,x,mmesh))^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+m_ = constant(rand(get_ngauss(mmesh)))
+v_ = rand(get_ngauss(mmesh))
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -59,3 +61,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("test.png")

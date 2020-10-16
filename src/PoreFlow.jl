@@ -13,7 +13,7 @@ module PoreFlow
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2
     np = PyNULL()
     interpolate = PyNULL()
-    LIBMFEM = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("nnfem_mfem")))
+    LIBMFEM = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("admfem")))
     libmfem = missing 
     LIBADFEM = abspath(joinpath(@__DIR__, "..",  "deps", "build", get_library_name("adfem")))
     libadfem = missing
