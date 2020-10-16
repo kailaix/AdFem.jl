@@ -1,3 +1,4 @@
+using Revise 
 using ADCME
 using PyCall
 using LinearAlgebra
@@ -6,16 +7,10 @@ using Random
 using PoreFlow
 Random.seed!(233)
 
-function fem_source_scalar(f, mesh)
-    fem_source_scalar_ = load_op_and_grad(PoreFlow.libmfem,"fem_source_scalar")
-    f = convert_to_tensor(Any[f], [Float64]); f = f[1]
-    fem_source_scalar_(f)
-end
-
-mesh = Mesh(2, 2, 0.5)
+mmesh = Mesh(2, 2, 0.5, degree=2)
 # TODO: specify your input parameters
-f = ones(get_ngauss(mesh))
-u = fem_source_scalar(f, mesh)
+f = constant(ones(get_ngauss(mmesh)))
+u = compute_fem_source_term1(f, mmesh)
 sess = Session(); init(sess)
 @show run(sess, u)
 
@@ -27,12 +22,12 @@ sess = Session(); init(sess)
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(x)
-    return sum(fem_source_scalar(x, mesh)^2)
+    return sum(compute_fem_source_term1(x, mmesh)^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(get_ngauss(mesh)))
-v_ = rand(get_ngauss(mesh))
+m_ = constant(rand(get_ngauss(mmesh)))
+v_ = rand(get_ngauss(mmesh))
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -62,3 +57,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")

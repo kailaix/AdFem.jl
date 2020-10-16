@@ -25,7 +25,7 @@ namespace MFEM{
       for (int j = 0; j<elem->ngauss; j++){
         grad_f[k] = 0.0;
         for(int r = 0; r<elem_ndof; r++)
-          grad_f[k] += elem->h(r, j) * elem->w[j] * grad_rhs[elem->node[r]];
+          grad_f[k] += elem->h(r, j) * elem->w[j] * grad_rhs[elem->dof[r]];
         k ++;
       }
     }
