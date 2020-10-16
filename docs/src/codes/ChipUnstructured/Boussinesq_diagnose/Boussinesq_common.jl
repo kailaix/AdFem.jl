@@ -1,9 +1,3 @@
-using LinearAlgebra
-using MAT
-using PoreFlow
-using PyPlot
-using SparseArrays
-
 nu = 0.01
 buoyance_coef = 1.0
 
@@ -21,10 +15,6 @@ end
 
 function t_exact(x,y)
     x*(1-x)*y*(1-y)
-end
-
-function k_exact(x,y)
-    1 + x^2 + x / (1+y^2)
 end
 
 function ffunc_(x, y)
@@ -64,7 +54,7 @@ Laplace = compute_fem_laplace_matrix1(nu * constant(ones(ngauss)), mesh)
 heat_source = eval_f_on_gauss_pts(heat_source_func, mesh)
 heat_source = constant(compute_fem_source_term1(heat_source, mesh))
 
-kgauss = eval_f_on_gauss_pts(k_exact, mesh)
+kgauss = eval_f_on_gauss_pts(k_func, mesh); kgauss=stack(kgauss)
 LaplaceK = constant(compute_fem_laplace_matrix1(kgauss, mesh))
 
 # xy = fem_nodes(mesh)
@@ -100,7 +90,7 @@ function compute_residual(S)
     g4 = Laplace*v 
     g5 = -F2
 
-    T_gauss = dof_to_gauss_points(T[1:ndof], mesh)
+    T_gauss = dof_to_gauss_points(T, mesh)
     buoyance_term = - buoyance_coef * compute_fem_source_term1(T_gauss, mesh)
 
     G = g1 + g2 + g3 + g4 + g5 + buoyance_term
@@ -109,8 +99,8 @@ function compute_residual(S)
 
     T0 = LaplaceK * T + compute_fem_advection_matrix1(ugauss,vgauss, mesh) * T - heat_source
     R = [F;G;H0;T0]
-    # return R
-    return [F; G; constant(zeros(nelem)); constant(zeros(ndof)) ]
+    return R
+    # return [F; G; constant(zeros(nelem)); constant(zeros(ndof)) ]
 end
 
 function compute_jacobian(S)
@@ -159,8 +149,8 @@ function compute_jacobian(S)
     J = [J1 
         [DU_TX DV_TY SparseTensor(spzeros(ndof, nelem)) M]]
 
-    return [J[1:2ndof, 1:2ndof] SparseTensor(spzeros(2ndof, nelem+ndof))
-        SparseTensor(spzeros(nelem+ndof, 2ndof))  spdiag(ones(nelem+ndof)) ]    
+    # return [J[1:2ndof, 1:2ndof] SparseTensor(spzeros(2ndof, nelem+ndof))
+        # SparseTensor(spzeros(nelem+ndof, 2ndof))  spdiag(ones(nelem+ndof)) ]    
     end
 
 NT = 8    # number of iterations for Newton's method
@@ -201,8 +191,7 @@ function solve_steady_cavityflow_one_step(S)
     residual = compute_residual(S)
     J = compute_jacobian(S)
     
-    J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
-    residual = scatter_update(residual, bd, zeros(length(bd)))    # residual[bd] .= 0.0 in Tensorflow syntax
+    J, residual = impose_Dirichlet_boundary_conditions(J, residual, bd, zeros(length(bd)))
 
     d = J\residual
     residual_norm = norm(residual)
@@ -212,33 +201,18 @@ function solve_steady_cavityflow_one_step(S)
     return S_new
 end
 
-
 function condition(i, S_arr)
-    i <= NT + 1
+    i <= NT
 end
 
 function body(i, S_arr)
-    S = read(S_arr, i-1)
+    S = read(S_arr, i)
     op = tf.print("i=",i)
     i = bind(i, op)
     S_new = solve_steady_cavityflow_one_step(S)
-    S_arr = write(S_arr, i, S_new)
+    S_arr = write(S_arr, i+1, S_new)
     return i+1, S_arr
 end
-
-# for i = 1:NT 
-#     residual = compute_residual(S[:,i])
-#     J = compute_jacobian(S[:,i])
-    
-#     J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
-#     residual[bd] .= 0.0
-
-
-#     d = J\residual
-#     S[:,i+1] = S[:,i] - d
-#     @info i, norm(residual)
-# end
-
 
 xy = fem_nodes(mesh)
 x, y = xy[:,1], xy[:,2]
@@ -254,48 +228,7 @@ p0 = @. p_exact(x,y)
 S_arr = TensorArray(NT+1)
 S_arr = write(S_arr, 1, zeros(nelem+3*ndof))
 
-i = constant(2, dtype=Int32)
+i = constant(1, dtype=Int32)
 
 _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, nelem+3*ndof))
-
-sess = Session(); init(sess)
-output = run(sess, S)
-
-matwrite("Boussinesq_diagnose/data.mat", 
-    Dict(
-        "V"=>output[end, :]
-    ))
-
-u_out, v_out, p_out, T_out = output[NT+1,1:nnode], output[NT+1,ndof+1:ndof+nnode], 
-                             output[NT+1,2*ndof+1:2*ndof+nelem],output[NT+1,2*ndof+nelem+1:2*ndof+nelem+nnode]
-
-figure(figsize=(25,10))
-subplot(241)
-title("u velocity")
-visualize_scalar_on_fem_points(u_out, mesh)
-subplot(245)
-visualize_scalar_on_fem_points(u0, mesh)
-
-subplot(242)
-title("v velocity")
-visualize_scalar_on_fem_points(v_out, mesh)
-subplot(246)
-visualize_scalar_on_fem_points(v0, mesh)
-
-subplot(243)
-visualize_scalar_on_fvm_points(p_out, mesh)
-title("pressure")
-subplot(247)
-visualize_scalar_on_fvm_points(p0, mesh)
-title("")
-
-subplot(244)
-title("temperature")
-visualize_scalar_on_fem_points(T_out, mesh)
-subplot(248)
-visualize_scalar_on_fem_points(t0, mesh)
-
-tight_layout()
-savefig("Boussinesq_diagnose/data.png")
-close("all")
