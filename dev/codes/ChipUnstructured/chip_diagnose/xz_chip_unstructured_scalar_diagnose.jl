@@ -32,7 +32,7 @@ u_std = 0.001
 p_std = 0.000001225
 T_infty = 300
 
-filename = "mesh/CHT_2D.stl"
+filename = "CHT_2D.stl"
 file_format = "stl"
 mesh = Mesh(filename, file_format = file_format, degree=2)
 mesh = Mesh(mesh.nodes ./ 0.030500000342726707, mesh.elems, -1, 2)
@@ -259,8 +259,7 @@ function solve_one_step(S)
     residual = compute_residual(S)
     J = compute_jacobian(S)
     
-    J, _ = fem_impose_Dirichlet_boundary_condition1(J, bd, mesh)
-    residual = scatter_update(residual, bd, zeros(length(bd)))    # residual[bd] .= 0.0 in Tensorflow syntax
+    J, residual = impose_Dirichlet_boundary_conditions(J, residual, bd, zeros(length(bd)))
 
     d = J\residual
     residual_norm = norm(residual)
@@ -293,22 +292,22 @@ _, S = while_loop(condition, body, [i, S_arr])
 S = set_shape(stack(S), (NT+1, nelem+3*ndof))
 
 S_computed = S[end, :]
-S_data = matread("xz_chip_unstructured_data.mat")["V"]
+# S_data = matread("xz_chip_unstructured_data.mat")["V"]
 
-sample_size = 20
-idx = rand(1:ndof, sample_size)
-idx = [idx; ndof .+ idx; 2*ndof+nelem .+ idx] # observe velocity and temperature
-observed_data = S_data[idx]
+# sample_size = 20
+# idx = rand(1:ndof, sample_size)
+# idx = [idx; ndof .+ idx; 2*ndof+nelem .+ idx] # observe velocity and temperature
+# observed_data = S_data[idx]
 
-noise = false
-noise_level = 0.05
-if noise
-    noise_ratio = (1 - noise_level) .+ 2 * noise_level * rand(Float64, size(observed_data)) # uniform on (1-noise_level, 1+noise_level)
-    observed_data = observed_data .* noise_ratio
-end
+# noise = false
+# noise_level = 0.05
+# if noise
+#     noise_ratio = (1 - noise_level) .+ 2 * noise_level * rand(Float64, size(observed_data)) # uniform on (1-noise_level, 1+noise_level)
+#     observed_data = observed_data .* noise_ratio
+# end
 
-loss = mean((S_computed[idx] .- observed_data)^2)
-loss = loss * 1e10
+# loss = mean((S_computed[idx] .- observed_data)^2)
+# loss = loss * 1e10
 # ---------------------------------------------------
 # create a session and run 
 # max_iter = 20
@@ -317,8 +316,12 @@ loss = loss * 1e10
 # figure(); semilogy(loss_); savefig("chip_unstructured_scalar_loss.png")
 
 sess = Session(); init(sess)
-@info run(sess, loss, k_chip=>2.60475)
-lineview(sess, θ, loss, [2.60475], ones(1))
-savefig("lineview.png")
-gradview(sess, θ, loss, ones(1))
-savefig("gradview.png")
+# @info run(sess, loss, k_chip=>2.60475)
+# lineview(sess, θ, loss, [2.60475], ones(1))
+# savefig("lineview.png")
+gradview(sess, θ, sum(S[2, :]^2), ones(1))
+savefig("gradview_S2.png")
+gradview(sess, θ, sum(S[3, :]^2), ones(1))
+savefig("gradview_S3.png")
+# gradview(sess, θ, loss, ones(1))
+# savefig("gradview.png")
