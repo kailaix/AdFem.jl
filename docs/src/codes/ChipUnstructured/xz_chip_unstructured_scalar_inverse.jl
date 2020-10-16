@@ -1,8 +1,9 @@
 using ADCME
 using LinearAlgebra
 using MAT
-using PoreFlow
-using PyPlot; matplotlib.use("agg") # or try "macosx"
+using AdFem
+using PyPlot
+matplotlib.use("agg") # or try "macosx"
 using SparseArrays
 
 # geometry setup in domain [0,1]^2

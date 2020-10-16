@@ -1,5 +1,5 @@
 using ADCME
-using PoreFlow
+using AdFem
 using LinearAlgebra
 using MAT
 using PyPlot; matplotlib.use("agg")
@@ -14,6 +14,8 @@ end
 paramA = θ[1]
 paramB = θ[2]
 paramC = θ[3]
+
+# RBF2D
 
 function k_func(x,y)
     1 + paramA * x^2 + paramB * x / (1+ paramC * y^2)

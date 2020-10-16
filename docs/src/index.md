@@ -1,14 +1,18 @@
-# PoreFlow.jl Documentation 
+# AdFem.jl Documentation 
 
-PoreFlow is an open-source package that accompanies [ADCME.jl](https://github.com/kailaix/ADCME.jl) for solving inverse problems involving partial differential equations (PDEs). PoreFlow provides users a rich collection of operators, which users can use to quickly build finite element/volumn codes for forward computation. More importantly, these operators can back-propagate gradients, and therefore users can calculate the gradients using the ideas of adjoint methods and reverse-mode automatic differention (these two concepts overlap). The advanced physics constrained learning (PCL) approach enables users to back-propagate gradients through iterative and nonlinear solvers efficiently. PoreFlow offers a flexible interface for experienced researchers to develop their own operators. 
+AdFem is an open-source package that accompanies [ADCME.jl](https://github.com/kailaix/ADCME.jl) for solving inverse problems involving partial differential equations (PDEs). AdFem provides users a rich collection of operators, which users can use to quickly build finite element/volumn codes for forward computation. More importantly, these operators can back-propagate gradients, and therefore users can calculate the gradients using the ideas of adjoint methods and reverse-mode automatic differention (these two concepts overlap). The advanced physics constrained learning (PCL) approach enables users to back-propagate gradients through iterative and nonlinear solvers efficiently. AdFem offers a flexible interface for experienced researchers to develop their own operators. 
 
 ## Expressing Numerical Simulation as a Computational Graph
 
 As an example, we consider solving the Poisson's equation 
+
 $$\nabla \cdot (\kappa\nabla u) = f, \mathbf{x}\in \partial \Omega; \qquad u(\mathbf{x}) = 0, \mathbf{x}\in \partial \Omega$$
+
 Here $\kappa$ is an unknown parameter, which we want to estimate. The corresponding variational form is 
+
 $$\int_\Omega\kappa \nabla u\cdot \nabla vdx = - \int_\Omega fv dx$$
-In PoreFlow, consider a $(m+1)\times (n+1)$ uniform grid with step size $h$, the finite element solution can be expressed as 
+
+In AdFem, consider a $(m+1)\times (n+1)$ uniform grid with step size $h$, the finite element solution can be expressed as 
 ```julia
 κ = Variable(1.0)
 A = κ * compute_fem_laplace_matrix1(m, n, h)
@@ -47,12 +51,4 @@ Because of the novel idea of expressing numerical simulators as computational gr
 x = gauss_nodes(m, n, h)
 κ = fc(x, [20,20,20,1])
 A = compute_fem_laplace_matrix1(κ, m, n, h)
-```
-
-## Installation
-To install the latest version of PoreFlow, try
-```julia-repl
-julia> ]
-pkg> add https://github.com/kailaix/PoreFlow.jl#master 
-pkg> build PoreFlow
 ```

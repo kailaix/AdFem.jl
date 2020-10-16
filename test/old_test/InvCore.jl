@@ -38,7 +38,7 @@ end
 
 @testset "compute_fem_stiffness_matrix1" begin
 using Revise
-using PoreFlow
+using AdFem
 using ADCME
     m = 10
     n = 5

@@ -4,7 +4,7 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
-using PoreFlow
+using AdFem
 Random.seed!(233)
 
 function fem_grad(u,m,n,h)

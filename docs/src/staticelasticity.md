@@ -13,7 +13,7 @@ Here $\varepsilon(u) = \frac{1}{2}(\nabla u + (\nabla u)^T)$ is the Cauchy tenso
 
 $$\int_\Omega \delta \varepsilon(u) : C \varepsilon(u)\mathrm{d} x = \int_{\Gamma_n} t\cdot\delta u \mathrm{d}s - \int_\Omega f\cdot \delta u \mathrm{d}x$$
 
-The codes for conducting linear elasticity problem can be [here](https://github.com/kailaix/PoreFlow.jl/tree/master/docs/src/codes/LinearElasticity).
+The codes for conducting linear elasticity problem can be [here](https://github.com/kailaix/AdFem.jl/tree/master/docs/src/codes/LinearElasticity).
 
 To verify our program, we first consider a parameter inverse problem where $E$ is a constant parameter that does not depend on $\mathbf{x}$. Additionally, we also let $\nu$ be an unknown parameter. We generate the displacement data using $E = 1.5$, $\nu = 0.3$. In the inverse problem, all displacement data are used to learn the parameters $E$ and $\nu$. The following table shows the learned parameters $E$ and $\nu$. We can see that our algorithm is quite efficient: after around 11 iterations, we reduce the absolute error to an order of $10^{-12}$ and $10^{-11}$ for $E$ and $\nu$, respectively.  
 

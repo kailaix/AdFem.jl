@@ -23,7 +23,7 @@ The code is as follows:
 ```julia
 # Solves the Poisson equation using the Mixed finite element method 
 using Revise
-using PoreFlow
+using AdFem
 using DelimitedFiles
 using SparseArrays
 using PyPlot

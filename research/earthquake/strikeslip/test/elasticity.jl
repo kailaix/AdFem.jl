@@ -1,7 +1,7 @@
 # exp(-t)*(2-x)*x*(1-y)
 using Revise
 using ADCME
-using PoreFlow 
+using AdFem 
 using PyPlot
 
 n = 20

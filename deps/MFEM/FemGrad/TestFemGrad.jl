@@ -1,4 +1,4 @@
-using PoreFlow
+using AdFem
 
 m = 100; n = 100; h = 1/n
 mesh = Mesh(m, n, h, degree=2)

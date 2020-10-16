@@ -3,7 +3,7 @@
 @testset "eval_f_on_gauss_pts" begin
     f = (x,y)->x^2+y^2
     F = eval_f_on_gauss_pts(f, m, n, h)
-    pts = PoreFlow.get_gauss_points(m, n, h)
+    pts = AdFem.get_gauss_points(m, n, h)
     close("all")
     scatter3D(pts[:,1], pts[:,2], F, marker=".")
     mesh(X, Y, (@. f(X, Y)), color="orange", alpha=0.5)

@@ -3,7 +3,7 @@
 ## Workflow
 This tutorial describes how to develop custom operators for unstructured meshes. 
 
-PoreFlow uses [MFEM](https://mfem.org/) as the backend for assembling finite element matrices. However, users, as well as custom operator developers, do not need to know how to use MFEM. PoreFlow has provided an easier interface to essential data structures for assembling finite element matrices. The data structure can be assessed in C++ (see [`Mesh`](@ref)) and the header files are located in `deps/MFEM/Common.h`. As the structured mesh utilties, we do not expose the APIs for Julia users, and therefore if some operators are lacking, users must modify the source codes of PoreFlow. 
+AdFem uses [MFEM](https://mfem.org/) as the backend for assembling finite element matrices. However, users, as well as custom operator developers, do not need to know how to use MFEM. AdFem has provided an easier interface to essential data structures for assembling finite element matrices. The data structure can be assessed in C++ (see [`Mesh`](@ref)) and the header files are located in `deps/MFEM/Common.h`. As the structured mesh utilties, we do not expose the APIs for Julia users, and therefore if some operators are lacking, users must modify the source codes of AdFem. 
 
 The basic workflow is to go into `deps/MFEM` directory. Then 
 
@@ -11,8 +11,8 @@ The basic workflow is to go into `deps/MFEM` directory. Then
 2. Generate templated files using `customop`. 
 3. In your source code, do remember to include `../Common.h`, which exposes `mmesh` for all necessary data structures. 
 4. Add your source code file names to `deps/MFEM/CMakeLists.txt`.
-5. Recompile PoreFlow or run `ninja` in `deps/MFEM/build`. 
-6. Test your code. Note you need to replace the library path in `load_op_and_grad` by `PoreFlow.libmfem` in order to share the same `mmesh` throughout the session. 
+5. Recompile AdFem or run `ninja` in `deps/MFEM/build`. 
+6. Test your code. Note you need to replace the library path in `load_op_and_grad` by `AdFem.libmfem` in order to share the same `mmesh` throughout the session. 
 
 ## Assembling Matrices and Vectors
 
@@ -20,7 +20,7 @@ The main approach for assembling matrices and vectors in finite element methods 
 
 ![](./assets/mfem/dof.png)
 
-Each finite element (triangle) is represented by `NNFEM_Element` in the C++ shared library of PoreFlow. The local DOFs are mapped to global DOFs via `dof` array, which is a 6-dimensional array. For P1 element, the last three components are redundant. For P2 elements, the global indices are arranged in a way such that all edge indices are after the nodal indices. The mapping between edge indices and vertices can be found in `edges` in the structure [`Mesh`](@ref). 
+Each finite element (triangle) is represented by `NNFEM_Element` in the C++ shared library of AdFem. The local DOFs are mapped to global DOFs via `dof` array, which is a 6-dimensional array. For P1 element, the last three components are redundant. For P2 elements, the global indices are arranged in a way such that all edge indices are after the nodal indices. The mapping between edge indices and vertices can be found in `edges` in the structure [`Mesh`](@ref). 
 
 When we loop over each element, each DOF is associated with a basis function $\phi_i(x, y)$, such that $\phi_i(x_j, y_j) = \delta_{ij}$, where $(x_j, y_j)$ is the nodes shown in the above plots. For convenience, an element (`NNFEM_Element`) provides the values of 
 
@@ -65,7 +65,7 @@ The corresponding Python code is
 mesh = UnitSquareMesh(8, 8, "left")
 ```
 
-| FEniCS | PoreFlow |
+| FEniCS | AdFem |
 |----------------|--------------|
 |   ![](./assets/mfem/mesh_fenics.png)            |      ![](./assets/mfem/mesh_mfem.png)        |
 
@@ -105,7 +105,7 @@ The corresponding Julia code is
 ```julia
 using ADCME
 using LinearAlgebra
-using PoreFlow
+using AdFem
 using DelimitedFiles
 
 p = readdlm("fenics/x.txt")[:]
@@ -132,4 +132,4 @@ conda create -n fenicsproject -c conda-forge fenics
 source activate fenicsproject
 ```
 
-Please refer to built-in PoreFlow custom operators to see how FEniCS is used for validation. 
+Please refer to built-in AdFem custom operators to see how FEniCS is used for validation. 

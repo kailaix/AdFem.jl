@@ -32,7 +32,7 @@ function neo_hookean(u::Union{Array{Float64, 1}, PyObject},
       mesh::Mesh)
     @assert length(μ)==length(λ)==get_ngauss(mesh)
     @assert length(u) == 2mesh.ndof
-    neo_hookean_ = load_op_and_grad(PoreFlow.libmfem,"neo_hookean", multiple=true)
+    neo_hookean_ = load_op_and_grad(AdFem.libmfem,"neo_hookean", multiple=true)
     u,mu,lamb = convert_to_tensor(Any[u,μ,λ], [Float64,Float64,Float64])
     psi, indices, vv = neo_hookean_(u,mu,lamb)
     J = RawSparseTensor(indices, vv, 2mesh.ndof, 2mesh.ndof)

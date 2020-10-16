@@ -4,7 +4,7 @@ using ADCMEKit
 using NNFEM 
 using PyPlot
 using ProgressMeter 
-using PoreFlow
+using AdFem
 using SparseArrays
 #----------------------------------------------------------------------------
 # step 1: create a computational domain 

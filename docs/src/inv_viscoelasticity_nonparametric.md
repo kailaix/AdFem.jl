@@ -4,7 +4,7 @@ In this section, we consider learning a nonparametric viscoelasticity model. We 
 
 $$\eta(\sigma) = 10 + \frac{5}{1+1000 (\sigma_{xx}^2 + \sigma_{yy}^2 + \sigma_{xy}^2)} \tag{2}$$
 
-This relation makes the constitutive equation (1) in [this section](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example-1) nonlinear. 
+This relation makes the constitutive equation (1) in [this section](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity/#Numerical-Example-1) nonlinear. 
 
 For the numerical simulation, we fix the bottom side of the computational domain and impose external pressure on the right hand side. Traction-free conditions are assumed for all other sides. 
 

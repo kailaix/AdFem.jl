@@ -510,7 +510,7 @@ Updates the stress for the Maxwell model
 
 $$\begin{bmatrix} \dot\sigma_{xx}\ \dot\sigma_{yy}\ \dot\sigma_{xy} \end{bmatrix} + \frac{\mu}{\eta}\begin{bmatrix} 2/3 & -1/3 & 0 \ -1/3 & 2/3 & 0 \ 0 & 0 & 1 \end{bmatrix}\begin{bmatrix} \sigma_{xx}\ \sigma_{yy}\ \sigma_{xy}\end{bmatrix} = \begin{bmatrix} 2\mu + \lambda & \lambda & 0 \ \lambda & 2\mu + \lambda & 0 \ 0 & 0 & \mu \end{bmatrix}\begin{bmatrix} \dot\epsilon_{xx}\ \dot\epsilon_{yy}\ \dot\gamma_{xy} \end{bmatrix}$$
 
-See [here](https://kailaix.github.io/PoreFlow.jl/dev/viscoelasticity/#Numerical-Example) for details. 
+See [here](https://kailaix.github.io/AdFem.jl/dev/viscoelasticity/#Numerical-Example) for details. 
 """
 function update_stress_viscosity(ε2::Array{Float64,2}, ε1::Array{Float64,2}, σ1::Array{Float64,2}, 
             invη::Array{Float64,1}, μ::Array{Float64,1}, λ::Array{Float64,1}, Δt::Float64)

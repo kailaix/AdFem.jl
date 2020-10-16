@@ -774,7 +774,7 @@ function compute_plane_strain_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::
     mode = 0
     N = length(nu)
     @assert length(E)==N
-    plane_strain_and_stress_ = load_op_and_grad(PoreFlow.libmfem,"plane_strain_and_stress")
+    plane_strain_and_stress_ = load_op_and_grad(AdFem.libmfem,"plane_strain_and_stress")
     e,nu,mode = convert_to_tensor(Any[E,nu,mode], [Float64,Float64,Int32])
     out = plane_strain_and_stress_(e,nu,mode)
     set_shape(out, (N, 3, 3))
@@ -787,7 +787,7 @@ function compute_plane_stress_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::
     mode = 1
     N = length(nu)
     @assert length(E)==N
-    plane_strain_and_stress_ = load_op_and_grad(PoreFlow.libmfem,"plane_strain_and_stress")
+    plane_strain_and_stress_ = load_op_and_grad(AdFem.libmfem,"plane_strain_and_stress")
     e,nu,mode = convert_to_tensor(Any[E,nu,mode], [Float64,Float64,Int32])
     out = plane_strain_and_stress_(e,nu,mode)
     set_shape(out, (N, 3, 3))

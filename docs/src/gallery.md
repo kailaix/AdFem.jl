@@ -1,6 +1,6 @@
 # PDE Galleries
 
-Here is a collection of common partial differential equations and how you can solve them using the PoreFlow library. Unless we specify particularly, the computational domain will be $\Omega = [0,1]^2$. The configuration of the computational domain is as follows
+Here is a collection of common partial differential equations and how you can solve them using the AdFem library. Unless we specify particularly, the computational domain will be $\Omega = [0,1]^2$. The configuration of the computational domain is as follows
 
 
 ![](./assets/domain.png)
@@ -23,7 +23,7 @@ $$f(x,y) = 2\pi^2 \sin \pi x \sin \pi y$$
 
 ```julia
 using PyPlot 
-using PoreFlow
+using AdFem
 
 m = 50; n = 50; h = 1/n 
 
@@ -97,7 +97,7 @@ p(x,y) = \sin(\pi x)\sin(\pi y)
 and we let $\nu=0.5$. 
 
 ```julia
-using PoreFlow
+using AdFem
 using PyPlot
 using SparseArrays
 
@@ -205,7 +205,7 @@ println(replace(replace(sympy.julia_code(f), ".*"=>"*"), ".^"=>"^"))
 We can plug the source term into the code 
 
 ```julia
-using PoreFlow
+using AdFem
 using PyPlot
 
 m = 50
@@ -286,7 +286,7 @@ $$\frac{\partial T}{\partial n} = 0$$
 
 
 ```julia
-using PoreFlow
+using AdFem
 using PyPlot
 
 m = 40

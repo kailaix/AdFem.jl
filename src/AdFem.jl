@@ -1,4 +1,4 @@
-module PoreFlow 
+module AdFem 
 
     using SparseArrays
     using LinearAlgebra
@@ -12,7 +12,6 @@ module PoreFlow
 
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2
     np = PyNULL()
-    interpolate = PyNULL()
     LIBMFEM = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("admfem")))
     libmfem = missing 
     LIBADFEM = abspath(joinpath(@__DIR__, "..",  "deps", "build", get_library_name("adfem")))
@@ -20,8 +19,10 @@ module PoreFlow
 
     function __init__()
         copy!(np, pyimport("numpy"))
-        copy!(interpolate,pyimport("scipy.interpolate"))
-        global libmfem = tf.load_op_library(LIBMFEM) # load for tensorflow first
+        if !isfile(LIBMFEM) || !isfile(LIBADFEM)
+            error("Dependencies of AdFem not properly built. Run `Pkg.build(\"AdFem\")` to rebuild AdFem.")
+        end
+        global libmfem = load_library(LIBMFEM)
         global libadfem = load_library(LIBADFEM)
     end
 
@@ -40,6 +41,5 @@ module PoreFlow
     include("MFEM/MUtils.jl")
     include("MFEM/Mechanics.jl")
     include("MFEM/MBDM.jl")
-    
 
 end

@@ -3,11 +3,11 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
-using PoreFlow
+using AdFem
 Random.seed!(233)
 
 function fem_to_gauss_points_mfem(u)
-    fem_to_gauss_points_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_to_gauss_points_mfem")
+    fem_to_gauss_points_mfem_ = load_op_and_grad(AdFem.libmfem,"fem_to_gauss_points_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     fem_to_gauss_points_mfem_(u)
 end

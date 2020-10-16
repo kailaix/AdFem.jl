@@ -2,8 +2,8 @@
 # using Pkg; Pkg.add("PyPlot")
 
 push!(LOAD_PATH, "../src/")
-using Documenter, PoreFlow
-makedocs(sitename="AdFem", modules=[PoreFlow],
+using Documenter, AdFem
+makedocs(sitename="AdFem", modules=[AdFem],
     pages = Any[
         "index.md",
         "Tutorial"=>Any["gallery.md"],
@@ -23,5 +23,5 @@ makedocs(sitename="AdFem", modules=[PoreFlow],
 )
 
 deploydocs(
-    repo = "github.com/kailaix/PoreFlow.jl.git",
+    repo = "github.com/kailaix/AdFem.jl.git",
 )

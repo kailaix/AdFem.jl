@@ -150,7 +150,7 @@ end
     compute_interaction_term(p::Union{PyObject,Array{Float64, 1}}, mesh::Mesh)
 """
 function compute_interaction_term(p::Union{PyObject,Array{Float64, 1}}, mesh::Mesh)
-    compute_interaction_term_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_interaction_term_mfem")
+    compute_interaction_term_mfem_ = load_op_and_grad(AdFem.libmfem,"compute_interaction_term_mfem")
     p = convert_to_tensor(Any[p], [Float64]); p = p[1]
     out = compute_interaction_term_mfem_(p)
     set_shape(out, (2mesh.ndof, ))
@@ -160,7 +160,7 @@ end
     compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh::Mesh)
 """
 function compute_fem_mass_matrix1(rho::Union{PyObject, Array{Float64, 1}}, mesh::Mesh)
-    compute_fem_mass_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_mass_matrix_mfem", multiple=true)
+    compute_fem_mass_matrix_mfem_ = load_op_and_grad(AdFem.libmfem,"compute_fem_mass_matrix_mfem", multiple=true)
     rho = convert_to_tensor(Any[rho], [Float64]); rho = rho[1]
     indices, vals = compute_fem_mass_matrix_mfem_(rho)
     n = mesh.ndof
@@ -178,7 +178,7 @@ end
 """
 function compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
     @assert length(u)==length(v)==get_ngauss(mesh)
-    compute_fem_advection_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_advection_matrix_mfem", multiple=true)
+    compute_fem_advection_matrix_mfem_ = load_op_and_grad(AdFem.libmfem,"compute_fem_advection_matrix_mfem", multiple=true)
     u,v = convert_to_tensor(Any[u,v], [Float64,Float64])
     indices, vals = compute_fem_advection_matrix_mfem_(u,v)
     n = mesh.ndof
@@ -218,7 +218,7 @@ end
 """
 function eval_grad_on_gauss_pts1(u::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
     @assert length(u)==mesh.ndof
-    fem_grad_mfem_ = load_op_and_grad(PoreFlow.libmfem,"fem_grad_mfem")
+    fem_grad_mfem_ = load_op_and_grad(AdFem.libmfem,"fem_grad_mfem")
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     out = fem_grad_mfem_(u)
     m = size(gauss_nodes(mesh), 1)
@@ -253,7 +253,7 @@ function compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
         kappa = reshape(repeat(reshape(kappa, (-1,)), get_ngauss(mesh)), (get_ngauss(mesh), 3, 3))
     end
     @assert size(kappa) == (get_ngauss(mesh), 3, 3)
-    compute_fem_stiffness_matrix_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_fem_stiffness_matrix_mfem", multiple=true)
+    compute_fem_stiffness_matrix_mfem_ = load_op_and_grad(AdFem.libmfem,"compute_fem_stiffness_matrix_mfem", multiple=true)
     kappa = convert_to_tensor(Any[kappa], [Float64]); kappa = kappa[1]
     kappa = reshape(kappa, (-1,))
     indices, vv = compute_fem_stiffness_matrix_mfem_(kappa)
@@ -650,7 +650,7 @@ function compute_fem_laplace_term1(u::Union{PyObject, Array{Float64, 1}},
                                    mesh::Mesh)
     @assert length(u) == mesh.ndof
     @assert length(nu) == get_ngauss(mesh)
-    compute_laplace_term_mfem_ = load_op_and_grad(PoreFlow.libmfem,"compute_laplace_term_mfem")
+    compute_laplace_term_mfem_ = load_op_and_grad(AdFem.libmfem,"compute_laplace_term_mfem")
     u,nu = convert_to_tensor(Any[u,nu], [Float64,Float64])
     out = compute_laplace_term_mfem_(u,nu)
     set_shape(out, (mesh.ndof,))

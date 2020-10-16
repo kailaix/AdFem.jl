@@ -3,7 +3,7 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
-using PoreFlow
+using AdFem
 using Test
 Random.seed!(233)
 

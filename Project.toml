@@ -1,4 +1,4 @@
-name = "PoreFlow"
+name = "AdFem"
 uuid = "c10abcb9-3e37-4bfe-9bab-99a3bc662411"
 authors = ["Kailai Xu <kailaix@stanford.edu>"]
 version = "0.1.0"
@@ -15,8 +15,10 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+ADCME = "0.6"
+MAT = "0.8"
 Parameters = "0.12"
-PyCall = "1.91"
+PyCall = "1.91,1.92"
 PyPlot = "2.9"
 Reexport = "0.2"
 julia = "1"

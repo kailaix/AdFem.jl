@@ -2,7 +2,7 @@ using MAT
 using PyPlot
 using LinearAlgebra
 using ADCME
-using PoreFlow
+using AdFem
 using Distributions
 
 sigma = 0.01
