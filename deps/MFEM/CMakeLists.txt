@@ -53,7 +53,7 @@ endif()
 
 include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${LIBDIR}/../include ${PREFIXDIR}/had)
 find_library(mfem mfem HINTS ${LIBDIR})
-add_library(nnfem_mfem SHARED Common.cpp API.cpp Mechanics.cpp
+add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
         FemLaplace1/FemLaplaceScalar.cpp 
           FemSource1/FemSourceScalar.cpp
           FemToGaussPoints/FemToGaussPointsMfem.cpp
@@ -77,11 +77,11 @@ add_library(nnfem_mfem SHARED Common.cpp API.cpp Mechanics.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp)
           
 message("MFEM = ${mfem}")
-target_link_libraries(nnfem_mfem ${TF_LIB_FILE} ${mfem})
-set_property(TARGET nnfem_mfem PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(admfem ${TF_LIB_FILE} ${mfem})
+set_property(TARGET admfem PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
-set_target_properties(nnfem_mfem PROPERTIES 
+set_target_properties(admfem PROPERTIES 
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build 
                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build
                 ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build)
