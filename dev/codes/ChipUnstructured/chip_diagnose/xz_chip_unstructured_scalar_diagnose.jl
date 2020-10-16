@@ -308,20 +308,14 @@ observed_data = S_data[idx]
 
 loss = mean((S_computed[idx] .- observed_data)^2)
 loss = loss * 1e10
-# ---------------------------------------------------
-# create a session and run 
-# max_iter = 20
-# sess = Session(); init(sess)
-# loss_ = BFGS!(sess, loss, max_iter)
-# figure(); semilogy(loss_); savefig("chip_unstructured_scalar_loss.png")
 
 sess = Session(); init(sess)
 # @info run(sess, loss, k_chip=>2.60475)
-lineview(sess, θ, loss, [2.60475], ones(1))
-savefig("lineview.png")
+# lineview(sess, θ, loss, [2.60475], ones(1))
+# savefig("lineview.png")
 # gradview(sess, θ, sum(S[2, :]^2), ones(1))
 # savefig("gradview_S2.png")
 # gradview(sess, θ, sum(S_computed^2), ones(1))
 # savefig("gradview_Scomputed.png")
-# gradview(sess, θ, loss, ones(1))
-# savefig("gradview.png")
+gradview(sess, θ, loss, ones(1))
+savefig("gradview.png")
