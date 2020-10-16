@@ -1,8 +1,8 @@
+using ADCME
 using LinearAlgebra
 using MAT
 using PoreFlow
-using PyPlot
-matplotlib.use("agg") # or try "macosx"
+using PyPlot; matplotlib.use("agg") # or try "macosx"
 using SparseArrays
 
 # geometry setup in domain [0,1]^2
@@ -310,7 +310,7 @@ loss = mean((S_computed[idx] .- observed_data)^2)
 loss = loss * 1e10
 # ---------------------------------------------------
 # create a session and run 
-max_iter = 20
+max_iter = 50
 sess = Session(); init(sess)
 loss_ = BFGS!(sess, loss, max_iter)
 figure(); semilogy(loss_); savefig("chip_unstructured_scalar_loss.png")
