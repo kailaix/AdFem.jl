@@ -1,7 +1,6 @@
-
-
-![](./docs/src/assets/logo.png)
-
+<p align="center">
+<img src="./docs/src/assets/logo.png" width="500"/>
+</p>
 
 
 | Documentation                                                |
@@ -46,8 +45,9 @@ K, F = impose_Dirichlet_boundary_conditions(K, F, bdnode, zeros(length(bdnode)))
 sol = K\F
 ```
 
-![](./docs/src/assets/poisson_solution.png)
-
+<p align="center">
+<img src="./docs/src/assets/poisson_solution.png" width="500"/>
+</p>
 
 The above code shows how to use a linear finite element space to approximate the state variable on a given mesh, define boundary conditions, and construct the linear system. 
 
