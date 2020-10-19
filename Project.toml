@@ -1,7 +1,7 @@
 name = "AdFem"
 uuid = "c10abcb9-3e37-4bfe-9bab-99a3bc662411"
 authors = ["Kailai Xu <kailaix@stanford.edu>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ADCME = "07b341a0-ce75-57c6-b2de-414ffdc00be5"
