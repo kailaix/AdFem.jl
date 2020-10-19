@@ -43,7 +43,7 @@ where $f$ is the yield surface.
 
     $$\dot\varepsilon^p_{ij} = \mathrm{const}\times\left(1-\frac{k(\xi)}{J_2(\sigma)}\right)_+ s_{ij}$$
     
-    ![](./assets/pi.png)
+    ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/pi.png)
 
 In the rate-indpendent plasticity, there exists $\lambda$ such that 
 
@@ -72,8 +72,8 @@ The three equations (1), (2) and (3) fully characterizes the constitutive relati
 
 |  Description          | Displacement Field             | Vertical Displacement           |
 | ---------- | ------------------------------ | ------------------------------- |
-| Plasticity | ![](./assets/plasticity_u.gif) | ![](./assets/plasticity_du.gif) |
-| Elasticity | ![](./assets/elasticity_u.gif) | ![](./assets/elasticity_du.gif) |
+| Plasticity | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/plasticity_u.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/plasticity_du.gif) |
+| Elasticity | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/elasticity_u.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/elasticity_du.gif) |
 
 
 

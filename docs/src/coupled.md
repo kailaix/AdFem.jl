@@ -89,7 +89,7 @@ The mechanical equation and fluid equation are coupled through $p$ and $\varepsi
 
 We discretize the domain $[0,(n-1)h]\times [0, (m-1)h]$ uniformly with step size $h$.
 
-![](./assets/domain.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/domain.png)
 
 The finite element method is usually used to solve the mechanics equation, whose discretization reads
 
@@ -129,7 +129,7 @@ and
 
 $$\xi = \frac{x-x_0}{h}\quad \eta = \frac{y-y_0}{h}$$
 
-![](./assets/rectangle.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/rectangle.png)
 
 The terms in the weak form can be expressed as 
 
@@ -218,7 +218,7 @@ g(x,y,t)&= \begin{bmatrix}
 
  u displacement                             | v displacement                             | Pressure                                   | Von Mises Stress               
  ------------------------------------------ | ------------------------------------------ | ------------------------------------------ | ------------------------------ 
- ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) | ![](./assets/disp_s_flood.gif) 
+ ![disp_u_flood](./assets/disp_u_flood.gif) | ![disp_v_flood](./assets/disp_v_flood.gif) | ![disp_p_flood](./assets/disp_p_flood.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_s_flood.gif) 
 
 ### Injection-Production in Homogenious Media
 
@@ -240,9 +240,9 @@ g(x,y,t)&= \begin{bmatrix}
 
 | Description                | u displacement                | v displacement                | Pressure                      |
 | -------------------------- | ----------------------------- | ----------------------------- | ----------------------------- |
-| $K = 0.5,\ \sigma_Y = 0.3$ | ![](./assets/disp_u_ppi1.gif) | ![](./assets/disp_v_ppi1.gif) | ![](./assets/disp_p_ppi1.gif) |
-| $K = 0,\ \sigma_Y = 0.3$   | ![](./assets/disp_u_ppi2.gif) | ![](./assets/disp_v_ppi2.gif) | ![](./assets/disp_p_ppi2.gif) |
-| $K = 0.5,\ \sigma_Y = 1.0$ | ![](./assets/disp_u_ppi3.gif) | ![](./assets/disp_v_ppi3.gif) | ![](./assets/disp_p_ppi3.gif) |
+| $K = 0.5,\ \sigma_Y = 0.3$ | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_u_ppi1.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_v_ppi1.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_p_ppi1.gif) |
+| $K = 0,\ \sigma_Y = 0.3$   | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_u_ppi2.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_v_ppi2.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_p_ppi2.gif) |
+| $K = 0.5,\ \sigma_Y = 1.0$ | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_u_ppi3.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_v_ppi3.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disp_p_ppi3.gif) |
 
 
 

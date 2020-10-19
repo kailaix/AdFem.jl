@@ -174,7 +174,7 @@ end
 
 Creates a mesh with a reference triangle. 
 
-![](./assets/mapping.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mapping.png)
 
 """
 function Mesh(; order::Int64 = -1, 

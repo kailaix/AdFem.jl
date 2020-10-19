@@ -3,7 +3,7 @@
 Here is a collection of common partial differential equations and how you can solve them using the AdFem library. Unless we specify particularly, the computational domain will be $\Omega = [0,1]^2$. The configuration of the computational domain is as follows
 
 
-![](./assets/domain.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/domain.png)
 
 We only show the forward modeling, but the inverse modeling is a by-product of the AD-capable implementation!
 
@@ -47,7 +47,7 @@ visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->sin(π*x)*sin(π*y), m, 
 title("Reference")
 ```
 
-![](./assets/gallery/poisson.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gallery/poisson.png)
 
 ## Stokes's Problem
 
@@ -172,9 +172,9 @@ title("Computed")
 
 | Variable                   | Result                   |
 |-----------------------------|---------------------------|
-| $u$ |       ![](./assets/gallery/stokes_u.png)       |
-|  $v$                           | ![](./assets/gallery/stokes_v.png) |
-|  $p$                           | ![](./assets/gallery/stokes_p.png) |
+| $u$ |       ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gallery/stokes_u.png)       |
+|  $v$                           | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gallery/stokes_v.png) |
+|  $p$                           | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gallery/stokes_p.png) |
 
 
 ## Heat Transfer 
@@ -274,7 +274,7 @@ p = visualize_scalar_on_fvm_points(abs.(U-Solution), m, n, h)
 
 | Computed | Error |
 |----------| ----- |
-| ![](./assets/gallery/heat_sol.gif) | ![](./asset/gallery/../../assets/gallery/heat_error.gif)|
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gallery/heat_sol.gif) | ![](./asset/gallery/../../assets/gallery/heat_error.gif)|
 
 
 ### Advection Effect
@@ -339,4 +339,4 @@ saveanim(p, "advec.gif")
 
 ```
 
-![](./assets/gallery/advec.gif)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gallery/advec.gif)

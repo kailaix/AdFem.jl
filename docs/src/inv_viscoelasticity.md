@@ -27,7 +27,7 @@ $$\begin{aligned}
 
 
 
-![](./assets/visco1.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco1.png)
 
 
 
@@ -37,7 +37,7 @@ We assume that the Lamé constants $\lambda$ and $\mu$ are given. The viscosity 
 
 | True Viscosity Distribution  | Von Mises Stress                | Displacement                    |
 | ---------------------------- | ------------------------------- | ------------------------------- |
-| ![](./assets/space/true.png) | ![](./assets/space/space_s.gif) | ![](./assets/space/space_u.gif) |
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/space/true.png) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/space/space_s.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/space/space_u.gif) |
 
 
 
@@ -66,7 +66,7 @@ with respect to $\bm{\sigma}^n$, $\eta$ and $\mathbf{u}^{n}$.
 Surprisingly, the seemingly complex formula (1) admits a simple implementation using automatic differentiation (of course a special technique called **physics constrained learning** is needed). Once the gradients $\frac{\partial\mathcal{J}}{\partial \eta}$ is computed, the inversion problem can be solved using gradient-based optimization techniques (e.g., LBFGS).
 
 
-![](./assets/gd.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gd.png)
 
 ## Numerical Example
 
@@ -74,12 +74,12 @@ We present the numerical example here. The true model and inverted model are sho
 
 | True model                   | Inverted result                  |
 | ---------------------------- | -------------------------------- |
-| ![](./assets/space/true.png) | ![](./assets/space/iter0200.png) |
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/space/true.png) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/space/iter0200.png) |
 
 
 We also show the inversion results in each iteration:
 
-![](./assets/space/iter.gif)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/space/iter.gif)
 
 
 ## Codes

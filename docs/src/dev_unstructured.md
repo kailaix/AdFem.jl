@@ -18,7 +18,7 @@ The basic workflow is to go into `deps/MFEM` directory. Then
 
 The main approach for assembling matrices and vectors in finite element methods is to loop over each element (triangles in our case), and computes contributions to the corresponding local degrees of freedom (DOF). For example, for P1 (linear) element, the local DOFs are three vertices; for P2 (quadratic) element, the local DOFs are both vertices and edges. 
 
-![](./assets/mfem/dof.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/dof.png)
 
 Each finite element (triangle) is represented by `NNFEM_Element` in the C++ shared library of AdFem. The local DOFs are mapped to global DOFs via `dof` array, which is a 6-dimensional array. For P1 element, the last three components are redundant. For P2 elements, the global indices are arranged in a way such that all edge indices are after the nodal indices. The mapping between edge indices and vertices can be found in `edges` in the structure [`Mesh`](@ref). 
 
@@ -42,7 +42,7 @@ int J = elem->dof[j];`
 
 For the quadratic element, it has 6 DOFs for each element
 
-![](./assets/quadraticelem.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/quadraticelem.png)
 
 Here $x_{ij} = x_i - x_j$, $y_{ij} = y_i - y_j$. We can use this information to assemble linear or bilinear forms. For example, in the course of implementing [`compute_fem_traction_term1`](@ref), we can first extract quadrature rules using 
 
@@ -67,7 +67,7 @@ mesh = UnitSquareMesh(8, 8, "left")
 
 | FEniCS | AdFem |
 |----------------|--------------|
-|   ![](./assets/mfem/mesh_fenics.png)            |      ![](./assets/mfem/mesh_mfem.png)        |
+|   ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/mesh_fenics.png)            |      ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/mesh_mfem.png)        |
 
 As an example, in `deps/MFEM/ComputeInteractionTerm`, we developed a custom operator to compute
 $$\int_\Omega p \begin{bmatrix}\frac{\partial u}{\partial x} \\\frac{\partial u}{\partial y}\end{bmatrix} dx$$

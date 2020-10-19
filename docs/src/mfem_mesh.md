@@ -6,11 +6,11 @@ The `Mesh` function in AdFem can also any any mesh files supported by [`meshio`]
 
 After defining the geometry and generating the mesh in the Gmsh software, we export the mesh in the file menu:
 
-![](./assets/mfem/mfem_mesh1.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/mfem_mesh1.png)
 
 Make sure you save the file as `stl` format
 
-![](./assets/mfem/mfem_mesh2.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/mfem_mesh2.png)
 
 You can read the file (e.g., `example.stl`) into AdFem with 
 

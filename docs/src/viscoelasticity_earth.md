@@ -73,7 +73,7 @@ where $f$ is the body force and $\rho$ is the density.
 
 |displacement $u$                                 |velocity $\dot u$                              | strain rate   $\partial \dot u / \partial x$     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
-|![](./assets/visco-earth/strikeslip-disp.gif)   |![](./assets/visco-earth/strikeslip-velocity.gif)    |![](./assets/visco-earth/strikeslip-strain_rate.gif)      |
+|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/strikeslip-disp.gif)   |![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/strikeslip-velocity.gif)    |![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/strikeslip-strain_rate.gif)      |
 
 ## Dip-slip Fault Setting
 
@@ -82,14 +82,14 @@ The constitutive relation of a dip-slip fault can be described by a plane strain
 
 |Finite element model                             |Elastic response                               | 
 |:------------------------------------------------|:----------------------------------------------|
-|![](./assets/visco-earth/dipslip-model.png)      |![](./assets/visco-earth/dipslip-elastic.png)  |
+|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-model.png)      |![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-elastic.png)  |
 
 
 ### Numerical result
 
 |horizontal slip $u_x$                            |vertical slip $u_y$                             | von Mises stress     |
 |:------------------------------------------------|:----------------------------------------------|:-------------------------------------------------|
-|![](./assets/visco-earth/dipslip-ux.png)   |![](./assets/visco-earth/dipslip-uy.png)    |![](./assets/visco-earth/dipslip-vonMises.png)     |
+|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-ux.png)   |![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-uy.png)    |![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-vonMises.png)     |
 
 ```@raw html
 <center>

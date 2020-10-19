@@ -116,7 +116,7 @@ Analytical Solution:
 
 $$u(x,y) = xy(x-1)(y-1) \quad v(x,y) = xy(x-1)(y-1)$$
 
-![](./assets/mfem/varying_elasticity1.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/varying_elasticity1.png)
 
 ### Test Case 2
 
@@ -127,7 +127,7 @@ $$u(x,y) = x^2y^2(x-1)(y^2-1) \quad v(x,y) = x^2y^2(x-1)(y^2-1)$$
 
 
 
-![](./assets/mfem/varying_elasticity2.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/varying_elasticity2.png)
 
 
 
@@ -139,4 +139,4 @@ $$u(x,y) = x^2y^2(x-1)(y^2-1) \quad v(x,y) = x^2y^2(x-1)(y^2-1)$$
 Analytical Solution:
 
 $$u(x,y) = x^2y^2(x-1)(y^2-1) \quad v(x,y) = xy(x-1)(y-1)$$
-![](./assets/mfem/varying_elasticity3.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/varying_elasticity3.png)

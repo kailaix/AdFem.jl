@@ -30,11 +30,11 @@ $$\phi_{l,1}\cdot \mathbf{n}_{E_k}|_{E_k} = \begin{cases}
 The six basis functions can be visualized as follows (codes are [here](./snippets/BDM)):
 
 
-![](./assets/BDM.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/BDM.png)
 
 In the finite element calculation, we need to map the reference triangle to the physical one. 
 
-![](./assets/mapping.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mapping.png)
 
 
 
