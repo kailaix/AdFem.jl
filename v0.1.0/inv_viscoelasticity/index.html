@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Inverse Modeling for Space Varying Viscoelasticity · AdFem</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="AdFem logo"/></a><div class="docs-package-name"><span class="docs-autofit">AdFem</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">AdFem.jl Documentation</a></li><li><span class="tocitem">Tutorial</span><ul><li><a class="tocitem" href="../gallery/">PDE Galleries</a></li></ul></li><li><span class="tocitem">Forward Computation</span><ul><li><a class="tocitem" href="../coupled/">Coupled Geomechanics and Single Phase Flow</a></li><li><a class="tocitem" href="../staticelasticity/">Static Linear Elasticity</a></li><li><a class="tocitem" href="../plasticity/">Plasticity</a></li><li><a class="tocitem" href="../viscoelasticity/">Viscoelasticity</a></li><li><a class="tocitem" href="../viscoelasticity_earth/">Modeling Viscoelasticity of the Earth</a></li><li><a class="tocitem" href="../earthquake/">Earthquake Simulation with Rate-and-State Friction</a></li><li><a class="tocitem" href="../heatequation/">Heat Equation</a></li><li><a class="tocitem" href="../elastodynamics/">Elastodynamics</a></li><li><a class="tocitem" href="../twophaseflow/">Coupled Geomechanics and Multiphase Flow</a></li><li><a class="tocitem" href="../NavierStokes2/">Navier-Stokes equations</a></li><li><a class="tocitem" href="../SteadyStateNavierStokes/">Steady-state Navier-Stokes equations</a></li><li><a class="tocitem" href="../CHTCoupled/">Conjugate heat transfer coupled solver for incompressible fluid</a></li><li><a class="tocitem" href="../fwd_mixed_poisson/">Mixed Finite Element Methods for Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../fwd_linear_elasticity/">Mixed Finite Element Methods for Linear Elasticity</a></li><li><a class="tocitem" href="../fwd_stress_based_viscoelasticity/">Mixed Finite Element Methods for Linear Viscoelasticity</a></li></ul></li><li><span class="tocitem">Inverse Modeling</span><ul><li><a class="tocitem" href="../inverse/">Inverse Modeling for Poroelasticity Models</a></li><li class="is-active"><a class="tocitem" href>Inverse Modeling for Space Varying Viscoelasticity</a><ul class="internal"><li><a class="tocitem" href="#Problem-Description"><span>Problem Description</span></a></li><li><a class="tocitem" href="#Forward-simulation"><span>Forward simulation</span></a></li><li><a class="tocitem" href="#Inversion-Method"><span>Inversion Method</span></a></li><li><a class="tocitem" href="#Numerical-Example"><span>Numerical Example</span></a></li><li><a class="tocitem" href="#Codes"><span>Codes</span></a></li></ul></li><li><a class="tocitem" href="../coupled_viscoelasticity/">Coupled Viscoelasticity and Single Phase Flow</a></li><li><a class="tocitem" href="../inv_twophaseflow/">Coupled Geomechanics and Multiphase Flow</a></li><li><a class="tocitem" href="../inv_viscoelasticity_nonparametric/">Inverse Modeling for Nonparametric Viscoelasticity</a></li><li><a class="tocitem" href="../inv_viscoelasticity_earth/">Viscoelasticity Model for the Earth</a></li></ul></li><li><span class="tocitem">Advanced Topics</span><ul><li><a class="tocitem" href="../mfem_tutorial/">Unstructured Meshes in AdFem</a></li><li><a class="tocitem" href="../mfem_mesh/">Construct Unstructured Meshes for AdFem</a></li><li><a class="tocitem" href="../dev_unstructured/">Adding Custom Operators for Unstructured Meshes</a></li><li><a class="tocitem" href="../BDMElement/">BDM Finite Element</a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Inverse Modeling</a></li><li class="is-active"><a href>Inverse Modeling for Space Varying Viscoelasticity</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Inverse Modeling for Space Varying Viscoelasticity</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/kailaix/AdFem.jl/blob/master/docs/src/inv_viscoelasticity.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Inverse-Modeling-for-Space-Varying-Viscoelasticity"><a class="docs-heading-anchor" href="#Inverse-Modeling-for-Space-Varying-Viscoelasticity">Inverse Modeling for Space Varying Viscoelasticity</a><a id="Inverse-Modeling-for-Space-Varying-Viscoelasticity-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Modeling-for-Space-Varying-Viscoelasticity" title="Permalink"></a></h1><h2 id="Problem-Description"><a class="docs-heading-anchor" href="#Problem-Description">Problem Description</a><a id="Problem-Description-1"></a><a class="docs-heading-anchor-permalink" href="#Problem-Description" title="Permalink"></a></h2><p>In this example, we consider the Maxwell viscoelasticity model. The governing equations are</p><ul><li>Momentum Balance:</li></ul><div>\[\sigma_{ij,j} + \rho f_i = \rho \ddot u_i\]</div><ul><li>Constitutive Relation (Plane Strain Viscoelasticity):</li></ul><div>\[\dot \sigma_{ij} + \frac{\mu}{\eta} \left( \sigma_{ij} - \frac{\sigma_{kk}}{3}\delta_{ij} \right) = 2\mu \dot \varepsilon_{ij} + \lambda \dot\varepsilon_{kk}\delta_{ij}\]</div><ul><li>Boundary Conditions:</li></ul><div>\[\begin{aligned}
+\bm{\sigma} \mathbf{n} &amp;=
+\begin{cases}
+0 &amp; \text{Top or Bottom} \\ 
+[-T, 0] &amp; \text{Right} \\
+\end{cases}  \\
+\mathbf{u} &amp;=0 \text{\hspace{3.1cm} Left} &amp;
+\end{aligned}\]</div><p><img src="../assets/visco1.png" alt/></p><p>We assume that the Lamé constants <span>$\lambda$</span> and <span>$\mu$</span> are given. The viscosity <span>$\eta$</span> is spatial varying. We want to <strong>estimate <span>$\eta$</span> based on the measurement of surface horizontal displacements</strong>. The true model consists of two layers of different vicosity. </p><table><tr><th style="text-align: right">True Viscosity Distribution</th><th style="text-align: right">Von Mises Stress</th><th style="text-align: right">Displacement</th></tr><tr><td style="text-align: right"><img src="../assets/space/true.png" alt/></td><td style="text-align: right"><img src="../assets/space/space_s.gif" alt/></td><td style="text-align: right"><img src="../assets/space/space_u.gif" alt/></td></tr></table><h2 id="Forward-simulation"><a class="docs-heading-anchor" href="#Forward-simulation">Forward simulation</a><a id="Forward-simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Forward-simulation" title="Permalink"></a></h2><p>We implement the forward simulation using finite element analysis discretization and <span>$\alpha$</span>-scheme, an implicit time stepping scheme that offers good stability and accuracy. </p><h2 id="Inversion-Method"><a class="docs-heading-anchor" href="#Inversion-Method">Inversion Method</a><a id="Inversion-Method-1"></a><a class="docs-heading-anchor-permalink" href="#Inversion-Method" title="Permalink"></a></h2><p>We formulate the loss function as the discrepancy between observations and predictions</p><div>\[\mathcal{J}(\eta) = \sum_{i=1}^{N_T} \sum_{k=1}^{m+1} (\mathbf{u}_{ik}^{\mathrm{obs}}- \mathbf{u}_i(x_k, 0))^2\]</div><p>Unlike the linear elasticity case, in the viscoelasticity case, the stress is history-dependent. Therefore, when we calculate the gradients <span>$\frac{\partial\mathcal{J}}{\partial \eta}$</span>, the state variables are both <span>$\mathbf{u}$</span> and <span>$\bm{\sigma}$</span>. Additionally, in each time step, since we have used an implicit scheme, we need to solve an equation </p><div>\[A(\eta, \bm{\sigma}^{n+1}) \mathbf{u}^{n+1} = \mathbf{f}(\bm{\sigma}^n, \mathbf{u}^{n})\]</div><p>The state adjoint method requires us to compute the gradients of </p><div>\[\mathbf{u}^{n+1}(\bm{\sigma}^n, \eta, \mathbf{u}^{n}) = A(\eta, \bm{\sigma}^{n+1})^{-1} \mathbf{f}(\bm{\sigma}^n, \mathbf{u}^{n})\tag{1}\]</div><p>with respect to <span>$\bm{\sigma}^n$</span>, <span>$\eta$</span> and <span>$\mathbf{u}^{n}$</span>. </p><p>Surprisingly, the seemingly complex formula (1) admits a simple implementation using automatic differentiation (of course a special technique called <strong>physics constrained learning</strong> is needed). Once the gradients <span>$\frac{\partial\mathcal{J}}{\partial \eta}$</span> is computed, the inversion problem can be solved using gradient-based optimization techniques (e.g., LBFGS).</p><p><img src="../assets/gd.png" alt/></p><h2 id="Numerical-Example"><a class="docs-heading-anchor" href="#Numerical-Example">Numerical Example</a><a id="Numerical-Example-1"></a><a class="docs-heading-anchor-permalink" href="#Numerical-Example" title="Permalink"></a></h2><p>We present the numerical example here. The true model and inverted model are shown as follows. We assume that the viscosity values are the same horizontally. </p><table><tr><th style="text-align: right">True model</th><th style="text-align: right">Inverted result</th></tr><tr><td style="text-align: right"><img src="../assets/space/true.png" alt/></td><td style="text-align: right"><img src="../assets/space/iter0200.png" alt/></td></tr></table><p>We also show the inversion results in each iteration:</p><p><img src="../assets/space/iter.gif" alt/></p><h2 id="Codes"><a class="docs-heading-anchor" href="#Codes">Codes</a><a id="Codes-1"></a><a class="docs-heading-anchor-permalink" href="#Codes" title="Permalink"></a></h2><p>The highlights of the implementation are</p><ul><li><p>The <span>$\alpha$</span>-scheme for time stepping. A stable scheme is important for inversion since we need to try out different parameters, which may crash the simulation if the scheme is sensitive to physical parameters. Therefore, we chose the <span>$\alpha$</span> scheme, which is an implicit scheme that offers satisfactory stability. </p></li><li><p><code>while_loop</code>. <code>while_loop</code> mechanism allows us to create only one computational graph for all the iterations. This is essential for simulations that span large time horizons. Fortunately, TensorFlow offers this functionality. </p></li><li><p>Custom sparse solver. We have used <a href="https://kailaix.github.io/ADCME.jl/dev/api/#Base.:\\">custom sparse solvers</a> in <code>ADCME</code>, which uses Eigen <code>SparseLU</code> as the backend. The sparse solver is the key for efficient implementation of physics constrained learning; otherwise, direct implementation in TensorFlow will convert the sparse matrix to dense and then invoke BLAS libraries. </p></li></ul><pre><code class="language-julia">using Revise
+using AdFem
+using PyCall
+using LinearAlgebra
+using PyPlot
+using SparseArrays
+using MAT
+using ADCMEKit
+np = pyimport(&quot;numpy&quot;)
+
+
+stepsize = 1
+if length(ARGS)==1
+  global stepsize = parse(Int64, ARGS[1])
+end
+@info stepsize
+
+mode = &quot;training&quot;
+
+## alpha-scheme
+β = 1/4; γ = 1/2
+a = b = 0.1
+
+n = 15
+m = 2n 
+h = 0.01
+NT = 100
+Δt = 2.0/NT
+ηmax = 1
+ηmin = 0.5
+
+obs_idx = collect(1:stepsize:m+1)
+
+bdedge = bcedge(&quot;right&quot;, m, n, h)
+bdnode = bcnode(&quot;lower&quot;, m, n, h)
+
+# λ = Variable(1.0)
+# μ = Variable(1.0)
+# invη = Variable(1.0)
+
+function eta_model(idx)
+  if idx == 1
+    out = ηmin * ones(n)
+    out[1:div(n,3)] .= ηmax
+    out
+  elseif idx==2
+    out = ηmin * ones(4, m, n)
+    out[:, :, 1:div(n,3)] .= ηmax
+    out[:, :, 2div(n,3):end] .= ηmax
+    out[:]
+  end
+end
+
+function visualize_inv_eta(X, k)
+    x = LinRange(0.5h,m*h, m)
+    y = LinRange(0.5h,n*h, n)
+    V = zeros(m, n)
+    for i = 1:m  
+        for j = 1:n 
+            elem = (j-1)*m + i 
+            V[i, j] = mean(X[4(elem-1)+1:4elem])
+        end
+    end
+    close(&quot;all&quot;)
+    pcolormesh(x, y, V&#39;/50.0, vmin=ηmin-(ηmax-ηmin)/4, vmax=ηmax+(ηmax-ηmin)/4)
+    colorbar(shrink=0.5)
+    xlabel(&quot;x&quot;)
+    ylabel(&quot;y&quot;)
+    # title(&quot;Iteration = $k&quot;)
+    axis(&quot;scaled&quot;)
+    gca().invert_yaxis()
+    if k == &quot;true&quot;
+      title(&quot;True Model&quot;)
+      savefig(&quot;true.png&quot;)
+      return 
+    end
+    k_ = string(k)
+    k_ = reduce(*, &quot;0&quot; for i = 1:3-length(k_))*k_
+    title(&quot;Iteration = $k_&quot;)
+    savefig(&quot;iter$k_.png&quot;)
+end
+
+λ = constant(2.0)
+μ = constant(0.2)
+if mode==&quot;data&quot;
+  global invη_var = constant(eta_model(1))
+  invη = reshape(repeat(invη_var, 1, 4m), (-1,))
+  global invη *= 50.0
+else
+    global invη_var = Variable((ηmin + ηmax)/2*ones(n))
+    invη_ = reshape(repeat(invη_var, 1, 4m), (-1,))
+    # invη_ = constant(eta_model(1))
+    global invη = 50.0*invη_
+end
+
+
+
+fn_G = invη-&gt;begin 
+  G = tensor([1/Δt+2/3*μ*invη -μ/3*invη 0.0
+    -μ/3*invη 1/Δt+2/3*μ*invη 0.0
+    0.0 0.0 1/Δt+μ*invη])
+  invG = inv(G)
+end
+invG = map(fn_G, invη)
+S = tensor([2μ/Δt+λ/Δt λ/Δt 0.0
+    λ/Δt 2μ/Δt+λ/Δt 0.0
+    0.0 0.0 μ/Δt])
+H = invG*S
+
+
+M = compute_fem_mass_matrix1(m, n, h)
+Zero = spzeros((m+1)*(n+1), (m+1)*(n+1))
+M = SparseTensor([M Zero;Zero M])
+
+K = compute_fem_stiffness_matrix(H, m, n, h)
+C = a*M + b*K # damping matrix 
+L = M + γ*Δt*C + β*Δt^2*K
+L, Lbd = fem_impose_Dirichlet_boundary_condition_experimental(L, bdnode, m, n, h)
+
+
+a = TensorArray(NT+1); a = write(a, 1, zeros(2(m+1)*(n+1))|&gt;constant)
+v = TensorArray(NT+1); v = write(v, 1, zeros(2(m+1)*(n+1))|&gt;constant)
+d = TensorArray(NT+1); d = write(d, 1, zeros(2(m+1)*(n+1))|&gt;constant)
+U = TensorArray(NT+1); U = write(U, 1, zeros(2(m+1)*(n+1))|&gt;constant)
+Sigma = TensorArray(NT+1); Sigma = write(Sigma, 1, zeros(4*m*n, 3)|&gt;constant)
+Varepsilon = TensorArray(NT+1); Varepsilon = write(Varepsilon, 1,zeros(4*m*n, 3)|&gt;constant)
+
+
+Forces = zeros(NT, 2(m+1)*(n+1))
+for i = 1:NT
+  T = eval_f_on_boundary_edge((x,y)-&gt;0.1, bdedge, m, n, h)
+
+  # if i&gt;=NT÷2
+  #   T *= 0.0
+  # end
+  T = [-T T]
+#   T = [T T]
+  rhs = compute_fem_traction_term(T, bdedge, m, n, h)
+
+#   if i*Δt&gt;0.5
+#     rhs = zero(rhs)
+#   end
+  Forces[i, :] = rhs
+end
+Forces = constant(Forces)
+
+function condition(i, tas...)
+  i &lt;= NT
+end
+
+function body(i, tas...)
+  a_, v_, d_, U_, Sigma_, Varepsilon_ = tas
+  a = read(a_, i)
+  v = read(v_, i)
+  d = read(d_, i)
+  U = read(U_, i)
+  Sigma = read(Sigma_, i)
+  Varepsilon = read(Varepsilon_, i)
+
+  res = batch_matmul(invG/Δt, Sigma)
+  F = compute_strain_energy_term(res, m, n, h) - K * U
+  rhs = Forces[i] - F
+
+  td = d + Δt*v + Δt^2/2*(1-2β)*a 
+  tv = v + (1-γ)*Δt*a 
+  rhs = rhs - C*tv - K*td
+  rhs = scatter_update(rhs, constant([bdnode; bdnode.+(m+1)*(n+1)]), constant(zeros(2*length(bdnode))))
+
+
+  ## alpha-scheme
+  a = L\rhs # bottleneck  
+  d = td + β*Δt^2*a 
+  v = tv + γ*Δt*a 
+  U_new = d
+
+  Varepsilon_new = eval_strain_on_gauss_pts(U_new, m, n, h)
+
+  res2 = batch_matmul(invG * S, Varepsilon_new-Varepsilon)
+  Sigma_new = res +  res2
+
+  i+1, write(a_, i+1, a), write(v_, i+1, v), write(d_, i+1, d), write(U_, i+1, U_new),
+        write(Sigma_, i+1, Sigma_new), write(Varepsilon_, i+1, Varepsilon_new)
+end
+
+
+i = constant(1, dtype=Int32)
+_, _, _, _, u, sigma, varepsilon = while_loop(condition, body, 
+                  [i, a, v, d, U, Sigma, Varepsilon])
+
+U = stack(u)
+Sigma = stack(sigma)
+Varepsilon = stack(varepsilon)
+
+if mode!=&quot;data&quot;
+  data = matread(&quot;viscoelasticity.mat&quot;)
+  global Uval,Sigmaval, Varepsilonval = data[&quot;U&quot;], data[&quot;Sigma&quot;], data[&quot;Varepsilon&quot;]
+  U.set_shape((NT+1, size(U, 2)))
+  idx0 = 1:4m*n
+  Sigma = map(x-&gt;x[idx0,:], Sigma)
+  global loss = sum((U[:, obs_idx] - Uval[:, obs_idx])^2) 
+end
+
+if !isdir(string(stepsize));mkdir(string(stepsize)); end
+sess = Session(); init(sess)
+
+cb = (v, i, l)-&gt;begin
+  println(&quot;[$i] loss = $l&quot;)
+  if i==&quot;true&quot; || mod(i,20)==0
+    inv_eta = v[1]
+    matwrite(&quot;$stepsize/eta$i.mat&quot;, Dict(&quot;eta&quot;=&gt;inv_eta))
+  end
+end
+
+if mode==&quot;data&quot;
+  Uval,Sigmaval, Varepsilonval = run(sess, [U, Sigma, Varepsilon])
+  matwrite(&quot;viscoelasticity.mat&quot;, Dict(&quot;U&quot;=&gt;Uval, &quot;Sigma&quot;=&gt;Sigmaval, &quot;Varepsilon&quot;=&gt;Varepsilonval))
+
+  # p = visualize_von_mises_stress(Sigmaval[1:5:end,:,:], m, n, h); saveanim(p, &quot;space_s.gif&quot;)
+  # p = visualize_displacement(Uval[1:5:end,:], m, n, h); saveanim(p, &quot;space_u.gif&quot;)
+
+  visualize_inv_eta(run(sess, invη), &quot;true&quot;)
+  # cb([run(sess, invη)], &quot;true&quot;, 0.0)
+  error(&quot;Stop!&quot;)
+end
+
+v_ = []
+i_ = []
+l_ = []
+
+
+loss_ = BFGS!(sess, loss*1e10, vars=[invη], callback=cb, var_to_bounds=Dict(invη_var=&gt;(0.1,2.0)))
+</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inverse/">« Inverse Modeling for Poroelasticity Models</a><a class="docs-footer-nextpage" href="../coupled_viscoelasticity/">Coupled Viscoelasticity and Single Phase Flow »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 19 October 2020 20:43">Monday 19 October 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
