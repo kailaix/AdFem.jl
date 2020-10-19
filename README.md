@@ -19,15 +19,15 @@ AdFem is built on [ADCME](https://github.com/kailaix/ADCME.jl), an automatic dif
 
 As an example, we consider solving the Poisson's equation in AdFem
 
-![](./docs/src/assets/eq1.svg)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/eq1.svg)
 
 Here
 
-![](./docs/src/assets/eq2.svg)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/eq2.svg)
 
 The weak form for the Poisson's equation is to solve a variational equation 
 
-![](./docs/src/assets/eq3.svg)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/eq3.svg)
 
 The problem is easily translated in AdFem:
 
@@ -48,7 +48,7 @@ sol = K\F
 ```
 
 <p align="center">
-<img src="./docs/src/assets/poisson_solution.png" width="500"/>
+<img src="https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/poisson_solution.png" width="500"/>
 </p>
 
 The above code shows how to use a linear finite element space to approximate the state variable on a given mesh, define boundary conditions, and construct the linear system. 
@@ -72,7 +72,7 @@ sess = Session(); init(sess)
 BFGS!(sess, loss)
 ```
 
-![](./docs/src/assets/poisson_kappa.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/poisson_kappa.png)
 
 ## Installation 
 
