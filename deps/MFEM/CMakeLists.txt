@@ -53,6 +53,7 @@ endif()
 
 include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${LIBDIR}/../include ${PREFIXDIR}/had)
 find_library(mfem mfem HINTS ${LIBDIR})
+message("MFEM = ${mfem}")
 add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
         FemLaplace1/FemLaplaceScalar.cpp 
           FemSource1/FemSourceScalar.cpp
@@ -76,7 +77,7 @@ add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
           EvalStrainOnGaussPtsMfem/EvalStrainOnGaussPts.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp)
           
-message("MFEM = ${mfem}")
+
 target_link_libraries(admfem ${TF_LIB_FILE} ${mfem})
 set_property(TARGET admfem PROPERTY POSITION_INDEPENDENT_CODE ON)
 

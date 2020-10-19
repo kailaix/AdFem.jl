@@ -5,7 +5,7 @@ install_mfem()
 install_had()
 
 change_directory(joinpath(@__DIR__, "build"))
-require_file("build.ninja") do 
+require_file("CMakeCache.txt") do 
     ADCME.cmake()
 end
 require_library("adfem") do 
@@ -13,7 +13,7 @@ require_library("adfem") do
 end
 
 change_directory(joinpath(@__DIR__, "MFEM", "build"))
-require_file("build.ninja") do 
+require_file("CMakeCache.txt") do 
     ADCME.cmake()
 end
 require_library("admfem") do 

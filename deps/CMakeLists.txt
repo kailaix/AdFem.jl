@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.5)
 project(TF_CUSTOM_OP)
 set (CMAKE_CXX_STANDARD 11)
 
+message("JULIA=${JULIA}")
+
+IF(JULIA)
+ELSE()
+find_program(JULIA "julia")
+ENDIF()
 
 execute_process(COMMAND ${JULIA} -e "import ADCME; print(ADCME.__STR__)" OUTPUT_VARIABLE JL_OUT)
 list(GET JL_OUT 0 BINDIR)
