@@ -12,6 +12,7 @@ julia:
 os:
   - osx
   - linux
+  - windows
 notifications:
   email: false
 after_success:
