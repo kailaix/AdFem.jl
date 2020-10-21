@@ -14,8 +14,6 @@ os:
   - linux
   - windows
 script:
- - julia --color=yes -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/kailaix/ADCME.jl", rev="master")); Pkg.build("ADCME")'
+  - julia --color=yes -e 'using Pkg;  Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.build("AdFem")'
 notifications:
   email: false
-after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
