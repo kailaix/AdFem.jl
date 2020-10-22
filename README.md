@@ -55,7 +55,7 @@ The above code shows how to use a linear finite element space to approximate the
 
 ## Inverse Modeling
 
-Most functions of AdFem, such as `compute_fem_laplace_matrix1`, `compute_fem_source_term1`, and `impose_Dirichlet_boundary_conditions`, AD-capable, meaning that you can back-propagate gradients from their outputs to inputs. This enables you to conduct inverse modeling without writing extra substantial effort once the forward computation codes are implemented. AdFem constructs a static computational graph for finite element simulators: the computational graph is optimized before executation, and all computations are delegated to efficient C++ kernels. 
+Most functions of AdFem, such as `compute_fem_laplace_matrix1`, `compute_fem_source_term1`, and `impose_Dirichlet_boundary_conditions`, are AD-capable, meaning that you can back-propagate gradients from their outputs to inputs. This enables you to conduct inverse modeling without writing extra substantial effort once the forward computation codes are implemented. AdFem constructs a static computational graph for finite element simulators: the computational graph is optimized before executation, and all computations are delegated to efficient C++ kernels. 
 
 Here we use a deep neural network to approximate κ(x) (`fc` is an ADCME function and stands for fully-connected):
 
