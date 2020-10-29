@@ -55,14 +55,15 @@ bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 S0 = constant(zeros(nelem+3*ndof))
 S_data = matread("diagnose1/data.mat")["V"]
 
-ntest = 10
-max_iter = 50
+ntest = 100
+max_iter = 20
 dist_test = zeros(ntest)
 loss_test = zeros(ntest)
 
 
 
 for t in 1:ntest
+    @info t
 # begin of FOR LOOP
 # generate one set of NN weights and biases
 
@@ -84,7 +85,7 @@ for t in 1:ntest
         global _loss
         push!(_loss, loss)
         printstyled("[#iter $iter] loss=$loss\n", color=:green)
-        if mod(iter, 10)==1
+        if mod(iter, 5)==1
             matwrite(string("diagnose1/test$t","_loss$iter.mat"), Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1], "d"=>d[1]))
         end
     end
