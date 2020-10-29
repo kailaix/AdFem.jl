@@ -1,6 +1,5 @@
 using ADCME
 using AdFem
-using Dates
 
 include("chip_unstructured_solver.jl")
 include("chip_unstructured_geometry.jl")
@@ -32,7 +31,7 @@ xy = [xy;xy2]
 
 x, y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip_exact = constant( @. k_exact(x, y) )
-k_chip = k_chip_exact .+  Variable(0.001 * ones(size(chip_fem_idx, 1)))
+k_chip = k_chip_exact .+  Variable(zeros(size(chip_fem_idx, 1)))
 
 heat_source_fem = zeros(ndof)
 heat_source_fem[chip_fem_top_idx] .= power_source
@@ -51,7 +50,7 @@ bd = [bd; bd .+ ndof;
 bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 
 S0 = constant(zeros(nelem+3*ndof))
-S_data = matread("xz_chip_unstructured_data2.mat")["V"]
+S_data = matread("../xz_chip_unstructured_data2.mat")["V"]
 
 
 S = solve_navier_stokes(S0, NT, k_chip)
@@ -61,14 +60,14 @@ loss =  mean((S_computed .- S_data)^2)
 loss = loss * 1e10
 
 # ---------------------------------------------------
-# _loss = Float64[]
+_loss = Float64[]
 cb = (vs, iter, loss)->begin 
-    # global _loss
-    # push!(_loss, loss)
+    global _loss
+    push!(_loss, loss)
     printstyled("[#iter $iter] loss=$loss\n", color=:green)
-    # if mod(iter, 10)==1
-        # matwrite(string("test$t","_loss$iter.mat"), Dict("iter"=>iter,"loss"=>loss, "k_chip"=>vs[1]))
-    # end
+    if mod(iter, 10)==1
+        matwrite("loss$iter.mat", Dict("iter"=>iter,"loss"=>loss, "k_chip"=>vs[1]))
+    end
 end
 
 sess = Session(); init(sess)

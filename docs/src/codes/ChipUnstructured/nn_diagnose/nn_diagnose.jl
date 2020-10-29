@@ -56,10 +56,11 @@ bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 S0 = constant(zeros(nelem+3*ndof))
 S_data = matread("fn1/xz_chip_unstructured_data.mat")["V"]
 
-ntest = 5
-max_iter = 20
+ntest = 1000
+max_iter = 50
 dist_test = zeros(ntest)
 loss_test = zeros(ntest)
+
 
 for t in 1:ntest
 # begin of FOR LOOP
@@ -97,10 +98,10 @@ for t in 1:ntest
     dist_test[t] = d[1]
     loss_test[t] = loss[end, 1]
 
-    Dates.format(now(), "HH:MM")
-
+    if mod(t, 10)==1
+        matwrite("diagnose1/summary$t.mat", Dict("dist"=>dist_test,"loss"=>loss_test))
+    end
 # end of FOR LOOP
 end
 
 # ---------------------------------------------------
-matwrite("nn_diagnose/summary.mat", Dict("dist"=>dist_test,"loss"=>loss_test))

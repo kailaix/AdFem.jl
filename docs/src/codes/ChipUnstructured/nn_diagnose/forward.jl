@@ -4,8 +4,6 @@ using AdFem
 include("chip_unstructured_solver.jl")
 include("chip_unstructured_geometry.jl")
 
-# trialnum = 1
-
 k_mold = 0.014531
 k_chip_ref = 2.60475
 k_air = 0.64357
