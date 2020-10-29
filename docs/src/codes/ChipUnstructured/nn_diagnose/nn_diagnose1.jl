@@ -2,8 +2,8 @@ using ADCME
 using AdFem
 using Dates
 
-include("chip_unstructured_solver.jl")
-include("chip_unstructured_geometry.jl")
+include("../chip_unstructured_solver.jl")
+include("../chip_unstructured_geometry.jl")
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
@@ -54,12 +54,13 @@ bd = [bd; bd .+ ndof;
 bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 
 S0 = constant(zeros(nelem+3*ndof))
-S_data = matread("fn1/xz_chip_unstructured_data.mat")["V"]
+S_data = matread("diagnose1/data.mat")["V"]
 
-ntest = 1000
+ntest = 10
 max_iter = 50
 dist_test = zeros(ntest)
 loss_test = zeros(ntest)
+
 
 
 for t in 1:ntest
@@ -79,15 +80,13 @@ for t in 1:ntest
     loss = loss * 1e10
 
     # ---------------------------------------------------
-    # _loss = Float64[]
+    _loss = Float64[]
     cb = (vs, iter, loss)->begin 
-        # global _loss
-        # push!(_loss, loss)
+        global _loss
+        push!(_loss, loss)
         printstyled("[#iter $iter] loss=$loss\n", color=:green)
         if mod(iter, 10)==1
-            # close("all")
-            # plot_velo_pres_temp_cond(iter)
-            matwrite(string("nn_diagnose/test$t","_loss$iter.mat"), Dict("iter"=>iter,"loss"=>loss, "k_chip"=>vs[1]))
+            matwrite(string("diagnose1/test$t","_loss$iter.mat"), Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1], "d"=>d[1]))
         end
     end
 
@@ -98,9 +97,7 @@ for t in 1:ntest
     dist_test[t] = d[1]
     loss_test[t] = loss[end, 1]
 
-    if mod(t, 10)==1
-        matwrite("diagnose1/summary$t.mat", Dict("dist"=>dist_test,"loss"=>loss_test))
-    end
+    matwrite("diagnose1/summary$t.mat", Dict("dist"=>dist_test,"loss"=>loss_test))
 # end of FOR LOOP
 end
 

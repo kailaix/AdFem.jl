@@ -1,8 +1,8 @@
 using ADCME
 using AdFem
 
-include("chip_unstructured_solver.jl")
-include("chip_unstructured_geometry.jl")
+include("../chip_unstructured_solver.jl")
+include("../chip_unstructured_geometry.jl")
 
 k_mold = 0.014531
 k_chip_ref = 2.60475

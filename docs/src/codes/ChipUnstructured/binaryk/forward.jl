@@ -9,7 +9,7 @@ k_chip_ref = 2.60475
 k_air = 0.64357
 
 function k_exact(x, y)
-    k_mold + 1000 * k_chip_ref * (x-0.49)^2 / (1 + x^2)
+    k_mold + (x>0.49 && x<0.5) *  k_chip_ref
 end
 
 k_chip = eval_f_on_dof_pts(k_exact, mesh)[chip_fem_idx]
@@ -29,7 +29,7 @@ heat_source_fem[chip_fem_top_idx] .= power_source
 heat_source_gauss = dof_to_gauss_points(heat_source_fem, mesh)
 
 B = constant(compute_interaction_matrix(mesh))
-Laplace = constant(compute_fem_laplace_matrix1(constant(nu * ones(ngauss)), mesh))
+Laplace = constant(compute_fem_laplace_matrix1(nu * constant(ones(ngauss)), mesh))
 heat_source = compute_fem_source_term1(constant(heat_source_gauss), mesh)
 
 # apply Dirichlet to velocity and temperature; set left bottom two points to zero to fix rank deficient problem for pressure
@@ -46,7 +46,7 @@ S = solve_navier_stokes(S0, NT, k_chip)
 sess = Session(); init(sess)
 output = run(sess, S)
 
-matwrite("diagnose1/data.mat", 
+matwrite("data.mat", 
     Dict(
         "V"=>output[end, :]
     ))
