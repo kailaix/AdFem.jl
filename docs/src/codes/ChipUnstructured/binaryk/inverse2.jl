@@ -5,20 +5,24 @@ include("../chip_unstructured_solver.jl")
 include("../chip_unstructured_geometry.jl")
 include("../plot_inverse_one_iter.jl")
 
-trialnum = 3
+trialnum = 13
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
 k_air = 0.64357
+
+k_chip_guess = Variable(3.0)
 
 function k_exact(x, y)
     k_mold + (x>0.49 && x<0.5) * k_chip_ref
 end
 
 function k_nn(x, y) # exact solution + nn: change to nn solution?
-    c = 100           #hyperparameter to control shape of sigmoid function
-    out = fc(x, [20,20,20,1])
-    k_mold + sigmoid(c * out) * k_chip_ref
+    if x>0.49 && x<0.5
+        constant(k_mold) + k_chip_guess
+    else
+        constant(k_mold)
+    end
 end
 
 xy = mesh.nodes 
@@ -30,7 +34,7 @@ xy = [xy;xy2]
 
 x, y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
 k_chip_exact = constant( @. k_exact(x, y) )
-k_chip = k_nn(x, y)
+k_chip = stack( @. k_nn(x, y))
 
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
