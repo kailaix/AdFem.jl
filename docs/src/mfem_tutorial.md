@@ -17,7 +17,7 @@ mesh = Mesh(m, n, h)
 visualize_mesh(mesh)
 ```
 
-![](./assets/mfem/mfem_mesh.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/mfem_mesh.png)
 Because we do not use the static condensation technique for tackling boundary conditions, there is no need to specify boundary conditions at this point. Plus, the lack of boundary conditions make it easier to develope re-usable custom operators for the finite element method. 
 
 The following script shows how to use an unstructured mesh to solve the Poisson equation [here](https://kailaix.github.io/AdFem.jl/dev/gallery/#Poisson's-Equation)
@@ -59,7 +59,7 @@ visualize_scalar_on_fem_points(eval_f_on_fem_pts((x,y)->sin(π*x)*sin(π*y), mes
 title("Reference")
 ```
 
-![](./assets/mfem/poisson.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/poisson.png)
 
 
 As a more interesting example, we consider the domain with two holes. Here we let the right hand side be 1. We impose Dirichlet boundary conditions on the bounding box and Neumann boundary conditions around the disc boundaries. 
@@ -95,4 +95,4 @@ visualize_scalar_on_fem_points(S, mesh)
 savefig("uPoisson.png")
 ```
 
-![](./assets/mfem/uPoisson.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/uPoisson.png)

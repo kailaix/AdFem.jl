@@ -1,10 +1,8 @@
 using ADCME
 using AdFem
 
-include("chip_unstructured_solver.jl")
-include("chip_unstructured_geometry.jl")
-
-# trialnum = 1
+include("../chip_unstructured_solver.jl")
+include("../chip_unstructured_geometry.jl")
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
@@ -15,7 +13,6 @@ function k_exact(x, y)
 end
 
 k_chip = eval_f_on_dof_pts(k_exact, mesh)[chip_fem_idx]
-k_chip = k_chip .+ 1.0
 
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
@@ -32,7 +29,7 @@ heat_source_fem[chip_fem_top_idx] .= power_source
 heat_source_gauss = dof_to_gauss_points(heat_source_fem, mesh)
 
 B = constant(compute_interaction_matrix(mesh))
-Laplace = constant(compute_fem_laplace_matrix1(nu * constant(ones(ngauss)), mesh))
+Laplace = constant(compute_fem_laplace_matrix1(constant(nu * ones(ngauss)), mesh))
 heat_source = compute_fem_source_term1(constant(heat_source_gauss), mesh)
 
 # apply Dirichlet to velocity and temperature; set left bottom two points to zero to fix rank deficient problem for pressure
@@ -49,7 +46,7 @@ S = solve_navier_stokes(S0, NT, k_chip)
 sess = Session(); init(sess)
 output = run(sess, S)
 
-matwrite("xz_chip_unstructured_data.mat", 
+matwrite("diagnose1/data.mat", 
     Dict(
         "V"=>output[end, :]
     ))
@@ -73,7 +70,7 @@ subplot(224)
 title("temperature")
 visualize_scalar_on_fem_points(T_out.* T_infty .+ T_infty, mesh);#gca().invert_yaxis()
 tight_layout()
-savefig("forward_solution_unstructured2.pdf")
+savefig("forward_solution_unstructured.pdf")
 
 print("Solution range:",
     "\n [u velocity] \t min:", minimum(u_out .* u_std), ",\t max:", maximum(u_out .* u_std),

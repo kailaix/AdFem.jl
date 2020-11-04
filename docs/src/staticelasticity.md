@@ -23,4 +23,4 @@ To verify our program, we first consider a parameter inverse problem where $E$ i
 | $\nu$     |      0.0      |   0.3   |  0.3  |  $1.78\times 10^{-11}$ |
 
 Next we consider a spatially-varying field $E(\mathbf{x})$ and fix $\nu=0.3$. We approaximate $E(\mathbf{x})$ using a deep neural network. The results are shown in the following figure. As a comparison, the result for representing $E(\mathbf{x})$ as a discrete vector of trainable variables is also shown. We can see that the DNN approach provides a much better result that the discretization approac
-![](./assets/LinearElasticity.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/LinearElasticity.png)

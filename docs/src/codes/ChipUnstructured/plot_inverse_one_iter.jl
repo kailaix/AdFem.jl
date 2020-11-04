@@ -72,15 +72,15 @@ function plot_velo_pres_temp_cond(iter)
     k_chip_nodes = eval_f_on_fem_pts(k_exact,mesh)[chip_fem_idx_nodes]
     # k_chip_nodes_out = eval_f_on_fem_pts(k_nn,mesh)[chip_fem_idx_nodes]
 
-    xy = mesh.nodes 
-    xy2 = zeros(mesh.nedge, 2)
-    for i = 1:mesh.nedge
-        xy2[i,:] = (mesh.nodes[mesh.edges[i,1], :] + mesh.nodes[mesh.edges[i,2], :])/2
-    end
-    xy = [xy;xy2]
+    # xy = mesh.nodes 
+    # xy2 = zeros(mesh.nedge, 2)
+    # for i = 1:mesh.nedge
+    #     xy2[i,:] = (mesh.nodes[mesh.edges[i,1], :] + mesh.nodes[mesh.edges[i,2], :])/2
+    # end
+    # xy = [xy;xy2]
 
-    x, y = xy[chip_fem_idx_nodes, 1], xy[chip_fem_idx_nodes, 2]
-    k_chip_nodes_out = run(sess, k_nn(x, y))
+    # x, y = xy[chip_fem_idx_nodes, 1], xy[chip_fem_idx_nodes, 2]
+    k_chip_nodes_out = run(sess, k_chip)[1:length(chip_fem_idx_nodes)]
     
     k_all  = k_mold * ones(nnode)
     k_all[chip_fem_idx_nodes] .= k_chip_nodes

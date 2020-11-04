@@ -14,7 +14,7 @@ $$\int_\Omega \rho\frac{\partial u}{\partial t}\delta u \mathrm{d}x + \int_\Omeg
 
 The computational domain is as follows: the top side is the inflow boundary condition and the other sides are Dirichlet boundary condition. 
 
-![](./assets/dirichlet.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/dirichlet.png)
 
 We consider the manufactured solution 
 
@@ -96,7 +96,7 @@ end
 pcolormesh(reshape(U[:,end], m+1, n+1)'-Uexact); colorbar()
 ```
 
-![](./assets/heat.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/heat.png)
 
 
 

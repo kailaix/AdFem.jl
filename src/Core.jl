@@ -418,7 +418,7 @@ Computes the term with two-point flux approximation
 ```math
 \int_{A_i} \Delta p \mathrm{d}x = \sum_{j=1}^{n_{\mathrm{faces}}} (p_j-p_i)
 ```
-![](./assets/tpfa.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/tpfa.png)
 
 !!! warning
     No flow boundary condition is assumed. 
@@ -560,7 +560,7 @@ component of `t` describes the $y$ direction traction.
 
 Also see [`compute_fem_normal_traction_term`](@ref). 
 
-![](./assets/traction.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/traction.png)
 """
 function compute_fem_traction_term(t::Array{Float64, 2},
     bdedge::Array{Int64,2}, m::Int64, n::Int64, h::Float64)
@@ -938,7 +938,7 @@ Evaluates `f` at Gaussian points and return the result as $4mn$ vector `out` (4 
 
 If `tensor_input = true`, the function `f` is assumed to map a tensor to a tensor output.
 
-![](./assets/gauss.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gauss.png)
 """
 function eval_f_on_gauss_pts(f::Function, m::Int64, n::Int64, h::Float64; tensor_input::Bool = false)
     xy = gauss_nodes(m, n, h)

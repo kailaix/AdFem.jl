@@ -20,7 +20,7 @@ We fix the left side of the plate. We use the alpha method [^alpha].
 
 | Gravity                   | External Force        |
 | ------------------------- | --------------------- |
-| ![](./assets/gravity.gif) | ![](./assets/ext.gif) |
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/gravity.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/ext.gif) |
 
 ```julia
 β = 1/4; γ = 1/2

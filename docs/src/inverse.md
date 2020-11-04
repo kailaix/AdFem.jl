@@ -12,7 +12,7 @@ We impose no-flow boundary condition on left, right, and bottom sides for $p$, i
 
 | Displacement                | Pressure                    | Von Mises Stress            |
 | --------------------------- | --------------------------- | --------------------------- |
-| ![](./assets/inverse/u.gif) | ![](./assets/inverse/p.gif) | ![](./assets/inverse/s.gif) |
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/inverse/u.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/inverse/p.gif) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/inverse/s.gif) |
 
 We estimate the elasticity tensor $H$ by solving a minimization problem 
 
@@ -20,7 +20,7 @@ $$\min_H \sum_{i\in\mathcal{I}} (u^{\mathrm{obs}}_i-u_i)^2$$
 
 where $\mathcal{I}$ is the index set for horizontal displacement  on the top side, $u^{\mathrm{obs}}_i$ is the corresponding observation. 
 
-![](./assets/inverse/loss.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/inverse/loss.png)
 
 | Initial Guess                                                | Estimated $H$                                                | Reference $H$                                                |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |

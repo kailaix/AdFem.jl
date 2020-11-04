@@ -1,7 +1,7 @@
 ![](https://travis-ci.com/kailaix/AdFem.jl.svg?token=tCRK4npbxWQNS6KVeBvs&branch=master)![Documentation](https://github.com/kailaix/AdFem.jl/workflows/Documentation/badge.svg)
 
 <p align="center">
-<img src="./docs/src/assets/logo.png" width="500"/>
+<img src="https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/logo.png" width="500"/>
 </p>
 
 
@@ -19,15 +19,15 @@ AdFem is built on [ADCME](https://github.com/kailaix/ADCME.jl), an automatic dif
 
 As an example, we consider solving the Poisson's equation in AdFem
 
-![](./docs/src/assets/eq1.svg)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/eq1.svg)
 
 Here
 
-![](./docs/src/assets/eq2.svg)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/eq2.svg)
 
 The weak form for the Poisson's equation is to solve a variational equation 
 
-![](./docs/src/assets/eq3.svg)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/eq3.svg)
 
 The problem is easily translated in AdFem:
 
@@ -48,14 +48,14 @@ sol = K\F
 ```
 
 <p align="center">
-<img src="./docs/src/assets/poisson_solution.png" width="500"/>
+<img src="https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/poisson_solution.png" width="500"/>
 </p>
 
 The above code shows how to use a linear finite element space to approximate the state variable on a given mesh, define boundary conditions, and construct the linear system. 
 
 ## Inverse Modeling
 
-Most functions of AdFem, such as `compute_fem_laplace_matrix1`, `compute_fem_source_term1`, and `impose_Dirichlet_boundary_conditions`, AD-capable, meaning that you can back-propagate gradients from their outputs to inputs. This enables you to conduct inverse modeling without writing extra substantial effort once the forward computation codes are implemented. AdFem constructs a static computational graph for finite element simulators: the computational graph is optimized before executation, and all computations are delegated to efficient C++ kernels. 
+Most functions of AdFem, such as `compute_fem_laplace_matrix1`, `compute_fem_source_term1`, and `impose_Dirichlet_boundary_conditions`, are AD-capable, meaning that you can back-propagate gradients from their outputs to inputs. This enables you to conduct inverse modeling without writing extra substantial effort once the forward computation codes are implemented. AdFem constructs a static computational graph for finite element simulators: the computational graph is optimized before executation, and all computations are delegated to efficient C++ kernels. 
 
 Here we use a deep neural network to approximate κ(x) (`fc` is an ADCME function and stands for fully-connected):
 
@@ -72,7 +72,7 @@ sess = Session(); init(sess)
 BFGS!(sess, loss)
 ```
 
-![](./docs/src/assets/poisson_kappa.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/poisson_kappa.png)
 
 ## Installation 
 

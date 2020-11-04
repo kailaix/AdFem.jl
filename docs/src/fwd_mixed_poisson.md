@@ -101,14 +101,14 @@ Analytical solution:
 
 $$u(x, y) = x(1-x)y(1-y)$$
 
-![](./assets/mfem/bdm1.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/bdm1.png)
 ### Test Case 2
 
 Analytical solution:
 
 $$u(x, y) = x^2  (1-x)  y  (1-y)^2$$
 
-![](./assets/mfem/bdm2.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/bdm2.png)
 
 
 ### Test Case 3
@@ -117,14 +117,14 @@ Analytical solution:
 
 $$u(x, y) = xy$$
 
-![](./assets/mfem/bdm3.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/bdm3.png)
 
 ### Test Case 4
 
 
 $$u(x,y) = x^2  y^2 + \frac{1}{1+x^2}$$
 
-![](./assets/mfem/bdm4.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/bdm4.png)
 
 ## Traction Boundary Condition 
 
@@ -218,4 +218,4 @@ savefig("mixed_poisson_neumann.png")
 
 The result is shown below
 
-![](./assets/mfem/mixed_poisson_neumann.png) 
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/mfem/mixed_poisson_neumann.png) 

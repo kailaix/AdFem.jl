@@ -12,7 +12,7 @@ In this example, we consider a layer model. In each layer, $\eta$ is a constant.
 
 | True model                   | Inverted result                  |
 | ---------------------------- | -------------------------------- |
-| ![](./assets/visco-earth/strikeslip-visco-model.png) | ![](./assets/visco-earth/strikeslip-inv_visco.png) |
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/strikeslip-visco-model.png) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/strikeslip-inv_visco.png) |
 
 
 We show the inversion results in each iteration:
@@ -42,7 +42,7 @@ The true vsicoelasticity parameter distribution is shown in the left panel in th
 
 | True model                   | Inverted result                  |
 | ---------------------------- | -------------------------------- |
-| ![](./assets/visco-earth/dipslip-linear_model.png) | ![](./assets/visco-earth/dipslip-inv_visco.png) |
+| ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-linear_model.png) | ![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/visco-earth/dipslip-inv_visco.png) |
 
 
 We also show the inversion results in each iteration:

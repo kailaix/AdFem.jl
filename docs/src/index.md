@@ -26,7 +26,7 @@ loss = sum((sol[idx] - obs[idx])^2)
 ```
 Note at this point, only the part of the computation that does not depend on $\kappa$ is carried out (partial evaluation), and the evaluation of `sol` is deferred to a later stage. The numerical computation for the partial evaluation is done using Julia and at compilation time. This eliminates much overhead for the optimization phase because only the variable part of the computational graph is executed many times. 
 
-![](./assets/cg_for_poisson.png)
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/cg_for_poisson.png)
 
 The computational graph is constructed implicitly, and users can calculate the gradients, whose computation is also deferred, using 
 ```julia
