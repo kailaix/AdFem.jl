@@ -123,7 +123,7 @@ function visualize_von_mises_stress(K::Array{Float64}, u::Array{Float64, 1}, mme
     visualize_scalar_on_gauss_points(VonMisesStress, mmesh, args...; kwargs...)
 end
 
-"""
+@doc raw"""
     visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
 
 Visualizes a vector on the mesh `mesh`. Here `u1` and `u2` are the $x$ and $y$ component of the vector. They are defined on the FEM nodes (not DOFs). 
