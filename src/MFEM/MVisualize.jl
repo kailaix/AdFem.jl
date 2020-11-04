@@ -125,6 +125,8 @@ end
 
 """
     visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+
+Visualizes a vector on the mesh `mesh`. Here `u1` and `u2` are the $x$ and $y$ component of the vector. They are defined on the FEM nodes (not DOFs). 
 """
 function visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
     @assert length(u1)==mesh.nnode
