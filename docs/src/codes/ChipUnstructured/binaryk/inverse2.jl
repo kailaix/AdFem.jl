@@ -5,13 +5,12 @@ include("../chip_unstructured_solver.jl")
 include("../chip_unstructured_geometry.jl")
 include("../plot_inverse_one_iter.jl")
 
-trialnum = 13
+trialnum = 11
+k_chip_guess = Variable(1.0)
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
 k_air = 0.64357
-
-k_chip_guess = Variable(3.0)
 
 function k_exact(x, y)
     k_mold + (x>0.49 && x<0.5) * k_chip_ref
@@ -78,7 +77,7 @@ cb = (vs, iter, loss)->begin
     printstyled("[#iter $iter] loss=$loss\n", color=:green)
     # if mod(iter, 1)==1
     close("all")
-    plot_velo_pres_temp_cond(iter)
+    plot_cond(iter, vs[1][1:length(chip_fem_idx_nodes)])
     matwrite("fn$trialnum/loss$iter.mat", Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1]))
     # end
 end

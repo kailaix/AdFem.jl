@@ -16,7 +16,7 @@ function k_exact(x, y)
 end
 
 function k_nn(x, y) # exact solution + nn: change to nn solution?
-    c = 100           #hyperparameter to control shape of sigmoid function
+    c = 20           # hyperparameter to control shape of sigmoid function
     out = fc(x, [20,20,20,1])
     k_mold + sigmoid(c * out) * k_chip_ref
 end
@@ -74,7 +74,7 @@ cb = (vs, iter, loss)->begin
     printstyled("[#iter $iter] loss=$loss\n", color=:green)
     # if mod(iter, 1)==1
     close("all")
-    plot_velo_pres_temp_cond(iter)
+    plot_cond(iter, vs[1][1:length(chip_fem_idx_nodes)])
     matwrite("fn$trialnum/loss$iter.mat", Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1]))
     # end
 end
