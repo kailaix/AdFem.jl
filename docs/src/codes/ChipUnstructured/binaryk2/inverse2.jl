@@ -5,15 +5,15 @@ include("../chip_unstructured_solver.jl")
 include("../chip_unstructured_geometry.jl")
 include("../plot_inverse_one_iter.jl")
 
-trialnum = 19
-num_regions = 4
+trialnum = 1
+num_regions = 2
 
 if num_regions == 1
     k_chip_guess = Variable(4.0)
 elseif num_regions == 2
     k_chip_guess = Variable([4.0, 1.0])
 elseif num_regions == 4
-    k_chip_guess = Variable([0.015, 3.0, 1.0, 0.015])
+    k_chip_guess = Variable([0.15, 3.0, 1.0, 0.15])
 elseif num_regions == 8
     k_chip_guess = Variable([10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 1.0])
 end
@@ -108,7 +108,7 @@ k_chip_exact = constant( @. k_exact(x, y) )
 k_chip = stack( @. k_nn(x, y))
 
 nu = 0.47893  # equal to 1/Re
-power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
+power_source = 82.46295 * 5  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
 buoyance_coef = 299102.83
 
 u_std = 0.001
@@ -167,7 +167,7 @@ x = placeholder(rand(5875, 2))
 # train the neural network 
 opt = AdamOptimizer().minimize(loss)
 sess = Session(); init(sess)
-for i = 1:100
+for i = 1:20
     _, loss_ = run(sess, [opt, loss], feed_dict=Dict(l=>S_data, x=>xy))
     @info i, loss_
 end

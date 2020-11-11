@@ -39,5 +39,17 @@ cb = (vs, iter, loss)->begin
     printstyled("[#iter $iter] loss=$loss\n", color=:green)
 end
 
+ADCME.options.training.training = placeholder(true)
+l = placeholder(rand(193,))
+x = placeholder(rand(5875, 2))
+
+# train the neural network 
+opt = AdamOptimizer().minimize(loss)
 sess = Session(); init(sess)
+for i = 1:10
+    _, loss_ = run(sess, [opt, loss], feed_dict=Dict(l=>k_chip_exact, x=>xy))
+    @info i, loss_
+end
+
+# sess = Session(); init(sess)
 BFGS!(sess, loss, vars = [k_chip], callback = cb)

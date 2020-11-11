@@ -5,7 +5,7 @@ include("../chip_unstructured_solver.jl")
 include("../chip_unstructured_geometry.jl")
 include("../plot_inverse_one_iter.jl")
 
-trialnum = 3
+trialnum = 5
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
@@ -16,7 +16,7 @@ function k_exact(x, y)
 end
 
 function k_nn(x, y) # exact solution + nn: change to nn solution?
-    c = 20           # hyperparameter to control shape of sigmoid function
+    c = 100           # hyperparameter to control shape of sigmoid function
     out = fc(x, [20,20,20,1])
     k_mold + sigmoid(c * out) * k_chip_ref
 end
@@ -79,5 +79,16 @@ cb = (vs, iter, loss)->begin
     # end
 end
 
+ADCME.options.training.training = placeholder(true)
+l = placeholder(rand(20545,))
+x = placeholder(rand(5875, 2))
+
+# train the neural network 
+opt = AdamOptimizer().minimize(loss)
 sess = Session(); init(sess)
+for i = 1:100
+    _, loss_ = run(sess, [opt, loss], feed_dict=Dict(l=>S_data, x=>xy))
+    @info i, loss_
+end
+
 BFGS!(sess, loss, vars = [k_chip], callback = cb)

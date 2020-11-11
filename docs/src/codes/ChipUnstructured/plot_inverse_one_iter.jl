@@ -35,9 +35,6 @@ end
 
 function plot_velo_pres_temp_cond(iter)
     S = run(sess, S_computed)
-
-    print("S^2=",sum(S.^2))
-
     u_out, v_out, p_out, T_out = S[1:nnode], 
                                  S[ndof+1:ndof+nnode], 
                                  S[2*ndof+1:2*ndof+nelem],
