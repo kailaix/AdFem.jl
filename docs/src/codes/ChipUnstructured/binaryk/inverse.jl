@@ -5,7 +5,7 @@ include("../chip_unstructured_solver.jl")
 include("../chip_unstructured_geometry.jl")
 include("../plot_inverse_one_iter.jl")
 
-trialnum = 5
+trialnum = 7
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
@@ -91,4 +91,4 @@ for i = 1:100
     @info i, loss_
 end
 
-BFGS!(sess, loss, vars = [k_chip], callback = cb)
+BFGS!(sess, loss, vars = [k_chip], callback = cb, method="BFGS")

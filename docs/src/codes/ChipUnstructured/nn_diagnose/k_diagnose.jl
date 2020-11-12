@@ -12,8 +12,8 @@ function k_exact(x, y)
     k_mold + 1000 * k_chip_ref * (x-0.49)^2 / (1 + x^2)
 end
 
-function k_nn(x, y)
-    out =  fc(x, [20,20,20,1])^2  .+ k_mold
+function k_nn(x, y, θ)
+    out =  fc(x, [20,20,20,1], θ)^2  .+ k_mold
     squeeze(out)
 end
 
@@ -25,7 +25,10 @@ end
 xy = [xy;xy2]
 
 x, y = xy[chip_fem_idx, 1], xy[chip_fem_idx, 2]
-k_chip = k_nn(x, y)
+
+n = 901 
+θ = Variable(randn(n))
+k_chip = k_nn(x, y, θ)
 k_chip_exact = @. k_exact(x, y)
 
 loss =  mean((k_chip .- k_chip_exact)^2)
@@ -53,3 +56,5 @@ end
 
 # sess = Session(); init(sess)
 BFGS!(sess, loss, vars = [k_chip], callback = cb)
+matwrite("k_diagnose_theta.mat", Dict("theta"=>run(sess, θ)))
+matwrite("k_diagnose_loss.mat", Dict("loss"=>_loss))
