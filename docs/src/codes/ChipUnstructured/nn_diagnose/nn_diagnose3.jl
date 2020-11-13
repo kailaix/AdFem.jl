@@ -53,7 +53,7 @@ bd = [bd; bd .+ ndof;
 bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 
 S0 = constant(zeros(nelem+3*ndof))
-S_data = matread("diagnose1+/data.mat")["V"]
+S_data = matread("diagnose1/data.mat")["V"]
 
 ntest = 100
 max_iter = 20
@@ -69,7 +69,7 @@ for t in 1:ntest
 
     n = 901 
     θ = Variable(randn(n))
-    d = 4.0 * rand() + 1.0 # for diagnose1+, sample distance between 1 and 5
+    d = rand() # for diagnose1+ and diagnose3, sample distance between 1 and 5
     θ = θ / norm(θ) * d
     k_chip = k_nn(x, y, θ .+ θ_trained)
 
@@ -86,7 +86,7 @@ for t in 1:ntest
         push!(_loss, loss)
         printstyled("[#t $t] [#iter $iter] loss=$loss\n", color=:green)
         if mod(iter, 5)==1
-            matwrite(string("diagnose3/test$t","_loss$iter.mat"), Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1], "d"=>d[1]))
+            matwrite(string("diagnose2/test$t","_loss$iter.mat"), Dict("iter"=>iter,"loss"=>_loss, "k_chip"=>vs[1], "d"=>d[1]))
         end
     end
 
@@ -97,7 +97,7 @@ for t in 1:ntest
     dist_test[t] = d
     loss_test[t] = loss[end, 1]
 
-    matwrite("diagnose3/summary$t.mat", Dict("dist"=>dist_test,"loss"=>loss_test))
+    matwrite("diagnose2/summary$t.mat", Dict("dist"=>dist_test,"loss"=>loss_test))
 # end of FOR LOOP
 end
 
