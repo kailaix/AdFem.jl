@@ -97,7 +97,10 @@ function visualize_scalar_on_fvm_points(u::Array{Float64,1}, mesh::Mesh, args...
         verts[i, :, :] = [x y]
     end
     # Make the collection and add it to the plot.
-    coll = matplotlib.collections.PolyCollection(verts, array=u, cmap=matplotlib.cm.jet, edgecolors="none", kwargs...)
+    coll = matplotlib.collections.PolyCollection(verts, array=u, cmap=matplotlib.cm.jet, edgecolors="none")
+    if haskey(kwargs, :vmin)
+        coll.set_clim(kwargs[:vmin], kwargs[:vmax])
+    end
     gca().add_collection(coll)
     colorbar(coll, ax=gca())
     xlabel("x")
@@ -123,8 +126,10 @@ function visualize_von_mises_stress(K::Array{Float64}, u::Array{Float64, 1}, mme
     visualize_scalar_on_gauss_points(VonMisesStress, mmesh, args...; kwargs...)
 end
 
-"""
+@doc raw"""
     visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
+
+Visualizes a vector on the mesh `mesh`. Here `u1` and `u2` are the $x$ and $y$ component of the vector. They are defined on the FEM nodes (not DOFs). 
 """
 function visualize_vector_on_fem_points(u1::Array{Float64,1}, u2::Array{Float64,1}, mesh::Mesh, args...;kwargs...)
     @assert length(u1)==mesh.nnode
