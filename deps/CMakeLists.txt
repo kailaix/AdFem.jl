@@ -26,7 +26,7 @@ list(GET JL_OUT 12 LIBCUDA)
 list(GET JL_OUT 13 CUDA_INC)
 
 message("Python path=${PYTHON}")
-message("EIGEN_INC=${EIGEN_INC}")
+message("LIBDIR=${LIBDIR}")
 message("TF_INC=${TF_INC}")
 message("TF_ABI=${TF_ABI}")
 message("TF_LIB_FILE=${TF_LIB_FILE}")
@@ -56,7 +56,7 @@ endif()
 
 include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${EIGEN_INC} ${LIBDIR}/../include ${PREFIXDIR}/had)
 
-include_directories(${LIBDIR}/Adept-2/include)
+include_directories(${PREFIXDIR}/Adept-2/include)
 find_library(ADEPT_LIB_FILE adept HINTS ${LIBDIR})
 message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 find_library(LIBOPENBLAS openblas HINTS ${LIBDIR})
