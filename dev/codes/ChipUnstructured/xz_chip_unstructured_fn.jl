@@ -4,7 +4,7 @@ using AdFem
 include("chip_unstructured_solver.jl")
 include("chip_unstructured_geometry.jl")
 
-trialnum = 1
+# trialnum = 1
 
 k_mold = 0.014531
 k_chip_ref = 2.60475
@@ -15,6 +15,7 @@ function k_exact(x, y)
 end
 
 k_chip = eval_f_on_dof_pts(k_exact, mesh)[chip_fem_idx]
+k_chip = k_chip .+ 1.0
 
 nu = 0.47893  # equal to 1/Re
 power_source = 82.46295  #82.46295 = 1.0e6 divide by air rho cp   #0.0619 = 1.0e6 divide by chip die rho cp
@@ -48,7 +49,7 @@ S = solve_navier_stokes(S0, NT, k_chip)
 sess = Session(); init(sess)
 output = run(sess, S)
 
-matwrite("fn$trialnum/xz_chip_unstructured_data.mat", 
+matwrite("xz_chip_unstructured_data.mat", 
     Dict(
         "V"=>output[end, :]
     ))
@@ -72,7 +73,7 @@ subplot(224)
 title("temperature")
 visualize_scalar_on_fem_points(T_out.* T_infty .+ T_infty, mesh);#gca().invert_yaxis()
 tight_layout()
-savefig("fn$trialnum/forward_solution_unstructured.pdf")
+savefig("forward_solution_unstructured2.pdf")
 
 print("Solution range:",
     "\n [u velocity] \t min:", minimum(u_out .* u_std), ",\t max:", maximum(u_out .* u_std),

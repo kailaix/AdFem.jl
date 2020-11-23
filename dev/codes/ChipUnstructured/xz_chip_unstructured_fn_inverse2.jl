@@ -1,5 +1,4 @@
 using ADCME
-using PoreFlow
 
 include("chip_unstructured_solver.jl")
 include("chip_unstructured_geometry.jl")
@@ -12,7 +11,7 @@ k_chip_ref = 2.60475
 k_air = 0.64357
 
 θ0 = [2.60475; 0.49; 1.0]
-θ = Variable([2.5; 0.5; 1.0])
+θ = Variable([2.5; 0.49; 1.0])
 paramA = θ[1]
 paramB = θ[2]
 paramC = θ[3]

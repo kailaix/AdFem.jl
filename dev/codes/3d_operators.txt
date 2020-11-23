@@ -1,0 +1,23 @@
+TO-DO:
+
+- util
+dof_to_gauss_points
+impose_Dirichlet_boundary_conditions
+
+- visualize
+visualize_scalar_on_fem_points
+visualize_scalar_on_fvm_points
+
+- vector
+eval_grad_on_gauss_pts1
+compute_interaction_term
+
+- matrix
+compute_fem_laplace_matrix1
+compute_fem_mass_matrix1
+compute_fem_advection_matrix1
+compute_fem_source_term1
+
+
+DONE:
+
