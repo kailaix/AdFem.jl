@@ -21,3 +21,10 @@ require_library("admfem") do
 end
 
 
+change_directory(joinpath(@__DIR__, "MFEM3", "build"))
+require_file("CMakeCache.txt") do 
+    ADCME.cmake()
+end
+require_library("admfem") do 
+    ADCME.make()
+end
