@@ -12,7 +12,7 @@ extern "C" {
     }
 
     // return total number of Gauss points
-    int mfem_get_ngauss3s(){
+    int mfem_get_ngauss3(){
         return mmesh3.ngauss;
     }
 
@@ -85,7 +85,7 @@ void test_APIs(){
     }
     printf("\n");
 
-    int ngauss = mfem_get_ngauss3s();
+    int ngauss = mfem_get_ngauss3();
     double v;
     printf("ngauss = %d\n", ngauss);
     double x[ngauss], y[ngauss], z[ngauss], w[ngauss];
