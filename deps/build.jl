@@ -20,4 +20,5 @@ require_library("admfem") do
     ADCME.make()
 end
 
+run(`$(ADCME.PIP) install pyvista`)
 
