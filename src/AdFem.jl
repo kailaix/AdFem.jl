@@ -13,16 +13,19 @@ module AdFem
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2
     np = PyNULL()
     LIBMFEM = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("admfem")))
+    LIBMFEM3 = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM3", "build", get_library_name("admfem")))
     libmfem = missing 
+    libmfem3 = missing 
     LIBADFEM = abspath(joinpath(@__DIR__, "..",  "deps", "build", get_library_name("adfem")))
     libadfem = missing
 
     function __init__()
         copy!(np, pyimport("numpy"))
-        if !isfile(LIBMFEM) || !isfile(LIBADFEM)
+        if !isfile(LIBMFEM) || !isfile(LIBADFEM) || !isfile(LIBMFEM3)
             error("Dependencies of AdFem not properly built. Run `Pkg.build(\"AdFem\")` to rebuild AdFem.")
         end
         global libmfem = load_library(LIBMFEM)
+        global libmfem3 = load_library(LIBMFEM3)
         global libadfem = load_library(LIBADFEM)
     end
 
@@ -41,5 +44,7 @@ module AdFem
     include("MFEM/MUtils.jl")
     include("MFEM/Mechanics.jl")
     include("MFEM/MBDM.jl")
+    include("MFEM3/MFEM.jl")
+    include("MFEM3/MCore.jl")
 
 end

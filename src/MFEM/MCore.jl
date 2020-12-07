@@ -93,7 +93,7 @@ end
 """
 function compute_fem_laplace_matrix1(kappa::PyObject, mesh::Mesh)
     @assert length(kappa) == get_ngauss(mesh)
-    fem_laplace_scalar_ = load_op_and_grad(libmfem,"fem_laplace_scalar", multiple=true)
+    fem_laplace_scalar_ = load_op_and_grad(AdFem.libmfem,"fem_laplace_scalar", multiple=true)
     kappa = convert_to_tensor(Any[kappa], [Float64]); kappa = kappa[1]
     indices, vv = fem_laplace_scalar_(kappa)
     n = mesh.ndof
