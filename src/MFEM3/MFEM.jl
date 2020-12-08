@@ -27,6 +27,14 @@ mutable struct Mesh3
     elem_type::FiniteElementType
 end
 
+"""
+    Mesh3(coords::Array{Float64, 2}, elems::Array{Int64, 2}, 
+        order::Int64 = -1, degree::Union{FiniteElementType,Int64} = 1, lorder::Int64 = -1)
+
+- `degree`: 1 for P1 element, 2 for P2 element 
+- `order`: Integration order for elements 
+- `lorder`: Integration order for faces
+"""
 function Mesh3(coords::Array{Float64, 2}, elems::Array{Int64, 2}, 
     order::Int64 = -1, degree::Union{FiniteElementType,Int64} = 1, lorder::Int64 = -1)
     @assert length(size(coords))==2 && size(coords,2)==3
@@ -147,6 +155,36 @@ function Mesh3(m::Int64, n::Int64, l::Int64, h::Float64; order::Int64 = -1,
     end
    
     Mesh3(coords, elems, order, degree, lorder)
+end
+
+
+"""
+    Mesh3(filename::String; file_format::Union{String, Missing} = missing, 
+    order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = 2)
+"""
+function Mesh3(filename::String; file_format::Union{String, Missing} = missing, 
+    order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = 2)
+    if splitext(filename)[2] == ".mat"
+        d = matread(filename)
+        return Mesh3(Float64.(d["nodes"]), Int64.(d["elems"]), order, degree, lorder)
+    end
+    meshio = get_meshio()
+    if !ismissing(file_format)
+        mesh = meshio.read(filename, file_format = file_format)
+    else
+    mesh = meshio.read(filename)
+    end
+    elem = []
+    for (mkr, dat) in mesh.cells
+        if mkr == "tetra"
+            push!(elem, dat)
+        end
+    end
+    elem = vcat(elem...)
+    if length(elem)==0
+        error("No triangles found in the mesh file.")
+    end
+    Mesh3(Float64.(mesh.points), Int64.(elem) .+ 1, order, degree, lorder)
 end
 
 
