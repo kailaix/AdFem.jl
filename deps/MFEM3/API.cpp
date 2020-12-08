@@ -65,65 +65,65 @@ extern "C" {
 }
 
 
-void test_APIs(){
-    double vertices[] = {0.0, 0.0, 0.0,
-                        0.0, 0.0, 1.0, 
-                        1.0,1.0,1.0,
-                        0.0,1.0,1.0};
-    int element_indices[] = {
-        0,1,2,3
-    };
-    long long nedges;
-    int degree = 2;
-    int quad_order = 2;
-    auto *edges = init_nnfem_mesh3(vertices, 4, element_indices, 1, quad_order, degree, &nedges);
-    printf("Edges = ");
-    int k = 0;
-    for(int i = 0; i < nedges; i ++){
-        printf("%d, %d\n", edges[k]-1, edges[k+nedges]-1);
-        k ++;
-    }
-    printf("\n");
+// void test_APIs(){
+//     double vertices[] = {0.0, 0.0, 0.0,
+//                         0.0, 0.0, 1.0, 
+//                         1.0,1.0,1.0,
+//                         0.0,1.0,1.0};
+//     int element_indices[] = {
+//         0,1,2,3
+//     };
+//     long long nedges;
+//     int degree = 2;
+//     int quad_order = 2;
+//     auto *edges = init_nnfem_mesh3(vertices, 4, element_indices, 1, quad_order, degree, &nedges);
+//     printf("Edges = ");
+//     int k = 0;
+//     for(int i = 0; i < nedges; i ++){
+//         printf("%d, %d\n", edges[k]-1, edges[k+nedges]-1);
+//         k ++;
+//     }
+//     printf("\n");
 
-    int ngauss = mfem_get_ngauss3();
-    double v;
-    printf("ngauss = %d\n", ngauss);
-    double x[ngauss], y[ngauss], z[ngauss], w[ngauss];
-    mfem_get_gauss3(x, y, z);
-    mfem_get_gauss_weights3(w);
-    printf("Guass = ");
-    for(int i = 0; i < ngauss; i ++){
-        printf("%f %f %f %f\n", x[i], y[i], z[i], w[i]);
-    }
-    printf("\n");
+//     int ngauss = mfem_get_ngauss3();
+//     double v;
+//     printf("ngauss = %d\n", ngauss);
+//     double x[ngauss], y[ngauss], z[ngauss], w[ngauss];
+//     mfem_get_gauss3(x, y, z);
+//     mfem_get_gauss_weights3(w);
+//     printf("Guass = ");
+//     for(int i = 0; i < ngauss; i ++){
+//         printf("%f %f %f %f\n", x[i], y[i], z[i], w[i]);
+//     }
+//     printf("\n");
 
-    mfem_get_volume3(&v);
-    printf("volume = %f\n", v);
+//     mfem_get_volume3(&v);
+//     printf("volume = %f\n", v);
 
-    int n = mfem_get_elem_ndof3();
-    printf("element_ndof = %d\n", n);
+//     int n = mfem_get_elem_ndof3();
+//     printf("element_ndof = %d\n", n);
 
-    n = mfem_get_ndof3();
-    printf("ndof = %d\n", n);
+//     n = mfem_get_ndof3();
+//     printf("ndof = %d\n", n);
 
-    long long conn[10];
-    mfem_get_connectivity3(conn);
-    printf("Connectivity = ");
-    for(int i = 0; i < 10; i ++){
-        printf("%d ", conn[i]);
-    }
-    printf("\n");
+//     long long conn[10];
+//     mfem_get_connectivity3(conn);
+//     printf("Connectivity = ");
+//     for(int i = 0; i < 10; i ++){
+//         printf("%d ", conn[i]);
+//     }
+//     printf("\n");
 
-    long long elems[4];
-    mfem_get_element_to_vertices3(elems);
-    printf("Elements = ");
-    for(int i = 0; i < 4; i ++){
-        printf("%d ", elems[i]);
-    }
-    printf("\n");
-}
+//     long long elems[4];
+//     mfem_get_element_to_vertices3(elems);
+//     printf("Elements = ");
+//     for(int i = 0; i < 4; i ++){
+//         printf("%d ", elems[i]);
+//     }
+//     printf("\n");
+// }
 
-int main(){
-    test_APIs();
-    return 1;
-}
+// int main(){
+//     test_APIs();
+//     return 1;
+// }

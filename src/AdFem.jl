@@ -12,6 +12,7 @@ module AdFem
 
     pts = @. ([-1/sqrt(3); 1/sqrt(3)] + 1)/2
     np = PyNULL()
+    pv = PyNULL()
     LIBMFEM = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM", "build", get_library_name("admfem")))
     LIBMFEM3 = abspath(joinpath(@__DIR__, "..",  "deps", "MFEM3", "build", get_library_name("admfem")))
     libmfem = missing 
@@ -21,6 +22,7 @@ module AdFem
 
     function __init__()
         copy!(np, pyimport("numpy"))
+        copy!(pv, pyimport("pyvista"))
         if !isfile(LIBMFEM) || !isfile(LIBADFEM) || !isfile(LIBMFEM3)
             error("Dependencies of AdFem not properly built. Run `Pkg.build(\"AdFem\")` to rebuild AdFem.")
         end
@@ -46,5 +48,6 @@ module AdFem
     include("MFEM/MBDM.jl")
     include("MFEM3/MFEM.jl")
     include("MFEM3/MCore.jl")
+    include("MFEM3/MVisualize.jl")
 
 end

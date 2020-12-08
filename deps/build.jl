@@ -20,7 +20,8 @@ require_library("admfem") do
     ADCME.make()
 end
 
-run(`$(ADCME.PIP) install pyvista`)
+PIP = get_pip()
+run(`$(PIP) install pyvista`)
 
 change_directory(joinpath(@__DIR__, "MFEM3", "build"))
 require_file("CMakeCache.txt") do 
