@@ -13,7 +13,8 @@ sess = Session(); init(sess)
 SOL = run(sess, sol)
 
 
-############## Visualization 
+
+############## Visualization 1
 using PyPlot
 using DelimitedFiles 
 idx = falses(mmesh.ndof)
@@ -37,3 +38,8 @@ legend()
 xlabel("x")
 ylabel("\$u(x, 0.5, 0.5)\$")
 savefig("section_plot_mfem3d.png")
+
+
+############## Visualization 2
+visualize_scalar_on_fem_points(SOL, mmesh)
+visualize_mesh(mmesh)

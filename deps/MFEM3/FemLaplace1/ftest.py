@@ -29,12 +29,15 @@ L = f*v*dx
 u = Function(V)
 solve(a == L, u, bc)
 
+
+##########################################
 values = []
 for k in range(21):
     for j in range(21):
         for i in range(21):
             values.append(u(0.05*i, 0.05*j, 0.05*k))
 values = np.array(values)
+np.savetxt("val_all.txt", values)
 
 
 values = []
