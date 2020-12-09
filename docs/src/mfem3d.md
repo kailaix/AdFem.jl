@@ -7,7 +7,7 @@ $$\nabla \cdot (\kappa(x) \nabla u) = - f(x) \text{ in } \Omega, \quad u(x) = 0 
 
 Here the diffusivity coefficient is given by 
 
-$$\kappa(x) = \frac{1}{a} + \|x\|^2_2}$$
+$$\kappa(x) = \frac{1}{a + \|x\|^2_2}$$
 
 where $a$ is a quantity of interest, which can be the parameter to be calibrated in the inverse problem. For simplicity, we let 
 
