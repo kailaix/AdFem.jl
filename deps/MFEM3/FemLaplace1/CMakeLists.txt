@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.5)
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 project(TF_CUSTOM_OP)
 SET (CMAKE_CXX_STANDARD 11)
 
@@ -52,25 +51,28 @@ else()
   SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 endif()
 
-include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${LIBDIR}/../include ${PREFIXDIR}/had)
-find_library(mfem mfem HINTS ${LIBDIR})
-message("MFEM = ${mfem}")
+include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC})
 
+find_program(_nvidia_smi "nvidia-smi")
+if (_nvidia_smi AND UNIX)
+  find_package(CUDA QUIET REQUIRED)
+  SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-O3 ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-shared ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-fPIC ${CMAKE_CXX_FLAGS}")
+  SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};--expt-relaxed-constexpr)
+  SET(CUDA_PROPAGATE_HOST_FLAGS ON)
+  add_definitions(-DGOOGLE_CUDA)
+  message("Compiling GPU-compatible custom operator!")
+  cuda_add_library(FemLaplaceScalarT SHARED FemLaplaceScalarT.cpp FemLaplaceScalarT.cu)
+else()
+  add_library(FemLaplaceScalarT SHARED FemLaplaceScalarT.cpp)
+endif()
 
-# add_executable(main Common.cpp API.cpp )        
-# target_link_libraries(main ${mfem})
-
-
-add_library(admfem SHARED Common.cpp API.cpp 
-  ComputeLaplaceTermMfem/ComputeLaplaceTermMfem.cpp
-  FemSource/FemSourceScalarT.cpp
-  FemLaplace1/FemLaplaceScalarT.cpp)
-          
-target_link_libraries(admfem ${TF_LIB_FILE} ${mfem})
-set_property(TARGET admfem PROPERTY POSITION_INDEPENDENT_CODE ON)
-
+set_property(TARGET FemLaplaceScalarT PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(FemLaplaceScalarT ${TF_LIB_FILE})
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
-set_target_properties(admfem PROPERTIES 
+set_target_properties(FemLaplaceScalarT PROPERTIES 
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build 
                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build
                 ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build)

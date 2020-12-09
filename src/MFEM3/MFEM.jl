@@ -16,9 +16,11 @@ export Mesh3, get_ngauss, get_volume
 mutable struct Mesh3
     nodes::Array{Float64, 2}
     edges::Array{Int64, 2}
+    faces::Array{Int64, 3}
     elems::Array{Int64, 2}
     nnode::Int64
     nedge::Int64
+    nface::Int64
     nelem::Int64
     ndof::Int64
     conn::Array{Int64, 2}
@@ -79,15 +81,30 @@ function Mesh3(coords::Array{Float64, 2}, elems::Array{Int64, 2},
     elseif degree==2
         elem_type = P2 
     end
-    Mesh3(coords, edges,  elems, nnode, nedges, nelem, ndof, conn, lorder, elem_dof, elem_type)
+
+    # get faces 
+    fset = Set{Tuple{Int64, Int64, Int64}}([])
+    for i = 1:nelem
+        cc = elems[i,:]
+        push!(fset, Tuple(cc[[1;2;3]]))
+        push!(fset, Tuple(cc[[1;2;4]]))
+        push!(fset, Tuple(cc[[1;3;4]]))
+        push!(fset, Tuple(cc[[2;3;4]]))
+    end
+
+    faces = vcat([[x[1] x[2] x[3]] for x in fset]...)
+    nfaces = size(faces, 1)
+    Mesh3(coords, edges,  faces, elems, nnode, nedges, nfaces, nelem, ndof, conn, lorder, elem_dof, elem_type)
 end
 
 Base.:copy(mesh::Mesh3) = Mesh3(copy(mesh.nodes),
                             copy(mesh.edges),
+                            copy(mesh.faces),
                             copy(mesh.elems),
                             copy(mesh.nnode),
                             copy(mesh.nedge),
                             copy(mesh.nelem),
+                            copy(mesh.nface),
                             copy(mesh.ndof),
                             copy(mesh.conn),
                             copy(mesh.lorder),
