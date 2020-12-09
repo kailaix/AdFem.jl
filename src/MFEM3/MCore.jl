@@ -1,3 +1,8 @@
+"""
+    compute_fem_laplace_term1(u::Union{PyObject, Array{Float64, 1}},
+        nu::Union{PyObject, Array{Float64, 1}},
+        mesh::Mesh3)
+"""
 function compute_fem_laplace_term1(u::Union{PyObject, Array{Float64, 1}},
     nu::Union{PyObject, Array{Float64, 1}},
     mesh::Mesh3)

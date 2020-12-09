@@ -22,7 +22,12 @@ module AdFem
 
     function __init__()
         copy!(np, pyimport("numpy"))
-        copy!(pv, pyimport("pyvista"))
+        try 
+            copy!(pv, pyimport("pyvista"))
+        catch
+            @warn """pyvista installation was not successful. 3D plots functionalities are disabled.
+To fix the problem, check why `$(ADCME.get_pip()) install pyvista` failed."""
+        end
         if !isfile(LIBMFEM) || !isfile(LIBADFEM) || !isfile(LIBMFEM3)
             error("Dependencies of AdFem not properly built. Run `Pkg.build(\"AdFem\")` to rebuild AdFem.")
         end

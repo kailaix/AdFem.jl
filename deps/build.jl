@@ -21,7 +21,11 @@ require_library("admfem") do
 end
 
 PIP = get_pip()
-run(`$(PIP) install pyvista`)
+try 
+    run(`$(PIP) install pyvista`)
+catch 
+    @warn "pyvista installation was not successful. 3D plots functionalities are disabled."
+end
 
 change_directory(joinpath(@__DIR__, "MFEM3", "build"))
 require_file("CMakeCache.txt") do 
