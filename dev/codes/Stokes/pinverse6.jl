@@ -9,12 +9,11 @@ mmesh = Mesh(joinpath(PDATA, "twoholes_large.stl"))
 mmesh = Mesh(mmesh.nodes * 10, mmesh.elems, -1, 2)
 
 
-function f(x, y)
-    0.0001*(10/(1+x^2) + x * y + 10*y^2)
-end
+ν = sigmoid(Variable(zeros(mmesh.nelem)) ) * 0.002
+ν = repeat(ν, 1, get_ngauss(mmesh)÷mmesh.nelem)
+ν = reshape(ν, (-1,))
 
-# ν = eval_f_on_gauss_pts(f, mmesh)
-ν = abs(squeeze(fc(gauss_nodes(mmesh), [20,20,20,1], activation="relu"))) * 0.0001 
+
 K = constant(compute_fem_laplace_matrix(ν, mmesh))
 B = constant(compute_interaction_matrix(mmesh))
 Z = [K -B'
@@ -43,10 +42,11 @@ cb = (vs, iter, loss)->begin
     push!(_loss, loss)
     printstyled("[#iter $iter] loss=$loss\n", color=:green)
     if mod(iter, 10)==1
+        make_directory("pixel2")
         close("all")
         visualize_scalar_on_gauss_points(vs[1], mmesh)
-        matwrite("fenics/bwd2-$iter.mat", Dict("iter"=>iter,"loss"=>_loss, "nu"=>vs[1]))
-        savefig("fenics/bwd2_nn$iter.png")
+        matwrite("pixel2/bwd3-$iter.mat", Dict("iter"=>iter,"loss"=>_loss, "nu"=>vs[1]))
+        savefig("pixel2/bwd3_pixel$iter.png")
     end
 end
 
