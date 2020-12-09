@@ -17,6 +17,8 @@ extern "C" {
     }
 
     void mfem_get_gauss3(double *x, double *y, double *z){
+        // printf("Gauss nodes = %d\n", mmesh3.ngauss);
+        // printf("Size = %d, %d\n", mmesh3.GaussPts.rows(), mmesh3.GaussPts.cols());
         memcpy(x, mmesh3.GaussPts.data(), mmesh3.ngauss * sizeof(double));
         memcpy(y, mmesh3.GaussPts.data() + mmesh3.ngauss, mmesh3.ngauss * sizeof(double));
         memcpy(z, mmesh3.GaussPts.data() + 2*mmesh3.ngauss, mmesh3.ngauss * sizeof(double));

@@ -16,7 +16,7 @@ export Mesh3, get_ngauss, get_volume
 mutable struct Mesh3
     nodes::Array{Float64, 2}
     edges::Array{Int64, 2}
-    faces::Array{Int64, 3}
+    faces::Array{Int64, 2}
     elems::Array{Int64, 2}
     nnode::Int64
     nedge::Int64
@@ -86,10 +86,10 @@ function Mesh3(coords::Array{Float64, 2}, elems::Array{Int64, 2},
     fset = Set{Tuple{Int64, Int64, Int64}}([])
     for i = 1:nelem
         cc = elems[i,:]
-        push!(fset, Tuple(cc[[1;2;3]]))
-        push!(fset, Tuple(cc[[1;2;4]]))
-        push!(fset, Tuple(cc[[1;3;4]]))
-        push!(fset, Tuple(cc[[2;3;4]]))
+        push!(fset, Tuple(sort(cc[[1;2;3]])))
+        push!(fset, Tuple(sort(cc[[1;2;4]])))
+        push!(fset, Tuple(sort(cc[[1;3;4]])))
+        push!(fset, Tuple(sort(cc[[2;3;4]])))
     end
 
     faces = vcat([[x[1] x[2] x[3]] for x in fset]...)
@@ -124,17 +124,23 @@ Constructs a mesh of a rectangular domain. The rectangle is split into $m\times 
 function Mesh3(m::Int64, n::Int64, l::Int64, h::Float64; order::Int64 = -1, 
             degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
     coords = zeros((m+1)*(n+1)*(l+1), 3)
-    elems = zeros(Int64, 6*m*n*l, 4)
+    elems = zeros(Int64, 5*m*n*l, 4)
     function ID(i, j, k)
         (k-1)*(n+1)*(m+1) + (j-1)*(m+1) + i 
     end
-    TE = [
+    TE1 = [
         [1; 2; 3; 5],
-        [2; 3; 5; 6],
-        [3; 5; 6; 7],
         [2; 3; 4; 8],
-        [2; 3; 6; 8],
-        [3; 6; 7; 8],
+        [3; 5; 7; 8],
+        [2; 3; 5; 8],
+        [2; 5; 6; 8]
+    ]
+    TE2 = [
+        [1; 2; 4; 6],
+        [1; 5; 6; 7],
+        [4; 6; 7; 8],
+        [1; 4; 6; 7],
+        [1; 3; 4; 7]
     ]
     
     s = 1
@@ -163,10 +169,14 @@ function Mesh3(m::Int64, n::Int64, l::Int64, h::Float64; order::Int64 = -1,
                     ID(i, j+1, k+1)
                     ID(i+1, j+1, k+1)
                 ]
-                for s = 1:6
-                    elems[s + K,:] = IDX[TE[s]]
+                for s = 1:5
+                    if (i+j+k)%2==0
+                        elems[s + K,:] = IDX[TE1[s]]
+                    else
+                        elems[s + K,:] = IDX[TE2[s]]
+                    end
                 end
-                K += 6
+                K += 5
             end
         end
     end
@@ -255,8 +265,9 @@ function gauss_nodes(mesh::Mesh3)
     ngauss = get_ngauss(mesh)
     x = zeros(ngauss)
     y = zeros(ngauss)
-    @eval ccall((:mfem_get_gauss3, $LIBMFEM3), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $x, $y)
-    [x y]
+    z = zeros(ngauss)
+    @eval ccall((:mfem_get_gauss3, $LIBMFEM3), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), $x, $y, $z)
+    [x y z]
 end
 
 """
