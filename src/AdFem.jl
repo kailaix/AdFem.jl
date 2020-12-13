@@ -54,5 +54,6 @@ To fix the problem, check why `$(ADCME.get_pip()) install pyvista` failed."""
     include("MFEM3/MFEM.jl")
     include("MFEM3/MCore.jl")
     include("MFEM3/MVisualize.jl")
+    include("pcl.jl")
 
 end
