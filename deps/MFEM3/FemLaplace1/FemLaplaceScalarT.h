@@ -6,11 +6,12 @@ namespace MFEM{
     int elem_ndof = mmesh3.elem_ndof;
     for(int i = 0; i<mmesh3.nelem; i++){
         NNFEM_Element3 * elem = mmesh3.elements[i];
-        Eigen::MatrixXd D(elem_ndof, 2);
+        Eigen::MatrixXd D(elem_ndof, 3);
         for (int k = 0; k<elem->ngauss; k++){
           for (int r = 0; r < elem_ndof; r++){
             D(r, 0) = elem->hx(r, k);
             D(r, 1) = elem->hy(r, k);
+            D(r, 2) = elem->hz(r, k);
           }
           Eigen::MatrixXd N = D * D.transpose() * kappa[s++] * elem->w[k];
           for (int p = 0; p < elem_ndof; p ++)
@@ -34,11 +35,12 @@ namespace MFEM{
     int elem_ndof = mmesh3.elem_ndof;
     for(int i = 0; i<mmesh3.nelem; i++){
         NNFEM_Element3 * elem = mmesh3.elements[i];
-        Eigen::MatrixXd D(elem_ndof, 2);
+        Eigen::MatrixXd D(elem_ndof, 3);
         for (int k = 0; k<elem->ngauss; k++){
           for (int r = 0; r < elem_ndof; r++){
             D(r, 0) = elem->hx(r, k);
             D(r, 1) = elem->hy(r, k);
+            D(r, 2) = elem->hz(r, k);
           }
           Eigen::MatrixXd N = D * D.transpose() * elem->w[k];
           double v = 0.0;

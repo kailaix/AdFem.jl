@@ -26,7 +26,7 @@ module AdFem
             copy!(pv, pyimport("pyvista"))
         catch
             @warn """pyvista installation was not successful. 3D plots functionalities are disabled.
-To fix the problem, check why `$(ADCME.get_pip()) install pyvista` failed."""
+To fix the problem, check why `$(ADCME.get_pip()) install pyvista` or `python -c 'import pyvista'` failed."""
         end
         if !isfile(LIBMFEM) || !isfile(LIBADFEM) || !isfile(LIBMFEM3)
             error("Dependencies of AdFem not properly built. Run `Pkg.build(\"AdFem\")` to rebuild AdFem.")
@@ -55,5 +55,6 @@ To fix the problem, check why `$(ADCME.get_pip()) install pyvista` failed."""
     include("MFEM3/MCore.jl")
     include("MFEM3/MVisualize.jl")
     include("pcl.jl")
+    include("MFEM3/MUtils.jl")
 
 end

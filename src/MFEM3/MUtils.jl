@@ -1,31 +1,37 @@
+export bcface, bcnode
 
-function get_face_dof(bdface, mmesh)
-end
+@doc raw"""
+    bcface(mmesh::Mesh3)
 
+Returns the boundary faces as a $n_b \times 3$ matrix. Each row is the three vertices for the triangle face. 
+"""
 function bcface(mmesh::Mesh3)
     fdict = Dict{Tuple{Int64, Int64, Int64}, Int64}()
     for i = 1:mmesh.nface
-        fdict[(fdict[i,1], fdict[i,2], fdict[i,3])] = i 
+        fdict[(mmesh.faces[i,1], mmesh.faces[i,2], mmesh.faces[i,3])] = i 
     end 
     bface = Dict([i=>0 for i = 1:mmesh.nface])
     for i = 1:mmesh.nelem
         el = mmesh.elems[i,:]
-        bface[Tuple(el[[1;2;3]])] += 1
-        bface[Tuple(el[[1;2;4]])] += 1
-        bface[Tuple(el[[1;3;4]])] += 1
-        bface[Tuple(el[[2;3;4]])] += 1
+        bface[fdict[Tuple(sort(el[[1;2;3]]))]] += 1
+        bface[fdict[Tuple(sort(el[[1;2;4]]))]] += 1
+        bface[fdict[Tuple(sort(el[[1;3;4]]))]] += 1
+        bface[fdict[Tuple(sort(el[[2;3;4]]))]] += 1
     end
+    bf = []
+    for k = 1:mmesh.nface
+        if bface[k] == 1
+            push!(bf, mmesh.faces[k,:])
+        end
+    end
+    Array(hcat(bf...)')
 end
 
+"""
+    bcnode(mmesh::Mesh3)
+"""
 function bcnode(mmesh::Mesh3)
-    bdedge = bcedge(mmesh)
-    if by_dof && mmesh.elem_type == P2
-        edgedof = get_edge_dof(bdedge, mmesh) .+ mmesh.nnode
-        [collect(Set(bdedge[:])); edgedof]
-    elseif by_dof && mmesh.elem_type == BDM1
-        bd = get_edge_dof(bdedge, mmesh) 
-        [bd; bd .+ mmesh.nedge]
-    else
-        collect(Set(bdedge[:]))
-    end
+    bf = bcface(mmesh)
+    s = Set(bf[:])
+    return [x for x in s]
 end
