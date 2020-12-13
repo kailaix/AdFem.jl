@@ -114,6 +114,13 @@ fem_nodes
 fvm_nodes
 ```
 
+
+## Physics Constrained Learning 
+```@docs
+pcl_impose_Dirichlet_boundary_conditions
+pcl_compute_fem_laplace_matrix1
+```
+
 ## Misc
 
 ```@docs

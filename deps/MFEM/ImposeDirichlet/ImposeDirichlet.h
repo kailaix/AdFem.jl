@@ -92,3 +92,21 @@ namespace MFEM{
         }  
     }
 }
+
+
+// J: indof x outdof 
+extern "C" void pcl_ImposeDirichlet(
+        double *J, 
+        const int64 *indices, const int64 *bd, int bdN, int sN){
+        std::set<int64> bdMap;
+        for(int i = 0; i < bdN; i++) bdMap.insert(bd[i]-1);
+        int s = 0;
+        for(int k = 0; k < sN; k++){
+            int64 i = indices[k] - 1, j = indices[k+sN] - 1;
+            if (bdMap.count(i)==0 && bdMap.count(j)==0){
+                int idx = k + s * sN;
+                s += 1;
+                J[idx] = 1.0;
+            }
+        }
+}
