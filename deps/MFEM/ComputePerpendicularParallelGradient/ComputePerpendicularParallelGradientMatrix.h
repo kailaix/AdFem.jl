@@ -48,10 +48,10 @@ namespace MFEM{
                 for(int l = 0; l < 2; l++){
                     for (int m = 0; m < 2; m++){
                         int idx = 2*m+l;
-                        grad_cmat[4*k+idx] = LEFT(0, l) * RIGHT(m, 0) * grad_nmat[4*k] + \
-                                            LEFT(1, l) * RIGHT(m, 0) * grad_nmat[4*k+1] + \
-                                            LEFT(0, l) * RIGHT(m, 1) * grad_nmat[4*k+2] + \
-                                            LEFT(1, l) * RIGHT(m, 1) * grad_nmat[4*k+3];
+                        grad_cmat[4*k+idx] = LEFT(0, m) * RIGHT(l, 0) * grad_nmat[4*k] + \
+                                            LEFT(0, m) * RIGHT(l, 1) * grad_nmat[4*k+1] + \
+                                            LEFT(1, m) * RIGHT(l, 0) * grad_nmat[4*k+2] + \
+                                            LEFT(1, m) * RIGHT(l, 1) * grad_nmat[4*k+3];
                     }
                 }
                 k++;

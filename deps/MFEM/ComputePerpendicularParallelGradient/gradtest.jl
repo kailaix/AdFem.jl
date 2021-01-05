@@ -6,19 +6,14 @@ using Random
 using AdFem
 Random.seed!(233)
 
-function compute_perpendicular_parallel_gradient_matrix(nv,cmat,left,right)
-    compute_perpendicular_parallel_gradient_matrix_ = load_op_and_grad(AdFem.libmfem,"compute_perpendicular_parallel_gradient_matrix")
-    nv,cmat,left,right = convert_to_tensor(Any[nv,cmat,left,right], [Float64,Float64,Int64,Int64])
-    compute_perpendicular_parallel_gradient_matrix_(nv,cmat,left,right)
-end
 
 # TODO: specify your input parameters
 mmesh = Mesh(10, 10, 0.1)
-left = 1
-right = 1
+left = -1
+right = -1
 cmat = rand(get_ngauss(mmesh), 2, 2)
 nv = rand(get_ngauss(mmesh), 2)
-u = compute_perpendicular_parallel_gradient_matrix(nv,cmat,left,right)
+u = compute_parallel_parallel_gradient_tensor(cmat, nv, mmesh)
 sess = Session(); init(sess)
 U = run(sess, u)
 
@@ -47,7 +42,11 @@ end
 # gradient check -- v
 function scalar_function(x)
     x = reshape(x, (get_ngauss(mmesh), 2, 2))
-    return sum(compute_perpendicular_parallel_gradient_matrix(nv,x,left,right)^2)
+    out = compute_perpendicular_parallel_gradient_tensor(x, nv, mmesh)
+    # out = compute_parallel_parallel_gradient_tensor(x, nv, mmesh)
+    # out = compute_perpendicular_perpendicular_gradient_tensor(x, nv, mmesh)
+    # out = compute_parallel_perpendicular_gradient_tensor(x, nv, mmesh)
+    sum(out^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
@@ -82,3 +81,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("test.png")

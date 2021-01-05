@@ -94,6 +94,10 @@ compute_space_varying_tangent_elasticity_matrix
 mantle_viscosity
 antiplane_viscosity
 update_stress_viscosity
+compute_perpendicular_parallel_gradient_tensor
+compute_parallel_parallel_gradient_tensor
+compute_perpendicular_perpendicular_gradient_tensor
+compute_parallel_perpendicular_gradient_tensor
 ```
 
 ## Mesh
