@@ -1,7 +1,8 @@
 export PDATA, get_edge_dof, 
     impose_Dirichlet_boundary_conditions, dof_to_gauss_points, get_boundary_edge_orientation,
     compute_perpendicular_parallel_gradient_tensor, compute_parallel_parallel_gradient_tensor,
-    compute_perpendicular_perpendicular_gradient_tensor, compute_parallel_perpendicular_gradient_tensor
+    compute_perpendicular_perpendicular_gradient_tensor, compute_parallel_perpendicular_gradient_tensor,
+    compute_pml_term
 
 """
     PDATA
@@ -298,4 +299,24 @@ See [`compute_perpendicular_parallel_gradient_tensor`](@ref) for details.
 function compute_perpendicular_perpendicular_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
     nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
     _compute_perpendicular_parallel_gradient(nv, C, 1, 1, mmesh)
+end
+
+@doc raw"""
+    compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
+    c::Union{Array{Float64,1}, PyObject},nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh)
+
+
+- `u`: a vector of length `mmesh.ndof`
+- `βprime`: a vector of length $n_{\text{gauss}}$
+- `c`: a tensor of size $n_{\text{gauss}}$
+- `nv`: a matrix of size $n_{\text{gauss}}\times 2$
+
+Returns a vector of length `mmesh.ndof`
+"""
+function compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
+        c::Union{Array{Float64,1}, PyObject},nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh)
+    compute_pml_term_ = load_op_and_grad(AdFem.libmfem,"compute_pml_term", multiple=true)
+    u,betap,c,nv = convert_to_tensor(Any[u,βprime,c,nv], [Float64,Float64,Float64,Float64])
+    out = compute_pml_term_(u,betap,c,nv)
+    set_shape(out[1], (mmesh.ndof, )), set_shape(out[2], (mmesh.ndof, )), set_shape(out[3], (mmesh.ndof, )), set_shape(out[4], (mmesh.ndof, ))
 end

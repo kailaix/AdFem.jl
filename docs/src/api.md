@@ -98,6 +98,7 @@ compute_perpendicular_parallel_gradient_tensor
 compute_parallel_parallel_gradient_tensor
 compute_perpendicular_perpendicular_gradient_tensor
 compute_parallel_perpendicular_gradient_tensor
+compute_pml_term
 ```
 
 ## Mesh

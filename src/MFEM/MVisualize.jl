@@ -58,7 +58,12 @@ function visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...
     end
 
     # plot the contours
-    plt.tricontourf(triangulation, nodal_values, levels=100)
+    if haskey(kwargs, :vmin)
+        levels = Array(LinRange(kwargs[:vmin], kwargs[:vmax], 100))
+    else 
+        levels = 100
+    end
+    plt.tricontourf(triangulation, nodal_values, levels = levels)
 
     xlabel("x")
     ylabel("y")
@@ -180,4 +185,38 @@ function visualize_displacement(u::Array{Float64, 2}, mmesh::Mesh)
         ylim(ymin, ymax)
     end
     animate(update, 1:size(u,1))
+end
+
+"""
+    visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh)
+"""
+function visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh)
+    vmax, vmin = maximum(U), minimum(U)
+
+    # FEM data
+    nodes_x = mesh.nodes[:,1]
+    nodes_y = mesh.nodes[:,2]
+    elements_tris = []
+    for i = 1:size(mesh.elems, 1)
+        push!(elements_tris, mesh.elems[i,:] .- 1)
+    end
+
+    # create an unstructured triangular grid instance
+    triangulation = matplotlib.tri.Triangulation(nodes_x, nodes_y, elements_tris)
+
+    # plot the contours
+    levels = Array(LinRange(vmin, vmax, 100))
+    
+    
+    plt.tricontourf(triangulation, U[1,:], levels = levels)
+    xlabel("x")
+    ylabel("y")
+    colorbar()
+    axis("scaled")
+
+    function update(i)
+        gca().clear()
+        plt.tricontourf(triangulation, U[i,:], levels = levels)
+    end
+    animate(update, 2:size(U,1))
 end

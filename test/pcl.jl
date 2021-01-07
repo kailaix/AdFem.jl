@@ -1,7 +1,7 @@
 sess = Session(); init(sess)
 @testset "pcl_impose_Dirichlet_boundary_conditions" begin 
-# using Revise; using AdFem; using PyPlot; using SparseArrays
-# sess = Session(); init(sess)
+using Revise; using AdFem; using PyPlot; using SparseArrays
+sess = Session(); init(sess)
 
     A = sprand(10,10,0.6)
     II, JJ, VV = findnz(A)
