@@ -1,3 +1,6 @@
+# purpose
+# finite element simulation for square domain with PML 
+# 
 using Revise
 using AdFem
 using PyPlot
@@ -10,9 +13,10 @@ function ricker(;dt = 0.005, f0 = 3.0)
     w = @. (1 - 2b)*exp(-b)
 end
 
-mmesh = Mesh(joinpath(PDATA, "disk.stl"))
+n = 50
+mmesh = Mesh(n, n, 1/n)
 NT = 300
-Δt = 10/NT 
+Δt = 6/NT 
 
 xy = gauss_nodes(mmesh)
 xg, yg = xy[:,1], xy[:,2]
@@ -29,41 +33,41 @@ R = 50000
 pf = n->R*n^3
 pfprime = n->3*R*n^2
 
-# for i = 1:get_ngauss(mmesh)
-#     if xg[i]<0.1
-#         nv[i,:] = [-1.0;0.0]
-#         n = abs(0.1-xg[i])
-#     elseif xg[i]>0.9
-#         nv[i,:] = [1.0;0.0]
-#         n = abs(0.9-xg[i])
-#     elseif yg[i]<0.1
-#         nv[i,:] = [0.0;-1.0]
-#         n = abs(0.1-yg[i])
-#     elseif yg[i]>0.9
-#         nv[i,:] = [0.0;1.0]
-#         n = abs(0.9-yg[i])
-#     else 
-#         continue 
-#     end
-#     β_g[i] = pf(n)
-#     βprime[i] = pfprime(n)
-# end
+for i = 1:get_ngauss(mmesh)
+    if xg[i]<0.1
+        nv[i,:] = [-1.0;0.0]
+        n = abs(0.1-xg[i])
+    elseif xg[i]>0.9
+        nv[i,:] = [1.0;0.0]
+        n = abs(0.9-xg[i])
+    elseif yg[i]<0.1
+        nv[i,:] = [0.0;-1.0]
+        n = abs(0.1-yg[i])
+    elseif yg[i]>0.9
+        nv[i,:] = [0.0;1.0]
+        n = abs(0.9-yg[i])
+    else 
+        continue 
+    end
+    β_g[i] = pf(n)
+    βprime[i] = pfprime(n)
+end
 
 
-# for i = 1:mmesh.ndof
-#     if x[i]<0.1
-#         n = abs(0.1-x[i])
-#     elseif x[i]>0.9
-#         n = abs(0.9-x[i])
-#     elseif y[i]<0.1
-#         n = abs(0.1-y[i])
-#     elseif y[i]>0.9
-#         n = abs(0.9-y[i])
-#     else 
-#         continue 
-#     end
-#     β[i] = pf(n)
-# end
+for i = 1:mmesh.ndof
+    if x[i]<0.1
+        n = abs(0.1-x[i])
+    elseif x[i]>0.9
+        n = abs(0.9-x[i])
+    elseif y[i]<0.1
+        n = abs(0.1-y[i])
+    elseif y[i]>0.9
+        n = abs(0.9-y[i])
+    else 
+        continue 
+    end
+    β[i] = pf(n)
+end
 
 nv = constant(nv)
 β_g = constant(β_g)
@@ -72,7 +76,7 @@ nv = constant(nv)
 
 
 F = zeros(NT+1, get_ngauss(mmesh))
-F[1:length(ricker(f0=2.0)),2312] = ricker(f0=2.0)
+F[1:length(ricker(f0=7.0)),2312] = ricker(f0=7.0)
 F = constant(F)
 
 RHS = zeros(mmesh.ndof)
