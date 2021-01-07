@@ -3,33 +3,38 @@ using PyCall
 using LinearAlgebra
 using PyPlot
 using Random
+using AdFem
 Random.seed!(233)
 
-function compute_pml_term(u,betap,c,nv)
-    compute_pml_term_ = load_op_and_grad("./build/libComputePmlTerm","compute_pml_term", multiple=true)
-    u,betap,c,nv = convert_to_tensor(Any[u,betap,c,nv], [Float64,Float64,Float64,Float64])
-    compute_pml_term_(u,betap,c,nv)
-end
-
-# TODO: specify your input parameters
-u = compute_pml_term(u,betap,c,nv)
+mmesh = Mesh(10,10,0.1)
+u0 = rand(mmesh.ndof)
+betap = rand(get_ngauss(mmesh))
+c = rand(get_ngauss(mmesh))
+nv = rand(get_ngauss(mmesh), 2)
+u = compute_pml_term(u0,betap,c,nv, mmesh)
 sess = Session(); init(sess)
 @show run(sess, u)
 
 # uncomment it for testing gradients
-error() 
+# error() 
 
 
 # TODO: change your test parameter to `m`
 #       in the case of `multiple=true`, you also need to specify which component you are testings
 # gradient check -- v
 function scalar_function(m)
-    return sum(compute_pml_term(u,betap,c,nv)^2)
+    k1,k2,k3,k4 = compute_pml_term(m,betap,c,nv, mmesh)
+
+    return sum(k1^2+k2^2+k3^2+k4^2)
 end
 
 # TODO: change `m_` and `v_` to appropriate values
-m_ = constant(rand(10,20))
-v_ = rand(10,20)
+# m_ = constant(rand(get_ngauss(mmesh)))
+# v_ = rand(get_ngauss(mmesh))
+
+m_ = constant(rand(mmesh.ndof))
+v_ = rand(mmesh.ndof)
+
 y_ = scalar_function(m_)
 dy_ = gradients(y_, m_)
 ms_ = Array{Any}(undef, 5)
@@ -59,3 +64,4 @@ plt.gca().invert_xaxis()
 legend()
 xlabel("\$\\gamma\$")
 ylabel("Error")
+savefig("gradtest.png")
