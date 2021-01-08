@@ -40,6 +40,8 @@ In the more general case, we replace the $+x$ direction with the outward normal 
 
 $$\tilde n(n) = n - \frac{i}{\omega}\int_0^n \beta(s) ds, \tilde y = y$$
 
+![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/pmldomain.png)
+
 To derive the governing equation in terms of $n$ using the governing equation in terms of $\tilde n$, note that 
 
 $$\frac{\partial n}{\partial \tilde n} = \frac{i \omega}{i\omega + \beta(n)}\tag{4}$$
