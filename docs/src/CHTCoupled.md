@@ -38,7 +38,7 @@ Temperature variations within a convective flow give rise to variations in fluid
 $$\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y}=0 \tag{1}$$
 $$u \frac{\partial u}{\partial x}+v \frac{\partial u}{\partial y}=- \frac{1}{\rho}\frac{\partial p}{\partial x}+\frac{\partial }{\partial x}\left( \nu \frac{\partial  u}{\partial x } \right)+ \frac{\partial }{\partial y}\left(\nu \frac{\partial  u}{\partial y } \right)\tag{2}$$
 $$u \frac{\partial v}{\partial x}+v \frac{\partial v}{\partial y} -  Ra\, \nu\, T =-\frac{1}{\rho}\frac{\partial p}{\partial y}+\frac{\partial }{\partial x}\left(\nu \frac{\partial  v}{\partial x } \right)+ \frac{\partial }{\partial y}\left(\nu \frac{\partial  v}{\partial y } \right) \tag{3}$$
-$$  u \frac{\partial T}{\partial x}+v \frac{\partial T}{\partial y}=\frac{\partial }{\partial x}\left( \frac{\partial  T}{\partial x } \right)+ \frac{\partial }{\partial y}\left(\frac{\partial  T}{\partial y } \right)\tag{4}$$
+$$u \frac{\partial T}{\partial x}+v \frac{\partial T}{\partial y}=\frac{\partial }{\partial x}\left( \frac{\partial  T}{\partial x } \right)+ \frac{\partial }{\partial y}\left(\frac{\partial  T}{\partial y } \right)\tag{4}$$
 
 where $K = k/\rho\,  C_p$ is the diffusivity of the material.
 
