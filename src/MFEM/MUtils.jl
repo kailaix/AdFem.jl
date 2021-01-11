@@ -235,7 +235,9 @@ end
 - `c`: a tensor of size $n_{\text{gauss}}$
 - `nv`: a matrix of size $n_{\text{gauss}}\times 2$
 
-Returns a vector of length `mmesh.ndof`
+This function returns four outputs
+
+$$\begin{aligned}k_1&=(c^2 n\partial_n u, n\partial_n\delta u)\\k_2&=(\beta'n\cdot(c^2 n\partial_n u), \delta u)\\ k_3&=(c^2\nabla^\parallel u, n\partial_n \delta u) + (c^2 n\partial n u, \nabla^\parallel \delta u)\\ k_4&= (c^2 \nabla^\parallel u, \nabla^\parallel \delta u)\end{aligend}$$
 """
 function compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
         c::Union{Array{Float64,1}, PyObject},nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh)
