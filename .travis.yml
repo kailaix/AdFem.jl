@@ -13,7 +13,5 @@ os:
   - osx
   - linux
   - windows
-script:
-  - julia --color=yes -e 'using Pkg;  Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.build("AdFem")'
 notifications:
   email: false
