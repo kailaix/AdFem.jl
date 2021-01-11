@@ -46,7 +46,7 @@ S = solve_navier_stokes(S0, NT, k_chip)
 sess = Session(); init(sess)
 output = run(sess, S)
 
-matwrite("data3.mat", 
+matwrite("data4.mat", 
     Dict(
         "V"=>output[end, :]
     ))
