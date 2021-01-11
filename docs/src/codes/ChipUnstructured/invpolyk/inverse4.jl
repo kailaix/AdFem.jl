@@ -59,7 +59,7 @@ bd = [bd; solid_fem_idx; solid_fem_idx .+ ndof; solid_fvm_idx .+ 2*ndof]
 S0 = constant(zeros(nelem+3*ndof))
 S = solve_navier_stokes(S0, NT, k_chip)
 S_computed = S[end, :]
-S_data = matread("data3.mat")["V"]
+S_data = matread("data4.mat")["V"]
 
 loss =  mean((S_computed .- S_data)^2)
 loss = loss * 1e10
