@@ -77,7 +77,6 @@ add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
           ComputeStrainEnergyTermMfem/ComputeStrainEnergyTermMfem.cpp
           EvalStrainOnGaussPtsMfem/EvalStrainOnGaussPts.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp
-          ComputePerpendicularParallelGradient/ComputePerpendicularParallelGradientMatrix.cpp
           ComputePMLTerm/ComputePmlTerm.cpp)
           
 

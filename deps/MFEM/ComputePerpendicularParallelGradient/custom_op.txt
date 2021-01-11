@@ -1,6 +1,0 @@
-ComputePerpendicularParallelGradientMatrix
-double nv(?,2)
-double cmat(?,2,2)
-int64 left()
-int64 right()
-double nmat(?,2,2) -> output

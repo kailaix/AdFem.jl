@@ -1,7 +1,5 @@
 export PDATA, get_edge_dof, 
     impose_Dirichlet_boundary_conditions, dof_to_gauss_points, get_boundary_edge_orientation,
-    compute_perpendicular_parallel_gradient_tensor, compute_parallel_parallel_gradient_tensor,
-    compute_perpendicular_perpendicular_gradient_tensor, compute_parallel_perpendicular_gradient_tensor,
     compute_pml_term
 
 """
@@ -226,80 +224,6 @@ function get_boundary_edge_orientation(bdedge::Array{Int64, 2}, mmesh::Mesh)
 end
 
 
-function _compute_perpendicular_parallel_gradient(nv::Union{Array{Float64, 2}, PyObject},
-    cmat::Union{Array{Float64, 3}, PyObject},left::Int64,right::Int64, mmesh::Mesh)
-    compute_perpendicular_parallel_gradient_matrix_ = load_op_and_grad(AdFem.libmfem,"compute_perpendicular_parallel_gradient_matrix")
-    nv,cmat,left,right = convert_to_tensor(Any[nv,cmat,left,right], [Float64,Float64,Int64,Int64])
-    out = compute_perpendicular_parallel_gradient_matrix_(nv,cmat,left,right)
-    set_shape(out, (get_ngauss(mmesh), 2, 2))
-end
-
-@doc raw"""
-    compute_perpendicular_parallel_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-
-Computes the tensor coefficient $K$ for 
-
-$$\int_\Omega \nabla^\bot u \cdot C\nabla^\parallel \delta u dx = \int_\Omega \nabla u \cdot K\nabla \delta u dx$$
-
-Here 
-
-$$\nabla^\bot u = nn^T\nabla u\quad \nabla^\parallel u = (I - nn^T)\nabla u$$
-
-The input $C$ and output $K$ are both matrices of size $n_{\text{gauss}} \times 2\times 2$, and `nv` is a matrix of size $n_{\text{gauss}} \times 2$.
-"""
-function compute_perpendicular_parallel_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-            nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-    _compute_perpendicular_parallel_gradient(nv, C, 1, -1, mmesh)
-end
-
-
-@doc raw"""
-    compute_parallel_perpendicular_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-
-Computes the tensor coefficient $K$ for 
-
-$$\int_\Omega \nabla^\parallel u \cdot C\nabla^\bot \delta u dx = \int_\Omega \nabla u \cdot K\nabla \delta u dx$$
-
-See [`compute_perpendicular_parallel_gradient_tensor`](@ref) for details. 
-"""
-function compute_parallel_perpendicular_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-    _compute_perpendicular_parallel_gradient(nv, C, -1, 1, mmesh)
-end
-
-
-@doc raw"""
-    compute_parallel_parallel_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-
-Computes the tensor coefficient $K$ for 
-
-$$\int_\Omega \nabla^\parallel u \cdot C\nabla^\parallel \delta u dx = \int_\Omega \nabla u \cdot K\nabla \delta u dx$$
-
-See [`compute_perpendicular_parallel_gradient_tensor`](@ref) for details. 
-"""
-function compute_parallel_parallel_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-    _compute_perpendicular_parallel_gradient(nv, C, -1, -1, mmesh)
-end
-
-
-@doc raw"""
-    compute_perpendicular_perpendicular_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-
-Computes the tensor coefficient $K$ for 
-
-$$\int_\Omega \nabla^\dot u \cdot C\nabla^\dot \delta u dx = \int_\Omega \nabla u \cdot K\nabla \delta u dx$$
-
-See [`compute_perpendicular_parallel_gradient_tensor`](@ref) for details. 
-"""
-function compute_perpendicular_perpendicular_gradient_tensor(C::Union{Array{Float64, 3}, PyObject},
-    nv::Union{Array{Float64, 2}, PyObject}, mmesh::Mesh)
-    _compute_perpendicular_parallel_gradient(nv, C, 1, 1, mmesh)
-end
 
 @doc raw"""
     compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
