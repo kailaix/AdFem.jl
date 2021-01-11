@@ -13,5 +13,9 @@ os:
   - osx
   - linux
   - windows
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2017community; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2017-workload-nativedesktop; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export PATH=$PATH:/C/Users/travis/.julia/adcme/Scripts:/C/Users/travis/.julia/adcme/Library/bin:/C/Users/travis/.julia/adcme/; fi
 notifications:
   email: false
