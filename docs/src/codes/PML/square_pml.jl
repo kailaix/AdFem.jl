@@ -4,6 +4,7 @@
 using Revise
 using AdFem
 using PyPlot
+matplotlib.use("agg")
 
 function ricker(;dt = 0.005, f0 = 3.0)
     nw = 2/(f0*dt)
@@ -29,24 +30,54 @@ x, y = xy[:,1], xy[:,2]
 c = constant(0.1ones(get_ngauss(mmesh)))
 nv = [ones(get_ngauss(mmesh)) zeros(get_ngauss(mmesh))]
 
-R = 50000
+R = 5000
 pf = n->R*n^3
 pfprime = n->3*R*n^2
 
 for i = 1:get_ngauss(mmesh)
-    if xg[i]<0.1
-        nv[i,:] = [-1.0;0.0]
-        n = abs(0.1-xg[i])
-    elseif xg[i]>0.9
-        nv[i,:] = [1.0;0.0]
-        n = abs(0.9-xg[i])
-    elseif yg[i]<0.1
+    n = 0.0
+
+    
+
+    if yg[i]<0.2
         nv[i,:] = [0.0;-1.0]
-        n = abs(0.1-yg[i])
-    elseif yg[i]>0.9
+        n = max(n, abs(0.2-yg[i]))
+    elseif yg[i]>0.8
         nv[i,:] = [0.0;1.0]
-        n = abs(0.9-yg[i])
-    else 
+        n = max(abs(0.8-yg[i]), n)
+    end
+
+    if xg[i]<0.2
+        nv[i,:] = [-1.0;0.0]
+        n = max(n, abs(0.2-xg[i]))
+    elseif xg[i]>0.8
+        nv[i,:] = [1.0;0.0]
+        n = max(n, abs(0.8-xg[i]))
+    end
+
+    if xg[i]<0.2 && yg[i]<0.2
+        nv[i,:] = [xg[i]-0.2 yg[i]-0.2]
+        ns = norm(nv[i,:])
+        nv[i,:] = nv[i,:]/ns
+    end
+    if xg[i]<0.2 && yg[i]>0.8
+        nv[i,:] = [xg[i]-0.2 yg[i]-0.8]
+        ns = norm(nv[i,:])
+        nv[i,:] = nv[i,:]/ns
+    end
+    if xg[i]>0.8 && yg[i]>0.8
+        nv[i,:] = [xg[i]-0.8 yg[i]-0.8]
+        ns = norm(nv[i,:])
+        nv[i,:] = nv[i,:]/ns
+    end
+    if xg[i]>0.8 && yg[i]<0.2
+        nv[i,:] = [xg[i]-0.8 yg[i]-0.2]
+        ns = norm(nv[i,:])
+        nv[i,:] = nv[i,:]/ns
+    end
+      
+
+    if (0.2<xg[i]<0.8) && (0.2<yg[i]<0.8)
         continue 
     end
     β_g[i] = pf(n)
@@ -55,17 +86,37 @@ end
 
 
 for i = 1:mmesh.ndof
-    if x[i]<0.1
-        n = abs(0.1-x[i])
-    elseif x[i]>0.9
-        n = abs(0.9-x[i])
-    elseif y[i]<0.1
-        n = abs(0.1-y[i])
-    elseif y[i]>0.9
-        n = abs(0.9-y[i])
-    else 
+    n = 0.0
+
+    if x[i]<0.2
+        n = abs(0.2-x[i])
+    elseif x[i]>0.8
+        n = abs(0.8-x[i])
+    end
+
+    if y[i]<0.2
+        n = max(n, abs(0.2-y[i]))
+    elseif y[i]>0.8
+        n = max(abs(0.8-y[i]), n)
+    end
+
+    # if x[i]<0.2 && y[i]<0.2
+    #     n = norm([x[i]-0.2 y[i]-0.2])
+    # end
+    # if x[i]<0.2 && y[i]>0.8
+    #     n = norm([x[i]-0.2 y[i]-0.8])
+    # end
+    # if x[i]>0.8 && y[i]>0.8
+    #     n = norm([x[i]-0.8 y[i]-0.8])
+    # end
+    # if x[i]>0.8 && y[i]<0.2
+    #     n = norm([x[i]-0.8 y[i]-0.2])
+    # end
+
+    if (0.2<x[i]<0.8) && (0.2<y[i]<0.8)
         continue 
     end
+
     β[i] = pf(n)
 end
 
@@ -76,7 +127,8 @@ nv = constant(nv)
 
 
 F = zeros(NT+1, get_ngauss(mmesh))
-F[1:length(ricker(f0=7.0)),2312] = ricker(f0=7.0)
+F[1:length(ricker(f0=7.0)),4001] = ricker(f0=7.0)
+# F[1:length(ricker(f0=7.0)),4001] = ricker(f0=7.0)
 F = constant(F)
 
 RHS = zeros(mmesh.ndof)

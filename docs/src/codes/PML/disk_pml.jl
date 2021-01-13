@@ -34,9 +34,9 @@ pfprime = n->3*R*n^2
 
 for i = 1:get_ngauss(mmesh)
     r = norm([xg[i];yg[i]])
-    if r>0.5
+    if r>0.3
         nv[i,:] = [xg[i];yg[i]]/r
-        n = r-0.5
+        n = r-0.3
     else 
         continue 
     end
@@ -46,9 +46,9 @@ end
 
 for i = 1:mmesh.ndof
     r = norm([x[i];y[i]])
-    if r>0.5
+    if r>0.3
         nv[i,:] = [x[i];y[i]]/r
-        n = r-0.5
+        n = r-0.3
     else 
         continue 
     end
@@ -62,7 +62,7 @@ nv = constant(nv)
 
 
 F = zeros(NT+1, get_ngauss(mmesh))
-F[1:length(ricker(f0=2.0)),2312] = ricker(f0=2.0)
+F[1:length(ricker(f0=5.0)),2312] = ricker(f0=5.0)
 F = constant(F)
 
 RHS = zeros(mmesh.ndof)
