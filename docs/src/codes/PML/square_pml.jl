@@ -37,8 +37,6 @@ pfprime = n->3*R*n^2
 for i = 1:get_ngauss(mmesh)
     n = 0.0
 
-    
-
     if yg[i]<0.2
         nv[i,:] = [0.0;-1.0]
         n = max(n, abs(0.2-yg[i]))
