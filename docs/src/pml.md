@@ -1,5 +1,6 @@
 # Perfectly Matched Layer
 
+## Acosutic Wave Equation
 
 In this example, we consider the finite element simulation for acoustic wave equations with perfectly matched layers (PML). The perfectly matched layer is a highly effecient absorbing boundary condition for numerical modeling of seismic wave equations. We consider the acoustic wave equation 
 
@@ -77,7 +78,7 @@ This translates to the equations in the time domain
 
 
 $$\begin{aligned}(\partial_t + \beta)^2 u_1 &= n\partial_n \cdot(c^2n\partial_n u)\\ 
-(\partial_t + \beta)^3 u_2 &= -\beta'  n\cdot (c^2n\partial_n \hat u)\\ 
+(\partial_t + \beta)^3 u_2 &= -\beta'  n\cdot (c^2n\partial_n  u)\\ 
 \partial_t(\partial_t + \beta) u_3 &=[n\partial_n \cdot(c^2 \nabla^\parallel  u) + \nabla^\parallel \cdot (c^2 n\partial_n  u)] \\ 
 \partial_t^2  u_4 &=\nabla^\parallel \cdot(c^2 \nabla^\parallel  u)
 \end{aligned}\tag{7}$$
@@ -98,7 +99,7 @@ This numerical scheme is taken from
 Zhao, Jian-Guo, and Rui-Qi Shi. "Perfectly matched layer-absorbing boundary condition for finite-element time-domain modeling of elastic wave equations." Applied Geophysics 10.3 (2013): 323-336.
 ```
 
-## Examples
+## Acosutic Wave Equation Examples
 
 The following shows the results of the numerical scheme introduced in the last section.
 
@@ -106,3 +107,38 @@ The following shows the results of the numerical scheme introduced in the last s
 |---|---|---|
 |Square|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/forward.gif)|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/forward_pml.gif)|
 |Disk|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disk_forward.gif)|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/disk_forward_pml.gif)|
+
+## Elastic Wave Equation 
+
+We now consider the elastic wave equation. 
+
+
+$$\ddot\mathbf{u} = \nabla \cdot (C : \nabla \mathbf{u})\tag{9}$$
+
+Here $C$ is the elastic tensor and `:` is a contraction operator, which is defined as follows
+
+$$C:\nabla \mathbf{u} = \bm{\sigma} := \begin{bmatrix}\sigma_{xx} & \sigma_{xy} \\ \sigma_{yx} & \sigma_{yy}\end{bmatrix}$$
+
+Here the stress tensor is computed using 
+
+$$\begin{bmatrix}\sigma_{xx}\\\sigma_{yy}\\\sigma_{xy}\end{bmatrix} = \begin{bmatrix}\lambda+2\mu & \lambda &0.0\\\lambda & \lambda+2\mu &0.0\\0 & 0 & \mu\end{bmatrix}\begin{bmatrix}\varepsilon_{xx} \\ \varepsilon_{yy} \\ 2\varepsilon_{xy}\end{bmatrix}$$
+
+where the strain tensor is defined as 
+
+$$\bm{\varepsilon} := \begin{bmatrix}\varepsilon_{xx} & \varepsilon_{xy} \\\varepsilon_{xy} & \varepsilon_{yy} \end{bmatrix} = \begin{bmatrix}u_x & \frac{u_y+v_x}{2} \\\frac{u_y+v_x}{2} & v_y \end{bmatrix}$$
+
+The weak form of the right hand side of Eq. 9 (up to the sign), we have
+
+$$\langle C: \nabla \mathbf{u}, \nabla \mathbf{u}'\rangle = \begin{bmatrix} u_x' & u_y' & v_x' & v_y'\end{bmatrix} \begin{bmatrix}a & 0 & 0 & b\\ 0 & c & c & 0\\ 0 & c & c & 0\\ b & 0 & 0 & a\end{bmatrix} \begin{bmatrix} u_x \\ u_y \\ v_x \\ v_y\end{bmatrix}\tag{10}$$
+
+
+!!! info 
+    Strictly speaking, we need to write two integrals for Eq. 10 since is 2 dimensional: 
+    
+    $$\langle (C: \nabla \mathbf{u})_{1,:}, \nabla u'\rangle = \begin{bmatrix} u_x' & u_y' \end{bmatrix} \begin{bmatrix}a & 0 & 0 & b\\ 0 & c & c & 0\end{bmatrix} \begin{bmatrix} u_x \\ u_y \\ v_x \\ v_y\end{bmatrix}$$
+
+    $$\langle (C: \nabla \mathbf{u})_{2,:}, \nabla v'\rangle = \begin{bmatrix} v_x' & v_y'\end{bmatrix} \begin{bmatrix} 0 & c & c & 0\\ b & 0 & 0 & a\end{bmatrix} \begin{bmatrix} u_x \\ u_y \\ v_x \\ v_y\end{bmatrix}$$
+
+    We merge these two formulas in Eq. 10 for convenience. Here `1,:` and `2,:` denotes first and second rows. 
+
+We can use Eq. 7 for simulation, except that we replace $c^2$ with the elastic tensor operation $C$. 
