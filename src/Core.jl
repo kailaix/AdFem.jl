@@ -271,6 +271,7 @@ A_{IB}
 """
 function fem_impose_Dirichlet_boundary_condition1(A::SparseMatrixCSC{Float64,Int64}, 
     bd::Array{Int64}, m::Int64, n::Int64, h::Float64)
+    @warn "Consider imposing boundary conditions using an algebraic approach: impose_Dirichlet_boundary_conditions" maxlog=1
     M, N = size(A)
     Q = A[:, bd]; Q[bd,:] = spzeros(length(bd), length(bd))
     A[bd,:] = spzeros(length(bd), N)

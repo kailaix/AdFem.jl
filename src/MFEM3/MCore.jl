@@ -84,10 +84,30 @@ function compute_fem_source_term1(f::Array{Float64,1}, mesh::Mesh3)
 end
 
 """
-    compute_fem_source_term(f1::Union{PyObject,Array{Float64,2}}, f2::Union{PyObject,Array{Float64,2}}, mesh::Mesh3)
+    compute_fem_source_term(f1::Union{PyObject,Array{Float64,2}}, 
+        f2::Union{PyObject,Array{Float64,2}}, mesh::Mesh3)
 """
 function compute_fem_source_term(f1::Union{PyObject,Array{Float64,1}}, f2::Union{PyObject,Array{Float64,1}}, mesh::Mesh3)
     [compute_fem_source_term1(f1, mesh); compute_fem_source_term1(f2, mesh)]
 end
 
+
+
 ##########################################
+
+"""
+    compute_fem_mass_matrix1(ρ::Union{PyObject, Array{Float64, 1}}, 
+            mmesh::Mesh3)
+"""
+function compute_fem_mass_matrix1(ρ::Union{PyObject, Array{Float64, 1}}, 
+        mmesh::Mesh3)
+        compute_fem_mass_matrix_mfem_t_ = load_op_and_grad(libmfem3,"compute_fem_mass_matrix_mfem_t", multiple=true)
+        rho = convert_to_tensor(Any[ρ], [Float64]); rho = rho[1]
+        indices, vv = compute_fem_mass_matrix_mfem_t_(rho)
+        RawSparseTensor(indices, vv, mmesh.ndof, mmesh.ndof)
+end
+
+"""
+    compute_fem_mass_matrix1(mmesh::Mesh3)
+"""
+compute_fem_mass_matrix1(mmesh::Mesh3) = compute_fem_mass_matrix1(ones(get_ngauss(mmesh)), mmesh)

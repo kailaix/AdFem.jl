@@ -64,7 +64,8 @@ message("MFEM = ${mfem}")
 add_library(admfem SHARED Common.cpp API.cpp 
   ComputeLaplaceTermMfem/ComputeLaplaceTermMfem.cpp
   FemSource/FemSourceScalarT.cpp
-  FemLaplace1/FemLaplaceScalarT.cpp)
+  FemLaplace1/FemLaplaceScalarT.cpp
+  ComputeFemMassMatrixMfem3/ComputeFemMassMatrixMfemT.cpp)
           
 target_link_libraries(admfem ${TF_LIB_FILE} ${mfem})
 set_property(TARGET admfem PROPERTY POSITION_INDEPENDENT_CODE ON)

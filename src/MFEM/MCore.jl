@@ -142,6 +142,7 @@ compute_fem_laplace_matrix(mesh::Mesh) = compute_fem_laplace_matrix(ones(get_nga
 A differentiable kernel for imposing the Dirichlet boundary of a scalar-valued function. 
 """
 function fem_impose_Dirichlet_boundary_condition1(L::SparseTensor, bdnode::Array{Int64}, mesh::Mesh)
+    @warn "Consider imposing boundary conditions using an algebraic approach: impose_Dirichlet_boundary_conditions" maxlog=1
     idx = bdnode
     Lbd = L[:, idx]
     L = scatter_update(L, :, idx, spzero(size(mesh.nodes, 1), length(idx)))
