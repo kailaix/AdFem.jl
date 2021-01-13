@@ -241,8 +241,33 @@ $$\begin{aligned}k_1&=(c^2 n\partial_n u, n\partial_n\delta u)\\k_2&=(\beta'n\cd
 """
 function compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
         c::Union{Array{Float64,1}, PyObject},nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh)
+    @assert length(u)==mmesh.ndof
+    @assert length(βprime)==length(c)==size(nv,1)==get_ngauss(mmesh)
     compute_pml_term_ = load_op_and_grad(AdFem.libmfem,"compute_pml_term", multiple=true)
     u,betap,c,nv = convert_to_tensor(Any[u,βprime,c,nv], [Float64,Float64,Float64,Float64])
     out = compute_pml_term_(u,betap,c,nv)
     set_shape(out[1], (mmesh.ndof, )), set_shape(out[2], (mmesh.ndof, )), set_shape(out[3], (mmesh.ndof, )), set_shape(out[4], (mmesh.ndof, ))
+end
+
+
+@doc raw"""
+    compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
+    λ::Union{Array{Float64,1}, PyObject},μ::Union{Array{Float64,1}, PyObject}, nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh)
+
+
+- `u`: a vector of length `mmesh.ndof`
+- `βprime`: a vector of length $n_{\text{gauss}}$
+- `λ`, `μ`: Lam\'e parameters
+- `nv`: a matrix of size $n_{\text{gauss}}\times 2$
+
+This is a 2D version of [`compute_pml_term`](@ref).
+"""
+function compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Array{Float64,1}, PyObject},
+    λ::Union{Array{Float64,1}, PyObject},μ::Union{Array{Float64,1}, PyObject}, nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh)
+    @assert length(u)==2mmesh.ndof
+    @assert length(βprime)==length(λ)==length(μ)==size(nv,1)==get_ngauss(mmesh)
+    compute_pml_elastic_term_ = load_op_and_grad(AdFem.libmfem,"compute_pml_elastic_term", multiple=true)
+    u,betap,λ,μ,nv = convert_to_tensor(Any[u,βprime,λ,μ,nv], [Float64,Float64,Float64,Float64,Float64])
+    out = compute_pml_elastic_term_(u,betap,λ,μ,nv)
+    set_shape(out[1], (2mmesh.ndof, )), set_shape(out[2], (2mmesh.ndof, )), set_shape(out[3], (2mmesh.ndof, )), set_shape(out[4], (2mmesh.ndof, ))
 end

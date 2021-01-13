@@ -129,8 +129,13 @@ $$\bm{\varepsilon} := \begin{bmatrix}\varepsilon_{xx} & \varepsilon_{xy} \\\vare
 
 The weak form of the right hand side of Eq. 9 (up to the sign), we have
 
-$$\langle C: \nabla \mathbf{u}, \nabla \mathbf{u}'\rangle = \begin{bmatrix} u_x' & u_y' & v_x' & v_y'\end{bmatrix} \begin{bmatrix}a & 0 & 0 & b\\ 0 & c & c & 0\\ 0 & c & c & 0\\ b & 0 & 0 & a\end{bmatrix} \begin{bmatrix} u_x \\ u_y \\ v_x \\ v_y\end{bmatrix}\tag{10}$$
+$$\begin{aligned}& \langle C: \nabla \mathbf{u}, \nabla \mathbf{u}'\rangle \\ 
+=& \begin{bmatrix} u_x' & u_y' & v_x' & v_y'\end{bmatrix}\begin{bmatrix}1 &0 &0 \\ 0 &0 &1\\0 & 0 & 1\\0 & 1 &0\end{bmatrix} \begin{bmatrix} a&b&0\\b&a&0\\0&0&c \end{bmatrix} \begin{bmatrix}1 & 0 & 0 &0 \\ 0 &0 &0 &1 \\0 & 1 & 1 &0\end{bmatrix} \begin{bmatrix} u_x \\ u_y \\ v_x \\ v_y\end{bmatrix}\\
+=&  \begin{bmatrix} u_x' & u_y' & v_x' & v_y'\end{bmatrix} \begin{bmatrix}a & 0 & 0 & b\\ 0 & c & c & 0\\ 0 & c & c & 0\\ b & 0 & 0 & a\end{bmatrix} \begin{bmatrix} u_x \\ u_y \\ v_x \\ v_y\end{bmatrix}\end{aligned}\tag{10}$$
 
+Here 
+
+$$a = \lambda + 2\mu, \quad b = \lambda, \quad c = \mu$$
 
 !!! info 
     Strictly speaking, we need to write two integrals for Eq. 10 since is 2 dimensional: 
@@ -142,3 +147,9 @@ $$\langle C: \nabla \mathbf{u}, \nabla \mathbf{u}'\rangle = \begin{bmatrix} u_x'
     We merge these two formulas in Eq. 10 for convenience. Here `1,:` and `2,:` denotes first and second rows. 
 
 We can use Eq. 7 for simulation, except that we replace $c^2$ with the elastic tensor operation $C$. 
+
+
+|Variable|Without PML|With PML|
+|---|---|---|
+|$u$|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/square_elastic_u.gif)|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/square_pml_elastic_u.gif)|
+|$v$|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/square_elastic_v.gif)|![](https://raw.githubusercontent.com/ADCMEMarket/ADCMEImages/master/AdFem/square_pml_elastic_v.gif)|

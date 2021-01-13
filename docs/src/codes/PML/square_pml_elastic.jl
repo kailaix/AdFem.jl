@@ -4,7 +4,6 @@
 using Revise
 using AdFem
 using PyPlot
-matplotlib.use("agg")
 
 function ricker(;dt = 0.005, f0 = 3.0)
     nw = 2/(f0*dt)
@@ -16,8 +15,8 @@ end
 
 n = 50
 mmesh = Mesh(n, n, 1/n)
-NT = 300
-Δt = 6/NT 
+NT = 400
+Δt = 2/NT 
 
 xy = gauss_nodes(mmesh)
 xg, yg = xy[:,1], xy[:,2]
@@ -27,12 +26,15 @@ x, y = xy[:,1], xy[:,2]
 β = zeros(mmesh.ndof)
 β_g = zeros(get_ngauss(mmesh))
 βprime = zeros(get_ngauss(mmesh))
-c = constant(0.1ones(get_ngauss(mmesh)))
+λ = constant(ones(get_ngauss(mmesh)))
+μ = constant(0.5ones(get_ngauss(mmesh)))
+
 nv = [ones(get_ngauss(mmesh)) zeros(get_ngauss(mmesh))]
 
 R = 5000
 pf = n->R*n^3
 pfprime = n->3*R*n^2
+
 
 for i = 1:get_ngauss(mmesh)
     n = 0.0
@@ -109,19 +111,23 @@ nv = constant(nv)
 β_g = constant(β_g)
 βprime = constant(βprime)
 β = constant(β)
-
+β = [β;β]
 
 F = zeros(NT+1, get_ngauss(mmesh))
-F[1:length(ricker(f0=7.0)),4001] = ricker(f0=7.0)
-# F[1:length(ricker(f0=7.0)),4001] = ricker(f0=7.0)
-F = constant(F)
+F[1:length(ricker(f0=5.0)),2312] = ricker(f0=5.0)
+F = constant([F zeros(NT+1, get_ngauss(mmesh))])
 
-RHS = zeros(mmesh.ndof)
+RHS = zeros(2mmesh.ndof)
 bdnode = bcnode(mmesh)
+bdnode = [bdnode; bdnode .+ mmesh.ndof]
 
 M = constant(compute_fem_mass_matrix1(mmesh))
 Z1 = constant(compute_fem_mass_matrix1(β_g, mmesh))
 Z2 = constant(compute_fem_mass_matrix1(β_g^2, mmesh))
+Z = spzero(mmesh.ndof)
+M = [M Z;Z M]
+Z1 = [Z1 Z;Z Z1]
+Z2 = [Z2 Z;Z Z2]
 M, _ = impose_Dirichlet_boundary_conditions(M, RHS, bdnode, zeros(length(bdnode)))
 Z1, _ = impose_Dirichlet_boundary_conditions(Z1, RHS, bdnode, zeros(length(bdnode)))
 Z2, _ = impose_Dirichlet_boundary_conditions(Z2, RHS, bdnode, zeros(length(bdnode)))
@@ -139,8 +145,8 @@ end
 
 function one_step(u, d10, d20, d30, d40, t0,
                     d11, d21, d31, d41, t1, f)
-    k1, k2, k3, k4 = compute_pml_term(u, βprime, c, nv, mmesh)
-    k4 = k4 + compute_fem_source_term1(f, mmesh)
+    k1, k2, k3, k4 = compute_pml_term(u, βprime, λ, μ, nv, mmesh)
+    k4 = k4 + compute_fem_source_term(f, mmesh)
     d12 = step(integrator1, d10, d11, k1)
     t2 = step(integrator2, t0, t1, k2)
     d32 = step(integrator3, d30, d31, k3)
@@ -153,8 +159,8 @@ end
 function simulate()
     for op in [:d1, :d2, :d3, :d4, :t, :uarr]
         @eval $op=TensorArray(NT+1)
-        @eval $op=write($op, 1, zeros(mmesh.ndof))
-        @eval $op=write($op, 2, zeros(mmesh.ndof))
+        @eval $op=write($op, 1, zeros(2mmesh.ndof))
+        @eval $op=write($op, 2, zeros(2mmesh.ndof))
     end
     
     function condition(i, tas...)
@@ -175,7 +181,7 @@ function simulate()
     end
     i = constant(2, dtype = Int32)
     _, _, _, _, _, _, u = while_loop(condition, body, [i, d1, d2, d3, d4, t, uarr])
-    set_shape(stack(u), (NT+1, mmesh.ndof))
+    set_shape(stack(u), (NT+1, 2mmesh.ndof))
 end
 
 
@@ -184,8 +190,14 @@ sess = Session(); init(sess)
 U = run(sess, u)
 
 close("all")
-p = visualize_scalar_on_fem_points(U[1:15:end,:], mmesh)
-saveanim(p, "anim.gif")
+p = visualize_scalar_on_fem_points(U[1:15:end,1:mmesh.ndof], mmesh)
+saveanim(p, "square_pml_elastic_u.gif")
+
+close("all")
+p = visualize_scalar_on_fem_points(U[1:15:end,mmesh.ndof+1:end], mmesh)
+saveanim(p, "square_pml_elastic_v.gif")
+
+
 # vmax, vmin = maximum(U), minimum(U)
 # for k = 0:5
 #     close("all")

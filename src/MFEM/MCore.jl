@@ -86,6 +86,10 @@ function compute_fem_source_term(f1::Union{PyObject,Array{Float64,1}}, f2::Union
     [compute_fem_source_term1(f1, mesh); compute_fem_source_term1(f2, mesh)]
 end
 
+function compute_fem_source_term(f::Union{PyObject,Array{Float64,1}},  mmesh::Mesh)
+    @assert length(f)==2*get_ngauss(mmesh)
+    compute_fem_source_term(f[1:get_ngauss(mmesh)], f[get_ngauss(mmesh)+1:end], mmesh)
+end
 
 
 """
@@ -126,6 +130,7 @@ function compute_fem_laplace_matrix(kappa::Union{PyObject, Array{Float64, 1}}, m
         spzero(mesh.ndof) Z]
     end
 end
+
 
 compute_fem_laplace_matrix1(mesh::Mesh) = compute_fem_laplace_matrix1(ones(get_ngauss(mesh)), mesh)
 compute_fem_laplace_matrix(mesh::Mesh) = compute_fem_laplace_matrix(ones(get_ngauss(mesh)), mesh)
@@ -171,6 +176,12 @@ end
 function compute_fem_mass_matrix1(mmesh::Mesh)
     compute_fem_mass_matrix1(ones(get_ngauss(mmesh)), mmesh)
 end
+
+# function compute_fem_mass_matrix(mmesh::Mesh)
+# end
+
+# function compute_fem_mass_matrix(rho::Union{PyObject, Array{Float64, 1}}, mmesh::Mesh)
+# end
 
 """
     compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)

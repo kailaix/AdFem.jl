@@ -77,7 +77,8 @@ add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
           ComputeStrainEnergyTermMfem/ComputeStrainEnergyTermMfem.cpp
           EvalStrainOnGaussPtsMfem/EvalStrainOnGaussPts.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp
-          ComputePMLTerm/ComputePmlTerm.cpp)
+          ComputePMLTerm/ComputePmlTerm.cpp
+          PMLElastic/ComputePmlElasticTerm.cpp)
           
 
 target_link_libraries(admfem ${TF_LIB_FILE} ${mfem})
