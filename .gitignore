@@ -77,3 +77,5 @@ docs/src/codes/ChipUnstructured/mesh
 deps/MFEM/BDMInnerProductMatrixMfem/bdm_mfem/*
 deps/MFEM3/FemLaplace1/val.txt
 *.gif
+*.pvd
+*.vtu
