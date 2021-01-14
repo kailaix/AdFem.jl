@@ -87,8 +87,21 @@ end
     compute_fem_source_term(f1::Union{PyObject,Array{Float64,2}}, 
         f2::Union{PyObject,Array{Float64,2}}, mesh::Mesh3)
 """
-function compute_fem_source_term(f1::Union{PyObject,Array{Float64,1}}, f2::Union{PyObject,Array{Float64,1}}, mesh::Mesh3)
-    [compute_fem_source_term1(f1, mesh); compute_fem_source_term1(f2, mesh)]
+function compute_fem_source_term(f1::Union{PyObject,Array{Float64,1}}, 
+    f2::Union{PyObject,Array{Float64,1}}, 
+    f3::Union{PyObject,Array{Float64,1}},
+    mesh::Mesh3)
+    @assert length(f1)==length(f2)==length(f3)==get_ngauss(mesh)
+    [compute_fem_source_term1(f1, mesh); compute_fem_source_term1(f2, mesh); compute_fem_source_term1(f3, mesh)]
+end
+
+function compute_fem_source_term(f::Union{PyObject,Array{Float64,1}},  mesh::Mesh3)
+    @assert length(f)==3get_ngauss(mesh)
+    N = get_ngauss(mesh)
+    f1 = f[1:N]
+    f2 = f[N+1:2N]
+    f3 = f[2N+1:end]
+    compute_fem_source_term(f1, f2, f3, mesh)
 end
 
 

@@ -148,6 +148,12 @@ $$a = \lambda + 2\mu, \quad b = \lambda, \quad c = \mu$$
 
     We merge these two formulas in Eq. 10 for convenience. Here `1,:` and `2,:` denotes first and second rows. 
 
+
+!!! info 
+    Eq. 10 can be easily extended to 3D. 
+
+$$\langle C: \nabla \mathbf{u}, \nabla u'\rangle = \begin{bmatrix}u_x'&u_y'&u_z'&v_x'&v_y'&v_z'&w_x'&w_y'&w_z'\end{bmatrix}\begin{bmatrix} a & 0 & 0 & 0 &  b & 0 & 0 & 0 &  b\\0 &  c & 0 &  c & 0 & 0 & 0 & 0 & 0\\0 & 0 &  c & 0 & 0 & 0 &  c & 0 & 0\\0 &  c & 0 &  c & 0 & 0 & 0 & 0 & 0\\ b & 0 & 0 & 0 &  a & 0 & 0 & 0 &  b\\0 & 0 & 0 & 0 & 0 &  c & 0 &  c & 0\\0 & 0 &  c & 0 & 0 & 0 &  c & 0 & 0\\0 & 0 & 0 & 0 & 0 &  c & 0 &  c & 0\\ b & 0 & 0 & 0 &  b & 0 & 0 & 0 &  a\end{bmatrix}\begin{bmatrix}u_x\\u_y\\u_z\\v_x\\v_y\\v_z\\w_x\\w_y\\w_z\end{bmatrix}$$
+
 We can use Eq. 7 for simulation, except that we replace $c^2$ with the elastic tensor operation $C$. 
 
 

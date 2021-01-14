@@ -62,7 +62,7 @@ function vtk(mmesh::Mesh3, name::String = "default_vtk_file")
     vtk_grid(name, mmesh.nodes[:,1], mmesh.nodes[:,2], mmesh.nodes[:,3], cells)
 end
 
-function save(f::WriteVTK.DatasetFile)
+function save(f::Union{WriteVTK.CollectionFile,WriteVTK.DatasetFile})
     vtk_save(f)
 end
 
@@ -86,4 +86,23 @@ outfiles = save(f)
 """
 function pvd(name::String = "default_pvd_file"; append = true)
     pvd = paraview_collection(name; append=append)
+end
+
+"""
+    compute_pml_term(u::Union{Array{Float64,1}, PyObject},
+        βprime::Union{Array{Float64,1}, PyObject},
+        λ::Union{Array{Float64,1}, PyObject},μ::Union{Array{Float64,1}, PyObject}, 
+        nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh3)
+"""
+function compute_pml_term(u::Union{Array{Float64,1}, PyObject},
+    βprime::Union{Array{Float64,1}, PyObject},
+    λ::Union{Array{Float64,1}, PyObject},μ::Union{Array{Float64,1}, PyObject}, 
+    nv::Union{Array{Float64,2}, PyObject}, mmesh::Mesh3)
+    @assert length(u)==3mmesh.ndof
+    @assert length(βprime)==length(λ)==length(μ)==get_ngauss(mmesh)
+    @assert size(nv)==(get_ngauss(mmesh), 3)
+    compute_pml_elastic_term_t_ = load_op_and_grad(libmfem3,"compute_pml_elastic_term_t", multiple=true)
+    u,betap,e,nu,nv = convert_to_tensor(Any[u,βprime,λ,μ,nv], [Float64,Float64,Float64,Float64,Float64])
+    out = compute_pml_elastic_term_t_(u,betap,e,nu,nv)
+    set_shape(out[1], (3mmesh.ndof, )), set_shape(out[2], (3mmesh.ndof, )), set_shape(out[3], (3mmesh.ndof, )), set_shape(out[4], (3mmesh.ndof, ))
 end
