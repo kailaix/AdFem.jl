@@ -79,3 +79,5 @@ deps/MFEM3/FemLaplace1/val.txt
 *.gif
 *.pvd
 *.vtu
+
+Manifest.toml
