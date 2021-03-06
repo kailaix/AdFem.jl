@@ -1,0 +1,3 @@
+FastSolve
+double rhs(?)
+double u(?) -> output
