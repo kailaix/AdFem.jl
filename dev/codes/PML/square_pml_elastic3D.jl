@@ -5,7 +5,7 @@ using Revise
 using AdFem
 using PyPlot
 
-function ricker(;dt = 0.005, f0 = 3.0)
+function ricker(;dt = 0.5, f0 = 0.8)
     nw = 2/(f0*dt)
     nc = floor(Int, nw/2)
     t = dt*collect(-nc:1:nc)
@@ -13,10 +13,10 @@ function ricker(;dt = 0.005, f0 = 3.0)
     w = @. (1 - 2b)*exp(-b)
 end
 
-n = 20
-mmesh = Mesh3(n, n, n, 1/n)
-NT = 400
-Δt = 2/NT 
+n = 10
+mmesh = Mesh3(n, n, n, 1.0)
+NT = 100
+Δt = 10/NT 
 
 xy = gauss_nodes(mmesh)
 xg, yg, zg = xy[:,1], xy[:,2], xy[:,3]
@@ -26,8 +26,8 @@ x, y, z = xy[:,1], xy[:,2], xy[:,3]
 β = zeros(mmesh.ndof)
 β_g = zeros(get_ngauss(mmesh))
 βprime = zeros(get_ngauss(mmesh))
-λ = constant(ones(get_ngauss(mmesh)))
-μ = constant(0.5ones(get_ngauss(mmesh)))
+λ = constant(2ones(get_ngauss(mmesh)))
+μ = constant(ones(get_ngauss(mmesh)))
 
 nv = [ones(get_ngauss(mmesh)) zeros(get_ngauss(mmesh)) zeros(get_ngauss(mmesh))]
 
@@ -114,7 +114,7 @@ nv = constant(nv)
 β = [β;β;β]
 
 F = zeros(NT+1, get_ngauss(mmesh))
-F[1:length(ricker(f0=5.0)),2312] = ricker(f0=5.0)
+F[1:length(ricker()),3500] = ricker()
 F = constant([F zeros(NT+1, get_ngauss(mmesh)) zeros(NT+1, get_ngauss(mmesh))])
 
 RHS = zeros(3mmesh.ndof)
@@ -192,10 +192,10 @@ U = run(sess, u)
 
 make_directory("pvd")
 pf = pvd("pvd/pml3d")
-for i = 1:20:size(U,1)
+for i = 1:size(U,1)
     @info i 
     v = vtk( mmesh, "pvd/result$i")
-    v["u"] = U 
+    v["u"] = U[i,:] 
     pf[(i-1)*Δt] = v 
 end
 save(pf)
