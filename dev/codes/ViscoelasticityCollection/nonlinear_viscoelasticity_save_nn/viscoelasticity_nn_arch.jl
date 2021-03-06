@@ -218,5 +218,6 @@ execute(db,
 """
 INSERT INTO nnarch VALUES ($model_id, $width, $depth, "$activation", "$loss_string")
 """)
+close(db)
 
 # writedlm("data/loss_$(model_id)_$(width)_$(depth)_$(activation).txt", reshape(loss_,:,1))
