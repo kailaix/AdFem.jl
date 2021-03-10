@@ -103,9 +103,46 @@ function normalize(x, n=201)
     return T
 end
 
+
+function get_best_loss(width, depth, activation, model_id)
+    db = Database("simulation.db")
+    res = execute(db, """select loss from nnarch 
+    where width=$width and depth=$depth and activation='$activation' and model_id=$model_id""")|>collect
+    res = [x[1] for x in res]
+    r = []
+    for x in res 
+        l = map(z->parse(Float64, z), split(x, ","))
+        push!(r, l)
+    end
+    idx = argmin([x[end] for x in r])
+    l = r[idx]
+    for k = length(l)+1:201
+        push!(l, l[end])
+    end
+    close(db)
+    return l 
+end
+
+
+function get_all_losses(width, depth, activation, model_id)
+    db = Database("simulation.db")
+    res = execute(db, """select loss from nnarch 
+    where width=$width and depth=$depth and activation='$activation' and model_id=$model_id""")|>collect
+    res = [x[1] for x in res]
+    r = []
+    for x in res 
+        l = map(z->parse(Float64, z), split(x, ","))
+        push!(r, l)
+    end
+    close(db)
+    return r
+end
+
 function get_data(model_id, width, depth, activation)
-    loss = readdlm("data/loss_$(model_id)_$(width)_$(depth)_$(activation).txt")[:]
-    return normalize(loss)
+    # loss = readdlm("data/loss_$(model_id)_$(width)_$(depth)_$(activation).txt")[:]
+    # return normalize(loss)
+    loss = get_best_loss(width, depth, activation, model_id)
+    loss = log.(loss)/log(10)
 end
 
 
@@ -123,7 +160,7 @@ function plot3(model_id, depth)
     # subplot(120+v)
     close("all")
     pcolormesh(U', rasterized=true, cmap="hot")
-    xticks([collect(0.5:1.0:19.5);2.5;7.5;12.5;17.5], 
+    xticks([collect(0.5:1.0:19.5);2.501;7.501;12.501;17.501], 
         [repeat([1 5 10 20 40], 1,4)[:];"tanh"; "relu"; "selu"; "elu"])
     c = colorbar()
     c.set_ticks([-2,-1,0,1,2,3])
@@ -145,19 +182,49 @@ function plot3(model_id, depth)
     gca().tick_params(axis="both", which="major", labelsize=10)
     ylabel("Iterations")
 
-    savefig("nn$(model_id)$depth.png")
-    savefig("nn$(model_id)$depth.pdf")
+    savefig("figures/nn$(model_id)$depth.png")
+    savefig("figures/nn$(model_id)$depth.pdf")
 end
 
-plot1(1, 0)
-plot1(1, 20)
-plot1(2, 0)
-plot1(2, 20)
 
-plot2(1)
-plot2(2)
 
-for i in [1,3,5,10]
-    plot3(1, i)
-    plot3(2, i)
+function plot4()
+    close("all")
+    COLORS = Dict(
+        "tanh"=>"g", 
+        "relu"=>"r", 
+        "elu"=>"y",
+        "selu"=>"b"
+    )
+    for act in ["tanh", "relu", "elu", "selu"]
+        losses = get_all_losses(20, 3, act, 2)
+        for (k,l) in enumerate(losses)
+            if k==1
+                semilogy(l, "$(COLORS[act])-", label = "$act")
+            else
+                semilogy(l, "$(COLORS[act])-")
+            end
+        end
+    end
+    legend()
+    xlabel("Iterations")
+    ylabel("Losses")
+    mpl.save("figures/robustness.tex")
+    savefig("figures/robustness.png")
 end
+
+
+# plot1(1, 0)
+# plot1(1, 20)
+# plot1(2, 0)
+# plot1(2, 20)
+
+# plot2(1)
+# plot2(2)
+
+# for i in [1,3,5,10]
+#     plot3(1, i)
+#     plot3(2, i)
+# end
+
+plot4()
