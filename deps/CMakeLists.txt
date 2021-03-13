@@ -54,9 +54,8 @@ if(MSVC)
 endif()
 
 
-include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${EIGEN_INC} ${LIBDIR}/../include ${PREFIXDIR}/had)
+include_directories(${TF_INC} ${PREFIXDIR} ${CUDA_INC} ${EIGEN_INC} ${LIBDIR}/../include ${PREFIXDIR}/had ${PREFIXDIR}/Adept-2/include)
 
-include_directories(${PREFIXDIR}/Adept-2/include)
 find_library(ADEPT_LIB_FILE adept HINTS ${LIBDIR})
 message("ADEPT_LIB_FILE=${ADEPT_LIB_FILE}")
 find_library(LIBOPENBLAS openblas HINTS ${LIBDIR})
