@@ -80,6 +80,7 @@ AdFem is tested on Unix platform (Linux and Mac). To install the stable release:
 
 ```julia
 using Pkg
+Pkg.add("ADCME") # dependency
 Pkg.add("AdFem")
 ```
 
