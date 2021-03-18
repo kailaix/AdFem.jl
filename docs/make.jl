@@ -17,7 +17,8 @@ makedocs(sitename="AdFem", modules=[AdFem],
         "Inverse Modeling"=>Any["inverse.md", "inv_viscoelasticity.md", "coupled_viscoelasticity.md",
             "inv_twophaseflow.md", "inv_viscoelasticity_nonparametric.md", "inv_viscoelasticity_earth.md"],
         "Advanced Topics"=>Any["mfem_tutorial.md", "mfem_mesh.md", "dev_unstructured.md", "BDMElement.md", "mfem3d.md"],
-        "api.md"
+        "api.md",
+        "docker_install_guide.md"
     ],
     authors = "Kailai Xu"
 )

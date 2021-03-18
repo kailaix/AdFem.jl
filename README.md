@@ -90,8 +90,7 @@ To install the latest version:
 using Pkg 
 Pkg.add(PackageSpec(url="https://github.com/kailaix/AdFem.jl", rev="master")) 
 ```
-
-
+To install with docker, here is the  [built docker image](https://hub.docker.com/r/zhehaoli/julia_adfem) provided by @Ricahrd-Li, and please see [docker install guide](./docs/src/docker_install_guide.md).
 
 
 
