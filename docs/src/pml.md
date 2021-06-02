@@ -25,6 +25,7 @@ $$\hat u = A \exp[-i(k_1x + k_2y - \omega t)]\tag{3}$$
 
 The idea is to let $\hat u$ "die out" near the boundary. Using complex 
 analysis, Eq. 2 can be analytically extended to complex domain for both $x$ and $y$ (the complex numbers are denoted as $\tilde x$ and $\tilde y$)
+
 $$\hat u = A \exp[-i(k_1\tilde x + k_2\tilde y - \omega t)]\tag{3}$$
 
 Let us consider the $+x$ direction, instead of looking at the real axis, we consider the transformation 
