@@ -100,6 +100,7 @@ compute_pml_term
 ## Mesh
 ```@docs
 get_edge_dof
+get_edge_normal
 get_boundary_edge_orientation
 get_area
 get_ngauss
