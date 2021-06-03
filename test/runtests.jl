@@ -4,6 +4,7 @@ using PyPlot
 using PyCall
 using LinearAlgebra
 
+include("MFEM/MUtils.jl")
 # sess = Session(); 
 
 # include("invkernel.jl")

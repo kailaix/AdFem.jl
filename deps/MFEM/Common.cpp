@@ -16,6 +16,7 @@ double heron(const MatrixXd& coord){
 
 // _order: integration order
 // _degree: element degrees, 1 for linear element, 2 for quadratic element
+// vertice is a 3D array!
 long long*  NNFEM_Mesh::init(double *vertices, int num_vertices, 
                 int *element_indices, int num_elements, int _order, int _degree, long long *nedges_ptr)
     {
@@ -25,6 +26,12 @@ long long*  NNFEM_Mesh::init(double *vertices, int num_vertices,
         nnode = num_vertices;
         std::unique_ptr<int> attributes(new int[num_elements]);
         for(int i = 0; i< num_elements; i++) attributes.get()[i] = 1;
+
+        nodes.resize(num_vertices, 2);
+        for (int i = 0; i < num_vertices; i++){
+            nodes(i, 0) = vertices[3*i];
+            nodes(i, 1) = vertices[3*i+1];
+        }
 
         Mesh mesh(vertices, num_vertices, element_indices, Geometry::Type::TRIANGLE,
             (int*)attributes.get(), num_elements, (int *)nullptr, Geometry::Type::SEGMENT, (int *)nullptr, 0, 2, 2);

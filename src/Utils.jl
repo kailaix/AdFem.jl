@@ -168,7 +168,7 @@ end
 """
     interior_node(desc::String, m::Int64, n::Int64, h::Float64)
 
-In contrast to [`bcnode`](@ref), `interior_node` returns the nodes that are not specified by `desc`, including thosee on the boundary.
+In contrast to [`bcnode`](@ref), `interior_node` returns the nodes that are not specified by `desc`, including those on the boundary.
 """
 function interior_node(desc::String, m::Int64, n::Int64, h::Float64)
     bc = bcnode(desc, m, n, h)

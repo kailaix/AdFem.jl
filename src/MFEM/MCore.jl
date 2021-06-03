@@ -1,4 +1,4 @@
-export eval_f_on_dof_pts, get_bdedge_integration_pts, gauss_weights
+export eval_f_on_dof_pts, get_bdedge_integration_pts, gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1
 
 """
     eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
@@ -753,4 +753,47 @@ function eval_strain_on_gauss_pts(u::PyObject, mmesh::Mesh)
     u = convert_to_tensor(Any[u], [Float64]); u = u[1]
     ε = eval_strain_on_gauss_pts_(u)
     set_shape(ε, (get_ngauss(mmesh), 3))
+end
+
+@doc raw"""
+    compute_fem_boundary_mass_matrix1(c::Union{Array{Float64}, PyObject}, bdedge::Array{Int64, 2}, mmesh::Mesh)
+
+Computes the matrix 
+
+$$\int_\Gamma cu \delta u ds$$
+
+The parameters are 
+- `bdedge`: a $N_e \times 2$ integer array, the boundary edge to integrate on
+- `c`: given by a vector of length $4N_e$; currently, each edge has 4 quadrature points;
+
+The output is a $N_v\times N_v$ sparse matrix. 
+"""
+function compute_fem_boundary_mass_matrix1(c::Union{Array{Float64}, PyObject}, bdedge::Array{Int64, 2}, mmesh::Mesh)
+    @assert length(c)==4*size(bdedge, 1)
+    compute_boundary_mass_matrix_one_ = @eval load_op_and_grad($libmfem,"compute_boundary_mass_matrix_one", multiple=true)
+    c,idx = convert_to_tensor(Any[c,bdedge], [Float64,Int64])
+    ij, vv = compute_boundary_mass_matrix_one_(c,idx)
+    RawSparseTensor(ij, vv, mmesh.ndof, mmesh.ndof)
+end
+
+
+@doc raw"""
+    compute_fem_boundary_mass_term1(u::Union{Array{Float64}, PyObject}, 
+        c::Union{Array{Float64}, PyObject}, bdedge::Array{Int64, 2}, mmesh::Mesh)
+
+Computes the term 
+
+$$\int_\Gamma cu \delta u ds$$
+
+The parameters are 
+- `u` : a vector of length $N_v$ 
+- `bdedge` : a $N_e \times 2$ integer array, the boundary edge to integrate on
+- `c`: given by a vector of length $4N_e$; currently, each edge has 4 quadrature points;
+
+The output is a $N_v\times N_v$ sparse matrix. 
+"""
+function compute_fem_boundary_mass_term1(u::Union{Array{Float64}, PyObject}, 
+        c::Union{Array{Float64}, PyObject}, bdedge::Array{Int64, 2}, mmesh::Mesh)
+    @assert length(u)==mmesh.nnode
+    compute_fem_boundary_mass_matrix1(c, bdedge, mmesh) * u 
 end

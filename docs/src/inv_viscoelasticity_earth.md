@@ -53,4 +53,4 @@ We also show the inversion results in each iteration:
 </center>
 ```
 
-Code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_inversion.jl), [load_domain_function.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/load_domain_function.jl).
+Code: [dippingfault_viscosity_forward.jl](https://github.com/kailaix/AdFem.jl/docs/src/codes/EarthquakeCollection/earthquake/dipslip/dippingfault_viscosity_forward.jl), [dippingfault_viscosity_inversion.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/dippingfault_viscosity_inversion.jl), [load_domain_function.jl](https://github.com/kailaix/AdFem.jl/blob/master/research/earthquake/dipslip/load_domain_function.jl).

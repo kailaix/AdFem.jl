@@ -24,6 +24,7 @@ compute_fem_bdm_mass_matrix1
 compute_fem_bdm_div_matrix
 compute_fem_bdm_div_matrix1
 compute_fem_bdm_skew_matrix
+compute_fem_boundary_mass_matrix1
 ```
 
 ## Vector Assembling Functions
@@ -43,6 +44,7 @@ compute_fvm_advection_term
 compute_interaction_term
 compute_fem_laplace_term1
 compute_fem_traction_term1
+compute_fem_boundary_mass_term1
 ```
 
 ## Evaluation Functions

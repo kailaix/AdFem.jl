@@ -49,8 +49,23 @@ public:
     int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element, -1 - BDM1
     int elem_ndof; // 3 for P1, 6 for P2
     MatrixXd GaussPts;
+    Eigen::MatrixXd nodes;
     std::vector<NNFEM_Element*> elements;
 };
+
+const double LineIntegralWeights[] = {
+ 0.32607257743127305,
+ 0.32607257743127305,
+ 0.1739274225687269,
+ 0.1739274225687269,
+};
+const double LineIntegralNode[] = {
+     0.33000947820757187,
+    0.6699905217924281,
+    0.06943184420297371,
+    0.9305681557970262
+};
+const double LineIntegralN = 4;
 
 extern NNFEM_Mesh mmesh;
 

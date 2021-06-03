@@ -56,6 +56,43 @@ function Mesh(filename::String; file_format::Union{String, Missing} = missing,
 end
 
 """
+    get_edge_normal(mmesh::Mesh)
+"""
+function get_edge_normal(mmesh::Mesh)
+    _edge_to_elem_map = Set{Tuple{Int64, Int64}}()
+    dic = (x,y)->(minimum([x,y]), maximum([x,y]))
+    add_dic = (e1, e2)->begin 
+        if dic(e1, e2) in _edge_to_elem_map
+            delete!(_edge_to_elem_map, dic(e1, e2))
+        else
+            push!(_edge_to_elem_map, dic(e1, e2))
+        end
+    end
+    edict = Dict()
+    for i = 1:mmesh.nelem
+        e1, e2, e3 = mmesh.elems[i,:]
+        add_dic(e1, e2); edict[dic(e1,e2)] = e3
+        add_dic(e3, e2); edict[dic(e3,e2)] = e1
+        add_dic(e1, e3); edict[dic(e1,e3)] = e2
+    end
+    out = zeros(Float64, length(_edge_to_elem_map), 2)
+    for (k,s) in enumerate(_edge_to_elem_map)
+        p1 = s[1] 
+        p2 = s[2]
+        p3 = edict[s]
+        x1 = mmesh.nodes[p1,:] - mmesh.nodes[p3,:]
+        x2 = mmesh.nodes[p1,:] - mmesh.nodes[p2,:]
+        n = [x2[2]; -x2[1]]
+        n = n/norm(n)
+        if dot(n, x1)<0
+            n = -n 
+        end
+        out[k,:] = n
+    end
+    out
+end
+
+"""
     save(filename::String, mesh::Mesh)
 
 Saves the mesh to the file `filename`.
