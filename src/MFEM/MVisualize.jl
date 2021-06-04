@@ -63,7 +63,7 @@ function visualize_scalar_on_fem_points(u::Array{Float64,1}, mesh::Mesh, args...
     else 
         levels = 100
     end
-    plt.tricontourf(triangulation, nodal_values, levels = levels)
+    plt.tricontourf(triangulation, nodal_values, levels = levels, cmap = "jet")
 
     xlabel("x")
     ylabel("y")
@@ -192,8 +192,8 @@ end
 """
 function visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh;
             vmin::Union{Missing, Float64} = missing, vmax::Union{Missing, Float64} = missing)
-    vmax = coalesc(vmax, maximum(U))
-    vmin = coalesc(vmin, minimum(U))
+    vmax = coalesce(vmax, maximum(U))
+    vmin = coalesce(vmin, minimum(U))
 
     # FEM data
     nodes_x = mesh.nodes[:,1]
@@ -218,7 +218,7 @@ function visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh;
 
     function update(i)
         gca().clear()
-        plt.tricontourf(triangulation, U[i,:], levels = levels)
+        plt.tricontourf(triangulation, U[i,:], levels = levels, cmap = "jet")
     end
     animate(update, 2:size(U,1))
 end

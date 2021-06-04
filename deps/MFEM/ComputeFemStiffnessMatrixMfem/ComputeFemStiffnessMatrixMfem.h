@@ -8,11 +8,12 @@ namespace MFEM{
         Eigen::MatrixXd B(3, elem_ndof*2);
         Eigen::Matrix3d K;
         K.setZero();
-        B.setZero();
+        
         int k = 0;
         int k0 = 0;
         for(int i = 0; i<mmesh.nelem; i++){
             NNFEM_Element * elem = mmesh.elements[i];
+            B.setZero();
             for (int j = 0; j< elem->ngauss; j++){
                 for (int r = 0; r < elem_ndof; r ++){
                     B(0, r) = elem->hx(r, j);
@@ -23,8 +24,8 @@ namespace MFEM{
                 for (int p = 0; p < 3; p++)
                     for(int q = 0; q <3; q++)
                         K(p, q) = hmat[k0++];
-                    
-                
+
+
                 Eigen::MatrixXd NN = B.transpose() * K * B * elem->w[j];
                 Eigen::VectorXi dofs(2*elem_ndof);
                 for(int p = 0; p < elem_ndof; p++){
@@ -54,9 +55,9 @@ namespace MFEM{
         Eigen::MatrixXd K(2*elem_ndof, 2*elem_ndof);
         int k0 = 0;
         int k = 0;
-        B.setZero();
         for(int i = 0; i<mmesh.nelem; i++){
             NNFEM_Element * elem = mmesh.elements[i];
+            B.setZero();
             for (int j = 0; j< elem->ngauss; j++){
                 for (int r = 0; r < elem_ndof; r ++){
                     B(0, r) = elem->hx(r, j);
