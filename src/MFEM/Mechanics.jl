@@ -1,4 +1,4 @@
-export neo_hookean
+export neo_hookean, compute_absorbing_boundary_condition_matrix
 
 @doc raw"""
     neo_hookean(u::Union{Array{Float64, 1}, PyObject}, 
@@ -53,4 +53,30 @@ function neo_hookean(u::Array{Float64, 1}, μ::Array{Float64, 1}, λ::Array{Floa
             $psi, $indices, $vv, $u, $μ, $λ)
     J = sparse(indices[1:2:end] .+ 1, indices[2:2:end] .+ 1, vv, 2mesh.ndof, 2mesh.ndof)
     psi, J
+end
+
+
+function compute_absorbing_boundary_condition_matrix(
+    ρ::Union{PyObject, Array{Float64, 1}},
+    cs::Union{PyObject, Array{Float64, 1}},
+    cp::Union{PyObject, Array{Float64, 1}},
+    bdedge::Array{Int64, 2}, mmesh::Mesh)
+    @assert length(ρ)==length(cs)==length(cp)==4*size(bdedge, 1)
+    ρ, cs, cp = convert_to_tensor([ρ, cs, cp], [Float64, Float64, Float64])
+    n = get_edge_normal(bdedge, mmesh)
+    m = [n[:,2] -n[:,1]]
+    n1 = constant(repeat(n[:,1], 1, 4)'[:])
+    n2 = constant(repeat(n[:,2], 1, 4)'[:])
+    m1 = constant(repeat(m[:,1], 1, 4)'[:])
+    m2 = constant(repeat(m[:,2], 1, 4)'[:])
+    a11 = ρ*cp*n1^2+ρ*cs*m1^2
+    a12 = ρ*cp*n1*n2+ρ*cs*m1*m2
+    a21 = ρ*cp*n1*n2+ρ*cs*m1*m2
+    a22 = ρ*cp*n2^2+ρ*cs*m2^2
+    A11 = compute_fem_boundary_mass_matrix1(a11, bdedge, mmesh)
+    A12 = compute_fem_boundary_mass_matrix1(a12, bdedge, mmesh)
+    A21 = compute_fem_boundary_mass_matrix1(a21, bdedge, mmesh)
+    A22 = compute_fem_boundary_mass_matrix1(a22, bdedge, mmesh)
+    K = [A11 A21
+        A12 A22]
 end

@@ -255,10 +255,14 @@ end
 #     return out 
 # end
 
-"""
+@doc raw"""
     compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
     compute_fem_stiffness_matrix(kappa::Array{Float64, 3}, mesh::Mesh)
     compute_fem_stiffness_matrix(kappa::Array{Float64, 2}, mesh::Mesh)
+
+Computes the stiffness matrix. Here, the acceptable sizes of $\kappa$ 
+- a $3\times 3$ matrix, which is the pointwise uniform stiffness matrix 
+- a $N_g \times 3 \times 3$ tensor, which includes a specific stiffness matrix at each Gauss node
 """
 function compute_fem_stiffness_matrix(kappa::PyObject, mesh::Mesh)
     if length(size(kappa))==2

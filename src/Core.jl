@@ -768,8 +768,11 @@ function compute_plane_stress_matrix(E::Float64, ν::Float64)
 end
 
 
-"""
+@doc raw"""
     compute_plane_strain_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
+
+Returns the pointwise plane strain matrix of size $N\times 3 \times 3$. Here $N$ is the length of $E$ or $\nu$. 
+$N$ can be any number. 
 """
 function compute_plane_strain_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
     mode = 0
@@ -781,8 +784,11 @@ function compute_plane_strain_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::
     set_shape(out, (N, 3, 3))
 end
 
-"""
+@doc raw"""
     compute_plane_stress_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
+    
+Returns the pointwise plane stress matrix of size $N\times 3 \times 3$. Here $N$ is the length of $E$ or $\nu$. 
+$N$ can be any number. 
 """
 function compute_plane_stress_matrix(E::Union{PyObject, Array{Float64, 1}}, nu::Union{PyObject, Array{Float64, 1}})
     mode = 1

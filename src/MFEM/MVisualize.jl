@@ -190,8 +190,10 @@ end
 """
     visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh)
 """
-function visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh)
-    vmax, vmin = maximum(U), minimum(U)
+function visualize_scalar_on_fem_points(U::Array{Float64,2}, mesh::Mesh;
+            vmin::Union{Missing, Float64} = missing, vmax::Union{Missing, Float64} = missing)
+    vmax = coalesc(vmax, maximum(U))
+    vmin = coalesc(vmin, minimum(U))
 
     # FEM data
     nodes_x = mesh.nodes[:,1]
