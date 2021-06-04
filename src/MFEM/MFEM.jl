@@ -1,4 +1,4 @@
-export Mesh, get_ngauss, get_area
+export Mesh, get_ngauss, get_area, Mesh_v2, Mesh_v3
 
 macro exported_enum(name, args...)
     esc(quote
@@ -66,7 +66,8 @@ mutable struct Mesh
     elem_type::FiniteElementType
 end
 
-function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = -1, degree::Union{FiniteElementType,Int64} = 1, lorder::Int64 = -1)
+function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = -1, 
+        degree::Union{FiniteElementType,Int64} = 1, lorder::Int64 = -1)
     if degree==P1 
         degree = 1
     elseif degree==P2 
@@ -143,16 +144,37 @@ Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),
 
 Constructs a mesh of a rectangular domain. The rectangle is split into $m\times n$ cells, and each cell is further split into two triangles. 
 `order` specifies the quadrature rule order. `degree` determines the degree for finite element basis functions.
+
+!!! info 
+    AdFem provides three types of triangulations for a rectangular domain. The different types of meshes can be used to validate numerical schemes.
+    For example, we can change to different meshes to verify that bugs of our program do not originate from mesh types. 
+    
+    ![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/mesh_types.png?raw=true)
 """
 function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1, 
-            degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
+            degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1, 
+            version::Int64 = 1)
     coords = zeros((m+1)*(n+1), 2)
     elems = zeros(Int64, 2*m*n, 3)
     for i = 1:n 
         for j = 1:m 
             e = 2*((i-1)*m + j - 1)+1
-            elems[e, :] = [(i-1)*(m+1)+j; (i-1)*(m+1)+j+1; i*(m+1)+j ]
-            elems[e+1, :] = [(i-1)*(m+1)+j+1; i*(m+1)+j; i*(m+1)+j+1]
+            if version == 1
+                elems[e, :] = [(i-1)*(m+1)+j; (i-1)*(m+1)+j+1; i*(m+1)+j ]
+                elems[e+1, :] = [(i-1)*(m+1)+j+1; i*(m+1)+j; i*(m+1)+j+1]
+            elseif version == 2
+                elems[e, :] = [(i-1)*(m+1)+j; i*(m+1)+j+1; i*(m+1)+j ]
+                elems[e+1, :] = [(i-1)*(m+1)+j; (i-1)*(m+1)+j+1; i*(m+1)+j+1]
+            elseif version == 3
+                if rand()>0.5
+                    elems[e, :] = [(i-1)*(m+1)+j; (i-1)*(m+1)+j+1; i*(m+1)+j ]
+                    elems[e+1, :] = [(i-1)*(m+1)+j+1; i*(m+1)+j; i*(m+1)+j+1]
+                else
+                    elems[e, :] = [(i-1)*(m+1)+j; i*(m+1)+j+1; i*(m+1)+j ]
+                    elems[e+1, :] = [(i-1)*(m+1)+j; (i-1)*(m+1)+j+1; i*(m+1)+j+1]
+                end
+            end
+
         end
     end
     k = 1
@@ -166,6 +188,9 @@ function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1,
     end
     Mesh(coords, elems, order, degree, lorder)
 end
+
+Mesh_v2(args...;kwargs...) = Mesh(args...; version = 2, kwargs...)
+Mesh_v3(args...;kwargs...) = Mesh(args...; version = 3, kwargs...)
 
 
 """
