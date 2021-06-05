@@ -137,7 +137,7 @@ Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),
                             copy(mesh.conn),
                             copy(mesh.lorder),
                             copy(mesh.elem_ndof),
-                            copy(mesh.elem_type))
+                            mesh.elem_type)
 
 @doc raw"""
     Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)

@@ -51,6 +51,7 @@ To fix the problem, check why `$(ADCME.get_pip()) install pyvista` or `python -c
     include("MFEM/MVisualize.jl")
     include("MFEM/MUtils.jl")
     include("MFEM/Mechanics.jl")
+    include("MFEM/MGeom.jl")
     include("MFEM/MBDM.jl")
     include("MFEM3/MFEM.jl")
     include("MFEM3/MCore.jl")
