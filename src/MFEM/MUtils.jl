@@ -203,7 +203,8 @@ function impose_Dirichlet_boundary_conditions(A::Union{SparseMatrixCSC, Array{Fl
     B, r
 end
 
-function impose_Dirichlet_boundary_conditions(A::SparseTensor, rhs::Union{Array{Float64,1}, PyObject}, bdnode::Array{Int64, 1}, 
+function impose_Dirichlet_boundary_conditions(A::SparseTensor, rhs::Union{Array{Float64,1}, PyObject}, 
+    bdnode::Array{Int64, 1}, 
     bdval::Union{Array{Float64,1}, PyObject})
     indices = A.o.indices 
     vv = A.o.values 

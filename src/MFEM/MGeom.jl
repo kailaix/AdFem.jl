@@ -18,6 +18,7 @@ mutable struct CrackMesh
     n::Int64 
     h::Float64
     k::Int64
+    nslip::Int64
     lower::Array{Int64,1}
     upper::Array{Int64,1}
     bdedge::Array{Int64,2}
@@ -72,7 +73,8 @@ mutable struct CrackMesh
         mmesh = Mesh(m, n, h)
         bdedge = bcedge(mmesh)
         mmesh = Mesh(coords, elem, -1, 1, -1)
-        new(m, n, h, k, lower, upper, bdedge, mmesh)
+        nslip = m+1-2k
+        new(m, n, h, k, nslip, lower, upper, bdedge, mmesh)
     end
 end
 
