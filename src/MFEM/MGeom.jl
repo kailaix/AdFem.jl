@@ -1,4 +1,18 @@
 export CrackMesh
+@doc raw"""
+    CrackMesh(m::Int64, n::Int64, h::Float64, k::Int64 = 1)
+
+Creates a crack mesh. 
+
+```julia
+mmesh = CrackMesh(20, 10, 0.1, 4)
+visualize_mesh(mmesh)
+```
+
+![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/crackmesh.PNG?raw=true)
+
+To access the underlying [`Mesh`](@ref) object, use `mmesh.mesh`.
+"""
 mutable struct CrackMesh
     m::Int64 
     n::Int64 

@@ -4,6 +4,7 @@
 ```@docs
 PoreData
 Mesh
+CrackMesh
 ```
 
 ## Matrix Assembling Functions
