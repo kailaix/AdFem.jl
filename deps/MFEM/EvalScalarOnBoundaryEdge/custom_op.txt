@@ -1,0 +1,4 @@
+EvalScalarOnBoundaryEdge
+double u(?)
+int64 edge(?,2)
+double s(?) -> output 

@@ -1,4 +1,6 @@
-export eval_f_on_dof_pts, get_bdedge_integration_pts, gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1
+export eval_f_on_dof_pts, get_bdedge_integration_pts, 
+    gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1,
+    eval_scalar_on_boundary_edge
 
 """
     eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
@@ -800,4 +802,27 @@ function compute_fem_boundary_mass_term1(u::Union{Array{Float64}, PyObject},
         c::Union{Array{Float64}, PyObject}, bdedge::Array{Int64, 2}, mmesh::Mesh)
     @assert length(u)==mmesh.nnode
     compute_fem_boundary_mass_matrix1(c, bdedge, mmesh) * u 
+end
+
+
+@doc raw"""
+    eval_scalar_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+            edge::Array{Int64, 1}, mmesh::Mesh)
+
+Returns an array of values on the Gauss quadrature nodes for each edge. 
+
+- `u`: nodal values 
+- `edge`: a $N\times 2$ integer array; each row represents an edge $(x_1, x_2)$
+
+The returned array consists of $(y_1, y_2, \ldots)$
+
+![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/docs/eval_scalar_on_boundary_edge.png?raw=true)
+"""
+function eval_scalar_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+        edge::Array{Int64, 2}, mmesh::Mesh)
+    eval_scalar_on_boundary_edge_ = @eval load_op_and_grad($libmfem,"eval_scalar_on_boundary_edge")
+    u,edge = convert_to_tensor(Any[u,edge], [Float64,Int64])
+    out = eval_scalar_on_boundary_edge_(u,edge)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    reshape(out, (N*size(edge, 1), ))
 end

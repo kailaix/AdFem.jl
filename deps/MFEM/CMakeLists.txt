@@ -79,7 +79,8 @@ add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
           BDMInnerProductMatrixMfem/BDMInnerProductMatrixMfem.cpp
           ComputePMLTerm/ComputePmlTerm.cpp
           PMLElastic/ComputePmlElasticTerm.cpp
-          ComputeBoundaryMassMatrix1/ComputeBoundaryMassMatrixOne.cpp)
+          ComputeBoundaryMassMatrix1/ComputeBoundaryMassMatrixOne.cpp
+          EvalScalarOnBoundaryEdge/EvalScalarOnBoundaryEdge.cpp)
           
 
 target_link_libraries(admfem ${TF_LIB_FILE} ${mfem})

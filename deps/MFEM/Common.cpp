@@ -63,6 +63,7 @@ long long*  NNFEM_Mesh::init(double *vertices, int num_vertices,
                 element->node[k] = vtx[k];
                 element->dof[k] = vtx[k];
             } 
+
                 
             for(int k = 0; k<3; k++){
                 mesh.GetElementEdges(e, edges_, cor);
@@ -78,6 +79,10 @@ long long*  NNFEM_Mesh::init(double *vertices, int num_vertices,
                                 coord2[0], coord2[1],
                                 coord3[0], coord3[1];
             element->area = heron(element->coord);
+            element->Coef << coord1[0], coord1[1], 1.0, 
+                                coord2[0], coord2[1], 1.0, 
+                                coord3[0], coord3[1], 1.0;
+            element->Coef.inverse();
 
 
             const FiniteElement *fe = fespace.GetFE(e);
@@ -307,4 +312,10 @@ NNFEM_Element::NNFEM_Element(int ngauss, int ndof, FiniteElementType fet): ngaus
     hs.resize(3, ngauss);
     w.resize(ngauss);
     coord.resize(ngauss, 2);
+}
+
+
+
+extern "C" int get_LineIntegralN(){
+    return LineIntegralN;
 }
