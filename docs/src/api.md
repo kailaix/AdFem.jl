@@ -108,6 +108,7 @@ antiplane_viscosity
 update_stress_viscosity
 compute_pml_term
 compute_absorbing_boundary_condition_matrix
+solve_slip_law
 ```
 
 ## Mesh

@@ -1,0 +1,6 @@
+SolveSlipLaw
+double a(?)
+double b(?)
+double c(?)
+double xinit(?)
+double x(?) -> output
