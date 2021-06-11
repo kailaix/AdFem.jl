@@ -67,6 +67,7 @@ eval_grad_on_gauss_pts
 ```@docs
 eval_scalar_on_boundary_edge
 eval_f_on_boundary_edge
+eval_strain_on_boundary_edge
 ```
 
 ## Boundary Conditions

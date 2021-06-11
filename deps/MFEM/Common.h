@@ -4,6 +4,9 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
 #include <vector>
+#include <map>
+#include <utility>
+#include <tuple>
 using namespace std;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
@@ -53,6 +56,9 @@ public:
     MatrixXd GaussPts;
     Eigen::MatrixXd nodes;
     std::vector<NNFEM_Element*> elements;
+
+    // Data preprocessing arrays
+    std::map<std::pair<int, int>, std::tuple<int, int, int>> edge_to_elem;
 };
 
 const double LineIntegralWeights[] = {

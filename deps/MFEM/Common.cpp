@@ -84,6 +84,15 @@ long long*  NNFEM_Mesh::init(double *vertices, int num_vertices,
                                 coord3[0], coord3[1], 1.0;
             element->Coef.inverse();
 
+            edge_to_elem[
+                std::make_pair(std::min(idx[1], idx[2]), std::max(idx[1], idx[2]))
+                ] = std::make_tuple(e, idx[1]<idx[2] ? 1 : 2, idx[1]<idx[2] ? 2 : 1 );
+            edge_to_elem[
+                std::make_pair(std::min(idx[0], idx[2]), std::max(idx[0], idx[2]))
+                ] = std::make_tuple(e, idx[0]<idx[2] ? 0 : 2, idx[0]<idx[2] ? 2 : 0);
+            edge_to_elem[
+                std::make_pair(std::min(idx[1], idx[0]), std::max(idx[1], idx[0]))
+                ] = std::make_tuple(e, idx[1]<idx[0] ? 1 : 0, idx[1]<idx[0] ? 0 : 1);
 
             const FiniteElement *fe = fespace.GetFE(e);
             ElementTransformation* eltrans = fespace.GetElementTransformation(e);

@@ -1,6 +1,6 @@
 export eval_f_on_dof_pts, get_bdedge_integration_pts, 
     gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1,
-    eval_scalar_on_boundary_edge
+    eval_scalar_on_boundary_edge, eval_strain_on_boundary_edge
 
 """
     eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
@@ -825,4 +825,23 @@ function eval_scalar_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
     out = eval_scalar_on_boundary_edge_(u,edge)
     N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
     reshape(out, (N*size(edge, 1), ))
+end
+
+@doc raw"""
+    eval_strain_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+    edge::Array{Int64, 2}, mmesh::Mesh)
+
+Returns an array of strain tensors on the Gauss quadrature nodes for each edge. 
+
+The returned value has size $N_e N_g\times 3$. Here $N_e$ is the number of edges, and $N_g$ is the number of 
+Gauss points on the edge. Each row of `edge`, $(l,r)$, has the following property: $l < r$
+"""
+function eval_strain_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+    edge::Array{Int64, 2}, mmesh::Mesh)
+    @assert length(u) == 2mmesh.ndof
+    eval_strain_on_boundary_edge_ = @eval load_op_and_grad($libmfem,"eval_strain_on_boundary_edge")
+    u,edge = convert_to_tensor(Any[u,edge], [Float64,Int64])
+    out = eval_strain_on_boundary_edge_(u,edge)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    reshape(out, (N*size(edge, 1), 3))
 end
