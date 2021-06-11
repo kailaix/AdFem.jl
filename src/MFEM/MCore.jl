@@ -1,6 +1,6 @@
 export eval_f_on_dof_pts, get_bdedge_integration_pts, 
     gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1,
-    eval_scalar_on_boundary_edge, eval_strain_on_boundary_edge
+    eval_scalar_on_boundary_edge, eval_strain_on_boundary_edge, eval_normal_and_shear_stress_on_boundary_edge
 
 """
     eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
@@ -844,4 +844,33 @@ function eval_strain_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
     out = eval_strain_on_boundary_edge_(u,edge)
     N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
     reshape(out, (N*size(edge, 1), 3))
+end
+
+
+@doc raw"""
+    eval_normal_and_shear_stress_on_boundary_edge(sigma::Union{PyObject, Array{Float64, 2}},
+        edge::Array{Int64, 2}, mmesh::Mesh)
+
+Calculates the normal and shear stress on boundary edges. 
+
+$$\sigma_n = (\sigma n)\cdot n, \tau = (\sigma n) \cdot m$$
+
+Here 
+$$m = \begin{bmatrix}n_2\\-n_1\end{bmatrix}$$
+
+
+![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/docs/shear_normal.png?raw=true)
+"""
+function eval_normal_and_shear_stress_on_boundary_edge(sigma::Union{PyObject, Array{Float64, 2}},
+    edge::Array{Int64, 2}, mmesh::Mesh)
+    nls = get_edge_normal(edge, mmesh)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    normals = zeros(N*size(nls, 1), 2)
+    for i = 1:size(nls, 1)
+        normals[(i-1)*N+1:i*N, :] = repeat(nls[i,:]', N, 1)
+    end
+    eval_normal_and_shear_stress_on_boundary_edge_ = @eval load_op_and_grad($libmfem,"eval_normal_and_shear_stress_on_boundary_edge", multiple=true)
+    sigma,normals = convert_to_tensor(Any[sigma,normals], [Float64,Float64])
+    sn, st = eval_normal_and_shear_stress_on_boundary_edge_(sigma,normals)
+    set_shape(sn, (N*size(nls, 1),)), set_shape(st, (N*size(nls, 1), ))
 end
