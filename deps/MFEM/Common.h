@@ -2,7 +2,11 @@
 #include <fstream>
 #include <iostream>
 #include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Dense"
 #include <vector>
+#include <map>
+#include <utility>
+#include <tuple>
 using namespace std;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
@@ -26,6 +30,7 @@ public:
     VectorXd w;
     double area;
     MatrixXd coord;
+    Eigen::Matrix3d Coef; // [a1 a2 a3; b1 b2 b3; c1 c2 c3], ai * x + bi * y + ci
     int nnode;
     int ngauss;
     int dof[6]; // local degrees of freedom, e.g., dof[3] is the global index of 4-th local DOF
@@ -51,21 +56,25 @@ public:
     MatrixXd GaussPts;
     Eigen::MatrixXd nodes;
     std::vector<NNFEM_Element*> elements;
+
+    // Data preprocessing arrays
+    std::map<std::pair<int, int>, std::tuple<int, int, int>> edge_to_elem;
 };
 
 const double LineIntegralWeights[] = {
- 0.32607257743127305,
- 0.32607257743127305,
  0.1739274225687269,
+ 0.32607257743127305,
+ 0.32607257743127305,
  0.1739274225687269,
 };
 const double LineIntegralNode[] = {
-     0.33000947820757187,
-    0.6699905217924281,
     0.06943184420297371,
+    0.33000947820757187,
+    0.6699905217924281,
     0.9305681557970262
 };
-const double LineIntegralN = 4;
+const int LineIntegralN = 4;
 
+extern "C" int get_LineIntegralN();
 extern NNFEM_Mesh mmesh;
 

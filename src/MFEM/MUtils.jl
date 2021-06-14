@@ -1,6 +1,6 @@
 export PDATA, get_edge_dof, 
     impose_Dirichlet_boundary_conditions, dof_to_gauss_points, get_boundary_edge_orientation,
-    compute_pml_term
+    compute_pml_term, solve_slip_law
 
 """
     PDATA
@@ -361,4 +361,56 @@ function compute_pml_term(u::Union{Array{Float64,1}, PyObject},βprime::Union{Ar
     u,betap,λ,μ,nv = convert_to_tensor(Any[u,βprime,λ,μ,nv], [Float64,Float64,Float64,Float64,Float64])
     out = compute_pml_elastic_term_(u,betap,λ,μ,nv)
     set_shape(out[1], (2mmesh.ndof, )), set_shape(out[2], (2mmesh.ndof, )), set_shape(out[3], (2mmesh.ndof, )), set_shape(out[4], (2mmesh.ndof, ))
+end
+
+
+@doc raw"""
+    solve_slip_law(v, ψ, dc, v0, a, b, f0, Δt::Float64)
+
+Solves one step of the slip law equation 
+
+$$\dot \psi = - \frac{|V|}{d_C}\left( a \sinh^{-1}\left( \frac{|V|}{2V_0}e^{\frac{\psi}{a}} \right) - f_0 + (b-a)*\log \frac{|V|}{V_0} \right)$$
+
+We discretize the equation with a central difference scheme 
+
+$$\frac{\psi^{n+1} - \psi^{n-1}}{2\Delta t} =  - \frac{|V|}{d_c}\left( a \sinh^{-1} \left( \frac{|V|}{2V_0} e^{\frac{\psi^{n+1} + \psi^{n-1}}{2a}{}} \right) - f_0 + (b-a) \log \frac{|V|}{V_0} \right)$$
+
+- `dc`, `v0`, `a`, `b`, and `f0` are scalars 
+"""
+function solve_slip_law(v, ψ, dc, v0, a, b, f0, Δt::Float64)
+    @assert size(v0)==size(a)==size(b)==size(f0)==size(dc)==()
+    @asset size(v)==size(ψ)
+    @asset length(size(v))==length(size(ψ))==1
+    v, ψ, dc, v0, a, b, f0 = convert_to_tensor(Any[v, ψ, dc, v0, a, b, f0], [Float64, Float64, Float64, Float64, Float64, Float64, Float64])
+    v = abs(v)
+    A = (-Δt*v)/dc
+    B = v/2v0*exp(ψ/2a)
+    C = (ψ + 2Δt*v/dc*(f0 - (b-a)*log(v/v0)))/2a 
+    solve_slip_law(A, B, C, ψ)
+end
+
+
+@doc raw"""
+    solve_slip_law( 
+        A::Union{Array{Float64,1}, PyObject}, 
+        B::Union{Array{Float64,1}, PyObject}, 
+        C::Union{Array{Float64,1}, PyObject},
+        X0::Union{Array{Float64,1}, PyObject})
+
+A helper function for [`solve_slip_law`](@ref) the nonlinear equation 
+
+$$x - A\sinh^{-1}(Bx) - C = 0$$
+
+`A`, `B`, and `C` are vectors of the same length. `X0` is the initial guess. 
+"""
+function solve_slip_law( 
+        A::Union{Array{Float64,1}, PyObject}, 
+        B::Union{Array{Float64,1}, PyObject}, 
+        C::Union{Array{Float64,1}, PyObject},
+        X0::Union{Array{Float64,1}, PyObject})
+    @assert length(X0) == length(A) == length(B) == length(C)
+    solve_slip_law_ = load_op_and_grad(AdFem.libmfem,"solve_slip_law")
+    a,b,c,xinit = convert_to_tensor(Any[A, B, C, X0], [Float64,Float64,Float64,Float64])
+    out = solve_slip_law_(a,b,c,xinit)
+    set_shape(out, (length(a),))
 end

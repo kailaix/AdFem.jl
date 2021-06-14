@@ -1,0 +1,5 @@
+EvalNormalAndShearStressOnBoundaryEdge
+double sigma(?,3)
+double n(?,2)
+double sn(?) -> output
+double st(?) -> output

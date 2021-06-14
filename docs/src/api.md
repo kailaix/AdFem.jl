@@ -49,17 +49,26 @@ compute_fem_boundary_mass_term1
 ```
 
 ## Evaluation Functions
+
+### Elementwise
 ```@docs
 eval_f_on_gauss_pts
 eval_f_on_dof_pts
 eval_f_on_boundary_node
-eval_f_on_boundary_edge
 eval_strain_on_gauss_pts
 eval_strain_on_gauss_pts1
 eval_f_on_fvm_pts
 eval_f_on_fem_pts
 eval_grad_on_gauss_pts1
 eval_grad_on_gauss_pts
+```
+
+### Edgewise 
+```@docs
+eval_scalar_on_boundary_edge
+eval_f_on_boundary_edge
+eval_strain_on_boundary_edge
+eval_normal_and_shear_stress_on_boundary_edge
 ```
 
 ## Boundary Conditions
@@ -99,6 +108,7 @@ antiplane_viscosity
 update_stress_viscosity
 compute_pml_term
 compute_absorbing_boundary_condition_matrix
+solve_slip_law
 ```
 
 ## Mesh

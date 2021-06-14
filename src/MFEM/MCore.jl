@@ -1,4 +1,6 @@
-export eval_f_on_dof_pts, get_bdedge_integration_pts, gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1
+export eval_f_on_dof_pts, get_bdedge_integration_pts, 
+    gauss_weights, compute_fem_boundary_mass_matrix1, compute_fem_boundary_mass_term1,
+    eval_scalar_on_boundary_edge, eval_strain_on_boundary_edge, eval_normal_and_shear_stress_on_boundary_edge
 
 """
     eval_f_on_gauss_pts(f::Function, mesh::Mesh; tensor_input::Bool = false)
@@ -810,4 +812,75 @@ function compute_fem_boundary_mass_term1(u::Union{Array{Float64}, PyObject},
         c::Union{Array{Float64}, PyObject}, bdedge::Array{Int64, 2}, mmesh::Mesh)
     @assert length(u)==mmesh.nnode
     compute_fem_boundary_mass_matrix1(c, bdedge, mmesh) * u 
+end
+
+
+@doc raw"""
+    eval_scalar_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+            edge::Array{Int64, 1}, mmesh::Mesh)
+
+Returns an array of values on the Gauss quadrature nodes for each edge. 
+
+- `u`: nodal values 
+- `edge`: a $N\times 2$ integer array; each row represents an edge $(x_1, x_2)$
+
+The returned array consists of $(y_1, y_2, \ldots)$
+
+![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/docs/eval_scalar_on_boundary_edge.png?raw=true)
+"""
+function eval_scalar_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+        edge::Array{Int64, 2}, mmesh::Mesh)
+    eval_scalar_on_boundary_edge_ = @eval load_op_and_grad($libmfem,"eval_scalar_on_boundary_edge")
+    u,edge = convert_to_tensor(Any[u,edge], [Float64,Int64])
+    out = eval_scalar_on_boundary_edge_(u,edge)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    reshape(out, (N*size(edge, 1), ))
+end
+
+@doc raw"""
+    eval_strain_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+    edge::Array{Int64, 2}, mmesh::Mesh)
+
+Returns an array of strain tensors on the Gauss quadrature nodes for each edge. 
+
+The returned value has size $N_e N_g\times 3$. Here $N_e$ is the number of edges, and $N_g$ is the number of 
+Gauss points on the edge. Each row of `edge`, $(l,r)$, has the following property: $l < r$
+"""
+function eval_strain_on_boundary_edge(u::Union{PyObject, Array{Float64, 1}},
+    edge::Array{Int64, 2}, mmesh::Mesh)
+    @assert length(u) == 2mmesh.ndof
+    eval_strain_on_boundary_edge_ = @eval load_op_and_grad($libmfem,"eval_strain_on_boundary_edge")
+    u,edge = convert_to_tensor(Any[u,edge], [Float64,Int64])
+    out = eval_strain_on_boundary_edge_(u,edge)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    reshape(out, (N*size(edge, 1), 3))
+end
+
+
+@doc raw"""
+    eval_normal_and_shear_stress_on_boundary_edge(sigma::Union{PyObject, Array{Float64, 2}},
+        edge::Array{Int64, 2}, mmesh::Mesh)
+
+Calculates the normal and shear stress on boundary edges. 
+
+$$\sigma_n = (\sigma n)\cdot n, \tau = (\sigma n) \cdot m$$
+
+Here 
+$$m = \begin{bmatrix}n_2\\-n_1\end{bmatrix}$$
+
+
+![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/docs/shear_normal.png?raw=true)
+"""
+function eval_normal_and_shear_stress_on_boundary_edge(sigma::Union{PyObject, Array{Float64, 2}},
+    edge::Array{Int64, 2}, mmesh::Mesh)
+    nls = get_edge_normal(edge, mmesh)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    normals = zeros(N*size(nls, 1), 2)
+    for i = 1:size(nls, 1)
+        normals[(i-1)*N+1:i*N, :] = repeat(nls[i,:]', N, 1)
+    end
+    eval_normal_and_shear_stress_on_boundary_edge_ = @eval load_op_and_grad($libmfem,"eval_normal_and_shear_stress_on_boundary_edge", multiple=true)
+    sigma,normals = convert_to_tensor(Any[sigma,normals], [Float64,Float64])
+    sn, st = eval_normal_and_shear_stress_on_boundary_edge_(sigma,normals)
+    set_shape(sn, (N*size(nls, 1),)), set_shape(st, (N*size(nls, 1), ))
 end
