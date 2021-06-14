@@ -582,7 +582,7 @@ $$\int_{\Gamma} t(x, y) \delta u dx$$
 
 Returns a vector of size `dof`. 
 
-$t$ is defined on boundary Gauss points. See [`eval_f_on_boundary_edge`](@ref). 
+Here $t$ is defined on boundary Gauss points, e.g., the quantity computed from [`eval_f_on_boundary_edge`](@ref). 
 
 
 !!! info 
