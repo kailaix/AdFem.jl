@@ -187,7 +187,8 @@ The function returns
 
 $$\begin{bmatrix} A_{II} & 0 \\ 0 & I \end{bmatrix}, \begin{bmatrix}r_I - A_{IB} u_B \\ r_B \end{bmatrix}$$
 """
-function impose_Dirichlet_boundary_conditions(A::Union{SparseMatrixCSC, Array{Float64, 2}}, rhs::Array{Float64,1}, bdnode::Array{Int64, 1}, 
+function impose_Dirichlet_boundary_conditions(A::Union{SparseMatrixCSC, Array{Float64, 2}}, 
+    rhs::Array{Float64,1}, bdnode::Array{Int64, 1}, 
     bdval::Array{Float64,1})
     N = length(rhs)
     r = copy(rhs)
@@ -215,6 +216,18 @@ function impose_Dirichlet_boundary_conditions(A::SparseTensor, rhs::Union{Array{
     indices,vv,bd,rhs,bdval = convert_to_tensor(Any[indices,vv,bdnode,rhs,bdval], [Int64,Float64,Int64,Float64,Float64])
     indices, vv, rhs = impose_dirichlet_(indices,vv,bd,rhs,bdval)
     RawSparseTensor(indices, vv, size(A)...), set_shape(rhs, (size(A,2),))
+end
+
+"""
+    impose_Dirichlet_boundary_conditions(A::SparseTensor, bdnode::Array{Int64, 1})
+
+A helper function to impose homogeneous Dirichlet boundary condition. 
+"""
+function impose_Dirichlet_boundary_conditions(A::SparseTensor, bdnode::Array{Int64, 1})
+    rhs = zeros(size(A, 1))
+    bdval = zeros(length(bdnode))
+    B, _ = impose_Dirichlet_boundary_conditions(A, rhs, bdnode, bdval)
+    B
 end
 
 

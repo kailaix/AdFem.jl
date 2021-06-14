@@ -178,11 +178,17 @@ function compute_fem_mass_matrix1(mmesh::Mesh)
     compute_fem_mass_matrix1(ones(get_ngauss(mmesh)), mmesh)
 end
 
-# function compute_fem_mass_matrix(mmesh::Mesh)
-# end
+function compute_fem_mass_matrix(mmesh::Mesh)
+    C = compute_fem_mass_matrix1(mmesh)
+    Z = spzero(size(C, 1))
+    [C Z;Z C]
+end
 
-# function compute_fem_mass_matrix(rho::Union{PyObject, Array{Float64, 1}}, mmesh::Mesh)
-# end
+function compute_fem_mass_matrix(ρ::Union{PyObject, Array{Float64, 1}}, mmesh::Mesh)
+    C = compute_fem_mass_matrix1(ρ, mmesh)
+    Z = spzero(size(C, 1))
+    [C Z;Z C]
+end
 
 """
     compute_fem_advection_matrix1(u::Union{Array{Float64,1}, PyObject},v::Union{Array{Float64,1}, PyObject}, mesh::Mesh)
@@ -615,9 +621,13 @@ function eval_f_on_boundary_node(f::Function, bdnode::Array{Int64}, mesh::Mesh)
 end
 
 
-"""
+@doc raw"""
     compute_von_mises_stress_term(K::Array{Float64, 3}, u::Array{Float64, 1}, mesh::Mesh)
     compute_von_mises_stress_term(K::Array{Float64, 2}, u::Array{Float64, 1}, mesh::Mesh)
+
+Computes the von Mises stress term
+
+$$\sigma_v = \sqrt{\sigma_1^2 - \sigma_1 \sigma_2 + \sigma_2^2 + 3\sigma_{12}^2}$$
 """
 function compute_von_mises_stress_term(K::Array{Float64, 3}, u::Array{Float64, 1}, mesh::Mesh)
     @assert length(u) == 2mesh.ndof
