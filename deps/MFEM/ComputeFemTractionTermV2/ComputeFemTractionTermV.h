@@ -37,3 +37,8 @@ namespace MFEM{
         }
     }
 }
+
+extern "C" void ComputeFemTractionV2_Julia(double *out, const double *t, 
+        const int64 *edgeid, int n){
+        MFEM::ComputeFemTractionV_forward(out, t, edgeid, n);
+}

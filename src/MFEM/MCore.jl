@@ -513,6 +513,13 @@ Returns a vector of size `dof`.
 function compute_fem_traction_term1(t::Array{Float64, 1},
             bdedge::Array{Int64,2}, mesh::Mesh)
     # sort bdedge so that bdedge[i,1] < bdedge[i,2]
+    out = zeros(mesh.ndof)
+    bdN = size(bdedge, 1)
+    if mesh.elem_type == P1 
+        @eval ccall((:ComputeFemTractionV2_Julia, $LIBMFEM), Cvoid, 
+            (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Clonglong}, Cint), $out, $t, $(bdedge'), $(bdN))
+        return out 
+    end
     for i = 1:size(bdedge, 1)
         if bdedge[i,1]>bdedge[i,2]
             bdedge[i,:] = [bdedge[i,2]; bdedge[i,1]]
@@ -524,7 +531,7 @@ function compute_fem_traction_term1(t::Array{Float64, 1},
     node_y = zeros(size(bdedge, 1))
     ngauss = Int64(@eval ccall((:ComputeFemTractionTermMfem_forward_getNGauss, $LIBMFEM), Cint, 
             (Cint,), Int32($order)))
-    bdN = size(bdedge, 1)
+    
     @assert length(t) == ngauss * bdN
     if mesh.elem_type==P1
         dofs = zeros(Int64, 2bdN)
@@ -547,11 +554,12 @@ function compute_fem_traction_term1(t::Array{Float64, 1},
             dofs[2*i] = e - 1 + mesh.nedge
         end
     end
-    out = zeros(mesh.ndof)
+    
     bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mesh)
     bdnode_x = bdnode_x'[:]
     bdnode_y = bdnode_y'[:]
-    if mesh.elem_type in [P1, P2]
+    
+    if mesh.elem_type == P2
         @eval ccall((:ComputeFemTractionTermMfem_forward_Julia, $LIBMFEM), Cvoid, 
             (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint), 
                 $out, $t, Int32.($dofs), $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
