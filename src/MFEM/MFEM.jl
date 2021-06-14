@@ -19,38 +19,23 @@ end
 - `nnode`, `nedge`, `nelem`: number of nodes, edges, and elements 
 - `ndof`: total number of degrees of freedoms 
 - `conn`: connectivity matrix, `nelems × 3` or `nelems × 6`, depending on whether a linear element or a quadratic element is used. 
-- `lorder`: order of quadrature rule for line integrals 
+- `lorder`: order of quadrature rule for line integrals (default = 6, 4 gauss points per line segment)
 - `elem_type`: type of the element (P1, P2 or BDM1)
 
-Internally, the mesh `mmesh` is represented by a collection of `NNFEM_Element` object with some other attributes
-```c++
-int nelem; // total number of elements
-int nnode; // total number of nodes
-int ngauss; // total number of Gauss points
-int ndof; // total number of dofs
-int order; // quadrature integration order
-int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element 
-int elem_ndof; // 3 for P1, 6 for P2
-MatrixXd GaussPts; // coordinates of Gauss quadrature points
-std::vector<NNFEM_Element*> elements; // array of elements
+# Constructors 
+
+```
+Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
 ```
 
-The `NNFEM_Element` has data
-```c++
-VectorXd h;   // basis functions, elem_ndof × ng  
-VectorXd hx;  // x-directional basis functions, elem_ndof × ng  
-VectorXd hy;  // y-directional basis functions, elem_ndof × ng  
-MatrixXd hs;  // shape functions for linear element, 3 × ng
-VectorXd w;   // weight vectors, ng  
-double area;  // area of the triangle
-MatrixXd coord; // coordinates array, 3 × 2
-int nnode; // total number of nodes 
-int ngauss; // total number of Gauss points
-int dof[6]; // global indices for both nodes and edges, note that edge indices are offset by `nv`
-int node[3]; // global indices of local vertices
-int edge[3]; // global indices of local edges
-int ndof; // DOF, 3 for P1 element, 6 for P2 element 
-```
+Constructs a mesh of a rectangular domain. The rectangle is split into $m\times n$ cells, and each cell is further split into two triangles. 
+`order` specifies the quadrature rule order. `degree` determines the degree for finite element basis functions.
+
+!!! info 
+    AdFem provides three types of triangulations for a rectangular domain. The different types of meshes can be used to validate numerical schemes.
+    For example, we can change to different meshes to verify that bugs of our program do not originate from mesh types. 
+    
+    ![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/mesh_types.png?raw=true)
 """
 mutable struct Mesh
     nodes::Array{Float64, 2}
@@ -87,9 +72,9 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
 
     if lorder==-1
         if degree == 1 || degree==BDM1
-            lorder = 2
+            lorder = 6
         elseif degree == 2
-            lorder = 4
+            lorder = 6
         end
     end
 
@@ -102,8 +87,8 @@ function Mesh(coords::Array{Float64, 2}, elems::Array{Int64, 2}, order::Int64 = 
     c = [coords zeros(size(coords, 1))]'[:]
     e = Int32.(elems'[:].- 1) 
     edges_ptr = @eval ccall((:init_nnfem_mesh, $LIBMFEM), Ptr{Clonglong}, (Ptr{Cdouble}, Cint, 
-            Ptr{Cint}, Cint, Cint, Cint, Ptr{Clonglong}), $c, Int32(size($coords, 1)), $e, Int32(size($elems,1)), 
-            Int32($order), Int32($degree), $nedges)
+            Ptr{Cint}, Cint, Cint, Cint, Cint, Ptr{Clonglong}), $c, Int32(size($coords, 1)), $e, Int32(size($elems,1)), 
+            Int32($order), Int32($lorder), Int32($degree), $nedges)
     nedges = nedges[1]
     edges = unsafe_wrap(Array{Int64,1}, edges_ptr, (2nedges,), own=true)
     edges = reshape(edges, nedges, 2)
@@ -139,18 +124,7 @@ Base.:copy(mesh::Mesh) = Mesh(copy(mesh.nodes),
                             copy(mesh.elem_ndof),
                             mesh.elem_type)
 
-@doc raw"""
-    Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
 
-Constructs a mesh of a rectangular domain. The rectangle is split into $m\times n$ cells, and each cell is further split into two triangles. 
-`order` specifies the quadrature rule order. `degree` determines the degree for finite element basis functions.
-
-!!! info 
-    AdFem provides three types of triangulations for a rectangular domain. The different types of meshes can be used to validate numerical schemes.
-    For example, we can change to different meshes to verify that bugs of our program do not originate from mesh types. 
-    
-    ![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/mesh_types.png?raw=true)
-"""
 function Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1, 
             degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1, 
             version::Int64 = 1)
