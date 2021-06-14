@@ -592,7 +592,7 @@ Here $t$ is defined on boundary Gauss points, e.g., the quantity computed from [
 
 Here is an example to evaluate the boundary integral on a domain $[0,1]^2$
 
-$$\int_{x=0}^1 t(x, 1) \delta u dx$$
+$$\int_{0}^1 t(x, 1) \delta u dx$$
 
 ```julia 
 mmesh = Mesh(10,10,0.1)
