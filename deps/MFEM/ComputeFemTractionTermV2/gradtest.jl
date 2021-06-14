@@ -10,6 +10,8 @@ Random.seed!(233)
 
 # TODO: specify your input parameters
 mmesh = Mesh(10,10,0.1)
+
+
 edgeid = bcedge((x1, y1, x2, y2)->(y1>0.99) && (y2>0.99), mmesh)
 t0 = eval_f_on_boundary_edge((x,y)->x+y, edgeid, mmesh)
 u0 = compute_fem_traction_term1(t0, edgeid, mmesh)

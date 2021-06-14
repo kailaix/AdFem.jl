@@ -517,7 +517,7 @@ function compute_fem_traction_term1(t::Array{Float64, 1},
     bdN = size(bdedge, 1)
     if mesh.elem_type == P1 
         @eval ccall((:ComputeFemTractionV2_Julia, $LIBMFEM), Cvoid, 
-            (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Clonglong}, Cint), $out, $t, $(bdedge'), $(bdN))
+            (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Clonglong}, Cint), $out, $t, $(bdedge'[:]), $(bdN))
         return out 
     end
     for i = 1:size(bdedge, 1)
