@@ -18,9 +18,11 @@ double heron(const MatrixXd& coord){
 // _degree: element degrees, 1 for linear element, 2 for quadratic element
 // vertice is a 3D array!
 long long*  NNFEM_Mesh::init(double *vertices, int num_vertices, 
-                int *element_indices, int num_elements, int _order, int _degree, long long *nedges_ptr)
+                int *element_indices, int num_elements, 
+                int _order, int _lorder, int _degree, long long *nedges_ptr)
     {
         order = _order;
+        lorder = _lorder;
         degree = _degree;
         nelem = num_elements;
         nnode = num_vertices;
@@ -324,7 +326,37 @@ NNFEM_Element::NNFEM_Element(int ngauss, int ndof, FiniteElementType fet): ngaus
 }
 
 
+void line_integral_gauss_quadrature(Eigen::VectorXd &xs, 
+        Eigen::VectorXd &w, int order){
+    IntegrationRules rule_;
+    IntegrationRule rule = rule_.Get(Element::Type::SEGMENT, order);
+    int ngauss = rule.GetNPoints();
+    w.resize(ngauss);
+    xs.resize(ngauss);
+    for (int i = 0; i < ngauss; i++){
+        const IntegrationPoint &ip = rule.IntPoint(i);
+        w[i] = ip.weight;
+        xs[i] = ip.x;
+    }    
+}
+
+int line_integral_ngauss(int order){
+    IntegrationRules rule_;
+    IntegrationRule rule = rule_.Get(Element::Type::SEGMENT, order);
+    int ngauss = rule.GetNPoints();
+    return ngauss;
+}
 
 extern "C" int get_LineIntegralN(){
-    return LineIntegralN;
+    return line_integral_ngauss(mmesh.lorder);
+}
+
+extern "C" void get_LineIntegralPnW(double *p, double *w){
+    Eigen::VectorXd xs; 
+    Eigen::VectorXd ws;
+    line_integral_gauss_quadrature(xs, ws, mmesh.lorder);
+    for(int i = 0; i < xs.size(); i++){
+        p[i] = xs[i];
+        w[i] = ws[i];
+    }
 }

@@ -66,6 +66,7 @@ public:
         
     // create output shape
     int nedge = idx_shape.dim_size(0);
+    int LineIntegralN = get_LineIntegralN();
     int N = LineIntegralN * 4 * nedge;
     
     TensorShape ij_shape({N,2});

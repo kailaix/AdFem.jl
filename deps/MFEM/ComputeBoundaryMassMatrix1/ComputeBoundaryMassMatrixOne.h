@@ -9,6 +9,9 @@ namespace MFEM{
         int s = 0;
         int cs = 0;
         const double *nodes = mmesh.nodes.data();
+        Eigen::VectorXd LineIntegralNode, LineIntegralWeights;
+        line_integral_gauss_quadrature(LineIntegralNode, LineIntegralWeights, mmesh.lorder);
+        int LineIntegralN = LineIntegralNode.size();
         for(int e = 0; e < nedge; e++){
             int p1 = idx[2*e] - 1;
             int p2 = idx[2*e+1] - 1;
@@ -42,6 +45,10 @@ namespace MFEM{
         int s = 0;
         int cs = 0;
         const double *nodes = mmesh.nodes.data();
+        Eigen::VectorXd LineIntegralNode, LineIntegralWeights;
+        line_integral_gauss_quadrature(LineIntegralNode, LineIntegralWeights, mmesh.lorder);
+        int LineIntegralN = LineIntegralNode.size();
+
         for(int e = 0; e < nedge; e++){
             int p1 = idx[2*e] - 1;
             int p2 = idx[2*e+1] - 1;

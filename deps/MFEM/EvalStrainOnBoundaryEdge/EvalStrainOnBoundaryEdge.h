@@ -4,6 +4,9 @@ namespace MFEM{
         int n_edge){
         int k = 0;
         int e, ll, rr;
+        Eigen::VectorXd LineIntegralNode, LineIntegralWeights;
+        line_integral_gauss_quadrature(LineIntegralNode, LineIntegralWeights, mmesh.lorder);
+        int LineIntegralN = LineIntegralNode.size();
         for (int i = 0; i < n_edge; i++){
             int l = edgeid[2*i]-1, r = edgeid[2*i+1]-1;
             std::tie(e, ll, rr) = mmesh.edge_to_elem[std::make_pair(l, r)];
@@ -33,6 +36,9 @@ namespace MFEM{
         int n_edge){
         int k = 0;
         int e, ll, rr;
+        Eigen::VectorXd LineIntegralNode, LineIntegralWeights;
+        line_integral_gauss_quadrature(LineIntegralNode, LineIntegralWeights, mmesh.lorder);
+        int LineIntegralN = LineIntegralNode.size();
         for (int i = 0; i < n_edge; i++){
             int l = edgeid[2*i]-1, r = edgeid[2*i+1]-1;
             std::tie(e, ll, rr) = mmesh.edge_to_elem[std::make_pair(l, r)];

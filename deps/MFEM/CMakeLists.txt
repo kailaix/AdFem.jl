@@ -83,6 +83,7 @@ add_library(admfem SHARED Common.cpp API.cpp Mechanics.cpp
           EvalScalarOnBoundaryEdge/EvalScalarOnBoundaryEdge.cpp
           EvalStrainOnBoundaryEdge/EvalStrainOnBoundaryEdge.cpp
           EvalNormalAndShearStressOnBoundaryEdge/EvalNormalAndShearStressOnBoundaryEdge.cpp
+          ComputeFemTractionTermV2/ComputeFemTractionTermV.cpp
           SolveSlipLaw/SolveSlipLaw.cpp)
           
 
@@ -94,3 +95,7 @@ set_target_properties(admfem PROPERTIES
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build 
                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build
                 ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build)
+
+
+add_executable(main main.cpp)
+target_link_libraries(main admfem)

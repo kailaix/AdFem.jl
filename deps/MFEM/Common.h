@@ -42,7 +42,7 @@ public:
 class NNFEM_Mesh{
 public:
     long long* init(double *vertices, int num_vertices, 
-                int *element_indices, int num_elements, int _order, int _degree, long long *nedges_ptr);
+                int *element_indices, int num_elements, int _order, int _lorder, int _degree,  long long *nedges_ptr);
     long long* init_BDM1(double *vertices, int num_vertices, 
                 int *element_indices, int num_elements, int _order, long long *nedges_ptr);
     ~NNFEM_Mesh();
@@ -53,6 +53,7 @@ public:
     int order; // integration order 
     int degree; // Degree of Polynomials, 1 - P1 element, 2 - P2 element, -1 - BDM1
     int elem_ndof; // 3 for P1, 6 for P2
+    int lorder; // line integration order 
     MatrixXd GaussPts;
     Eigen::MatrixXd nodes;
     std::vector<NNFEM_Element*> elements;
@@ -61,20 +62,15 @@ public:
     std::map<std::pair<int, int>, std::tuple<int, int, int>> edge_to_elem;
 };
 
-const double LineIntegralWeights[] = {
- 0.1739274225687269,
- 0.32607257743127305,
- 0.32607257743127305,
- 0.1739274225687269,
-};
-const double LineIntegralNode[] = {
-    0.06943184420297371,
-    0.33000947820757187,
-    0.6699905217924281,
-    0.9305681557970262
-};
-const int LineIntegralN = 4;
 
+// Line Integral 
+
+void line_integral_gauss_quadrature(Eigen::VectorXd &xs, 
+        Eigen::VectorXd &w, int order);
+
+int line_integral_ngauss(int order);
+
+extern "C" void get_LineIntegralPnW(double *p, double *w);
 extern "C" int get_LineIntegralN();
 extern NNFEM_Mesh mmesh;
 

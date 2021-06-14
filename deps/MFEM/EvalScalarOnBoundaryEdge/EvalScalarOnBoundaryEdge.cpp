@@ -63,6 +63,7 @@ public:
         
     // create output shape
     int n_elem = edge_shape.dim_size(0);
+    int LineIntegralN = get_LineIntegralN();
     TensorShape s_shape({LineIntegralN*n_elem});
             
     // create output tensor

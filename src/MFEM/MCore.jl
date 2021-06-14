@@ -320,18 +320,22 @@ end
 Returns Gauss quadrature points on the boundary edge as a $n\times 2$ matrix. Here $n$ is the number of rows for `bdedge`.
 """
 function get_bdedge_integration_pts(bdedge::Array{Int64, 2}, mmesh::Mesh)
-    order = mmesh.lorder
-    bdnode_x, bdnode_y = _traction_get_nodes(bdedge, mmesh)
-    bdnode_x = bdnode_x'[:]
-    bdnode_y = bdnode_y'[:]
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    xs = zeros(N)
+    ws = zeros(N)
+    @eval ccall((:get_LineIntegralPnW, $LIBMFEM), Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}), $xs, $ws)
+
     bdN = size(bdedge, 1)
-    ngauss = Int64(@eval ccall((:ComputeFemTractionTermMfem_forward_getNGauss, $LIBMFEM), Cint, 
-            (Cint,), Int32($order)))
-    x = zeros(ngauss * bdN)
-    y = zeros(ngauss * bdN)
-    @eval ccall((:ComputeFemTractionTermMfem_forward_getGaussPoints, $LIBMFEM), Cvoid, 
-    (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint), $x, $y, 
-        $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
+    x = zeros(N * bdN)
+    y = zeros(N * bdN)
+    for i = 1:bdN 
+        l = mmesh.nodes[bdedge[i,1],:]
+        r = mmesh.nodes[bdedge[i,2],:]
+        xx = @. (1-xs) * l[1] + xs * r[1]
+        yy = @. (1-xs) * l[2] + xs * r[2]
+        x[(i-1)*N+1:i*N] = xx
+        y[(i-1)*N+1:i*N] = yy
+    end
     [x y]
 end
 
@@ -558,6 +562,72 @@ function compute_fem_traction_term1(t::Array{Float64, 1},
             $out, $sn, $t, Int32.($dofs), $bdnode_x, $bdnode_y, Int32($bdN), Int32($order))
     end
     return out 
+end
+
+
+@doc raw"""
+    compute_fem_traction_term1(t::PyObject,bdedge::Array{Int64, 2}, mmesh::Mesh)
+
+Computes the boundary integral 
+
+$$\int_{\Gamma} t(x, y) \delta u dx$$
+
+Returns a vector of size `dof`. 
+
+$t$ is defined on boundary Gauss points. See [`eval_f_on_boundary_edge`](@ref). 
+
+
+!!! info 
+    Currently, only P1 element is supported. 
+
+# Example 
+
+Here is an example to evaluate the boundary integral on a domain $[0,1]^2$
+
+$$\int_{x=0}^1 t(x, 1) \delta u dx$$
+
+```julia 
+mmesh = Mesh(10,10,0.1)
+a = constant(1.0)
+f = (x,y)->x+y*a
+top = bcedge((x1,y1,x2,y2)->(y1>0.99) && (y2>0.99), mmesh)
+t = eval_f_on_boundary_edge(f, top, mmesh; tensor_input = true)
+T = compute_fem_traction_term1(t, top, mmesh)
+```
+"""
+function compute_fem_traction_term1(t::PyObject,bdedge::Array{Int64, 2}, mmesh::Mesh)
+    N = @eval ccall((:get_LineIntegralN, $(AdFem.LIBMFEM)), Cint, ())
+    if size(bdedge, 1)*N != length(t)
+        @error "Size of `t` (=$(length(t))) does not match #edge x #gauss points per edge (=$(size(bdedge, 1)) × $N)"
+    end
+    @assert mmesh.elem_type == P1
+    compute_fem_traction_term_v_ = load_op_and_grad(AdFem.libmfem,"compute_fem_traction_term_v")
+    t,edgeid = convert_to_tensor(Any[t,bdedge], [Float64,Int64])
+    out = compute_fem_traction_term_v_(t,edgeid)
+    set_shape(out, (mmesh.ndof,))
+end
+
+@doc raw"""
+    compute_fem_traction_term(t1::PyObject, t2::PyObject, bdedge::Array{Int64, 2}, mmesh::Mesh)
+
+Computes the boundary integral 
+
+$$\int_\Gamma \mathbf{t}(x,y)\cdot \delta \mathbf{u} d\mathbf{x}$$
+
+Here $\mathbf{t}(x,y)$ is the boundary traction term 
+
+$$\mathbf{t}(x,y) = \begin{bmatrix} t_1(x,y) \\ t_2(x,y) \end{bmatrix}$$
+
+and 
+
+$$\mathbf{u} = \begin{bmatrix} u_1(x,y) \\ u_2(x,y) \end{bmatrix}$$
+
+$t_1$ and $t_2$ are defined on boundary Gauss points. See [`eval_f_on_boundary_edge`](@ref). 
+"""
+function compute_fem_traction_term(t1::PyObject, t2::PyObject, bdedge::Array{Int64, 2}, mmesh::Mesh)
+    T1 = compute_fem_traction_term1(t1, bdedge, mmesh)
+    T2 = compute_fem_traction_term1(t2, bdedge, mmesh)
+    [T1;T2]
 end
 
 """

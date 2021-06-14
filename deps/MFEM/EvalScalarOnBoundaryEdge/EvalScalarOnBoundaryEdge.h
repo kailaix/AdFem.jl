@@ -4,6 +4,10 @@ namespace MFEM{
         double *s, const double *u, const int64 *edgeid, 
         int n_edge
     ){
+        Eigen::VectorXd LineIntegralNode, LineIntegralWeights;
+        line_integral_gauss_quadrature(LineIntegralNode, LineIntegralWeights, mmesh.lorder);
+        int LineIntegralN = LineIntegralNode.size();
+        
         int k = 0;
         for (int i = 0; i < n_edge; i++){
             int l = edgeid[2*i]-1, r = edgeid[2*i+1]-1;
@@ -18,6 +22,10 @@ namespace MFEM{
         const double *s, const double *u, const int64 *edgeid, 
         int n_edge
     ){
+        Eigen::VectorXd LineIntegralNode, LineIntegralWeights;
+        line_integral_gauss_quadrature(LineIntegralNode, LineIntegralWeights, mmesh.lorder);
+        int LineIntegralN = LineIntegralNode.size();
+
         int k = 0;
         for (int i = 0; i < n_edge; i++){
             int l = edgeid[2*i]-1, r = edgeid[2*i+1]-1;

@@ -2,7 +2,7 @@
 
 extern "C" {
     long long * init_nnfem_mesh(double *vertices, int num_vertices, 
-                int *element_indices, int num_elements, int order, int degree, long long *nedges){
+                int *element_indices, int num_elements, int order, int lorder, int degree, long long *nedges){
         if (mmesh.elements.size()>0){
             printf("WARNING: Internal mesh is being overwritten!\n");
             for(int i = 0; i< mmesh.nelem; i++) delete mmesh.elements[i];
@@ -10,7 +10,7 @@ extern "C" {
         }
         if (degree==-1)
             return mmesh.init_BDM1(vertices, num_vertices, element_indices, num_elements, order, nedges);
-        return mmesh.init(vertices, num_vertices, element_indices, num_elements, order, degree, nedges);
+        return mmesh.init(vertices, num_vertices, element_indices, num_elements, order, lorder, degree, nedges);
     }
 
     // return total number of Gauss points

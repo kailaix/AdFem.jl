@@ -379,8 +379,8 @@ $$\frac{\psi^{n+1} - \psi^{n-1}}{2\Delta t} =  - \frac{|V|}{d_c}\left( a \sinh^{
 """
 function solve_slip_law(v, ψ, dc, v0, a, b, f0, Δt::Float64)
     @assert size(v0)==size(a)==size(b)==size(f0)==size(dc)==()
-    @asset size(v)==size(ψ)
-    @asset length(size(v))==length(size(ψ))==1
+    @assert size(v)==size(ψ)
+    @assert length(size(v))==length(size(ψ))==1
     v, ψ, dc, v0, a, b, f0 = convert_to_tensor(Any[v, ψ, dc, v0, a, b, f0], [Float64, Float64, Float64, Float64, Float64, Float64, Float64])
     v = abs(v)
     A = (-Δt*v)/dc
