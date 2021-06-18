@@ -15,7 +15,7 @@ function get_meshio()
         pyimport("meshio")
     catch
         PIP = joinpath(ADCME.BINDIR, "pip")
-        run_with_env(`$PIP install meshio`)
+        run_with_env(`$PIP install meshio==4.2`)
         pyimport("meshio")
     end
 end
@@ -36,19 +36,13 @@ function Mesh(filename::String; file_format::Union{String, Missing} = missing,
         d = matread(filename)
         return Mesh(Float64.(d["nodes"]), Int64.(d["elems"]), order, degree, lorder)
     end
-    meshio = get_meshio()
+    meshio = AdFem.get_meshio()
     if !ismissing(file_format)
         mesh = meshio.read(filename, file_format = file_format)
     else
         mesh = meshio.read(filename)
     end
-    elem = []
-    for (mkr, dat) in mesh.cells
-        if mkr == "triangle"
-            push!(elem, dat)
-        end
-    end
-    elem = vcat(elem...)
+    elem = py"list($mesh.cells[0])"[2]
     if length(elem)==0
         error("No triangles found in the mesh file.")
     end
