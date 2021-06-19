@@ -1,5 +1,5 @@
 function precompile_adfem()
-    PWD = @__DIR__
+    PWD = pwd()
     DEPS = joinpath(@__DIR__, "..", "deps")
     change_directory(DEPS)
     ADCME.precompile()
