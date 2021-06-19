@@ -1,4 +1,4 @@
-function Base.:precompile(force::Bool = false)
+function ADCME.:precompile(force::Bool = false)
     
     ADCME.precompile()
 
