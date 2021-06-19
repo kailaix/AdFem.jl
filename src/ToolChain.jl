@@ -1,5 +1,6 @@
 function precompile_adfem()
-    
+    PWD = @__DIR__
+    change_directory(joinpath(@__DIR__, "..", "deps"))
     ADCME.precompile()
 
     install_adept()
@@ -37,5 +38,6 @@ function precompile_adfem()
     catch 
         @warn "pyvista installation was not successful. 3D plots functionalities are disabled."
     end
+    change_directory(PWD)
 
 end
