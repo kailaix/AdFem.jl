@@ -25,7 +25,9 @@ end
 # Constructors 
 
 ```
-Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = 2, degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1)
+Mesh(m::Int64, n::Int64, h::Float64; order::Int64 = -1, 
+            degree::Union{FiniteElementType, Int64} = 1, lorder::Int64 = -1, 
+            version::Int64 = 1)
 ```
 
 Constructs a mesh of a rectangular domain. The rectangle is split into $m\times n$ cells, and each cell is further split into two triangles. 
@@ -36,6 +38,10 @@ Constructs a mesh of a rectangular domain. The rectangle is split into $m\times 
     For example, we can change to different meshes to verify that bugs of our program do not originate from mesh types. 
     
     ![](https://github.com/ADCMEMarket/ADCMEImages/blob/master/AdFem/mesh_types.png?raw=true)
+
+# Integration Order : `order` and `lorder`
+
+TODO
 """
 mutable struct Mesh
     nodes::Array{Float64, 2}

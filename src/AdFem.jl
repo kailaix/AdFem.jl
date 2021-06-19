@@ -23,20 +23,23 @@ module AdFem
 
     function __init__()
         copy!(np, pyimport("numpy"))
-        try 
-            copy!(pv, pyimport("pyvista"))
-        catch
-            @warn """pyvista installation was not successful. 3D plots functionalities are disabled.
-To fix the problem, check why `$(ADCME.get_pip()) install pyvista` or `python -c 'import pyvista'` failed."""
-        end
+        
         if !isfile(LIBMFEM) || !isfile(LIBADFEM) || !isfile(LIBMFEM3)
-            error("Dependencies of AdFem not properly built. Run `Pkg.build(\"AdFem\")` to rebuild AdFem.")
+            @warn "Dependencies of AdFem not properly built. Run `using AdFem; AdFem.precompile() to fix the problem`"
+        else 
+            global libmfem = load_library(LIBMFEM)
+            global libmfem3 = load_library(LIBMFEM3)
+            global libadfem = load_library(LIBADFEM)
+            try 
+                copy!(pv, pyimport("pyvista"))
+            catch
+                @warn """pyvista installation was not successful. 3D plots functionalities are disabled.
+    To fix the problem, check why `$(ADCME.get_pip()) install pyvista` or `python -c 'import pyvista'` failed."""
+            end
         end
-        global libmfem = load_library(LIBMFEM)
-        global libmfem3 = load_library(LIBMFEM3)
-        global libadfem = load_library(LIBADFEM)
     end
 
+    include("ToolChain.jl")
     include("Struct.jl")
     include("Utils.jl")
     include("Core.jl")

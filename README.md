@@ -15,6 +15,17 @@ AdFem is built on [ADCME](https://github.com/kailaix/ADCME.jl), an automatic dif
 
 `Ad` in AdFem stands for "automatic differentiation" or "adjoint". 
 
+## Install Guide
+
+```julia
+using Pkg
+Pkg.add("AdFem")
+using AdFem; AdFem.precompile()
+```
+
+`AdFem.precompile()` will precompile the C++ source files contained in ADCME and AdFem. 
+
+
 ## Forward Computation in AdFem
 
 As an example, we consider solving the Poisson's equation in AdFem
