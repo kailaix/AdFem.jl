@@ -1,13 +1,14 @@
 function precompile_adfem()
     PWD = @__DIR__
-    change_directory(joinpath(@__DIR__, "..", "deps"))
+    DEPS = joinpath(@__DIR__, "..", "deps")
+    change_directory(DEPS)
     ADCME.precompile()
 
     install_adept()
     install_mfem()
     install_had()
 
-    change_directory(joinpath(@__DIR__, "build"))
+    change_directory(joinpath(DEPS, "build"))
     require_file("CMakeCache.txt") do 
         ADCME.cmake()
     end
@@ -15,7 +16,7 @@ function precompile_adfem()
         ADCME.make()
     end
 
-    change_directory(joinpath(@__DIR__, "MFEM", "build"))
+    change_directory(joinpath(DEPS, "MFEM", "build"))
     require_file("CMakeCache.txt") do 
         ADCME.cmake()
     end
@@ -23,7 +24,7 @@ function precompile_adfem()
         ADCME.make()
     end
 
-    change_directory(joinpath(@__DIR__, "MFEM3", "build"))
+    change_directory(joinpath(DEPS, "MFEM3", "build"))
     require_file("CMakeCache.txt") do 
         ADCME.cmake()
     end
